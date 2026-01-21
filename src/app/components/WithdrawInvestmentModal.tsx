@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CheckCircle, Loader, ArrowDownToLine, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, Loader, ArrowDownToLine, AlertCircle, Wallet, LockKeyhole } from 'lucide-react';
 
 interface WithdrawInvestmentModalProps {
   onClose: () => void;
@@ -14,7 +14,7 @@ interface WithdrawInvestmentModalProps {
     startDate: Date;
     earned: number;
   };
-  onWithdraw: (investmentId: string, amount: number, withdrawEarnings: boolean) => void;
+  onWithdraw: (investmentId: string, amount: number, withdrawEarnings: boolean, destination: 'vault' | 'wallet') => void;
 }
 
 export default function WithdrawInvestmentModal({ onClose, investment, onWithdraw }: WithdrawInvestmentModalProps) {
@@ -25,20 +25,21 @@ export default function WithdrawInvestmentModal({ onClose, investment, onWithdra
   const [amount, setAmount] = useState('');
   const [withdrawType, setWithdrawType] = useState<'partial' | 'full'>('partial');
   const [includeEarnings, setIncludeEarnings] = useState(true);
+  const [destination, setDestination] = useState<'vault' | 'wallet'>('vault');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleWithdraw = () => {
     if (withdrawType === 'partial' && (!amount || parseFloat(amount) <= 0)) return;
-    
+
     setIsProcessing(true);
-    
+
     setTimeout(() => {
       const withdrawAmount = withdrawType === 'full' ? totalAvailable : parseFloat(amount);
-      onWithdraw(investment.id, withdrawAmount, includeEarnings || withdrawType === 'full');
+      onWithdraw(investment.id, withdrawAmount, includeEarnings || withdrawType === 'full', destination);
       setIsProcessing(false);
       setIsSuccess(true);
-      
+
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
@@ -102,7 +103,9 @@ export default function WithdrawInvestmentModal({ onClose, investment, onWithdra
                 <CheckCircle className="w-16 h-16 text-green-500" />
               </motion.div>
               <h3 className="text-gray-900 mb-2">Withdrawal Successful!</h3>
-              <p className="text-gray-600 text-center mb-6">Funds transferred to your vault balance</p>
+              <p className="text-gray-600 text-center mb-6">
+                Funds transferred to your {destination === 'vault' ? 'vault balance' : 'main wallet'}
+              </p>
               <div className="bg-gray-50 rounded-2xl p-4 w-full space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Amount Withdrawn</span>
@@ -116,7 +119,7 @@ export default function WithdrawInvestmentModal({ onClose, investment, onWithdra
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Destination</span>
-                  <span className="text-gray-900">Vault Balance</span>
+                  <span className="text-gray-900">{destination === 'vault' ? 'Vault Balance' : 'Main Wallet'}</span>
                 </div>
               </div>
             </motion.div>
@@ -183,6 +186,41 @@ export default function WithdrawInvestmentModal({ onClose, investment, onWithdra
                     >
                       <p className="text-sm">Full Exit</p>
                       <p className="text-xs opacity-70">Close position</p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Destination Selector */}
+                <div>
+                  <label className="block text-gray-600 text-sm mb-2">Withdraw To</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setDestination('vault')}
+                      className={`py-3 px-4 rounded-xl border-2 transition-all ${
+                        destination === 'vault'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 bg-white text-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <LockKeyhole className="w-4 h-4" />
+                        <p className="text-sm">Vault</p>
+                      </div>
+                      <p className="text-xs opacity-70">Keep in vault</p>
+                    </button>
+                    <button
+                      onClick={() => setDestination('wallet')}
+                      className={`py-3 px-4 rounded-xl border-2 transition-all ${
+                        destination === 'wallet'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 bg-white text-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Wallet className="w-4 h-4" />
+                        <p className="text-sm">Wallet</p>
+                      </div>
+                      <p className="text-xs opacity-70">Main balance</p>
                     </button>
                   </div>
                 </div>
@@ -264,7 +302,7 @@ export default function WithdrawInvestmentModal({ onClose, investment, onWithdra
 
                 {/* Info */}
                 <p className="text-xs text-gray-500 text-center">
-                  Funds will be transferred to your vault balance and available for immediate use.
+                  Funds will be transferred to your {destination === 'vault' ? 'vault balance' : 'main wallet'} and available for immediate use.
                 </p>
               </div>
             </>

@@ -490,12 +490,13 @@ export default function Dashboard() {
       {openModal === 'receive' && <ReceiveModal onClose={handleModalClose} />}
       {openModal === 'swap' && <SwapModal onClose={handleModalClose} />}
       {openModal === 'grow' && (
-        <GrowModal 
-          onClose={handleModalClose} 
+        <GrowModal
+          onClose={handleModalClose}
           vaultBalance={vaultBalance}
           vaultEarned={vaultEarned}
           onDeposit={handleVaultDeposit}
           onWithdraw={handleVaultWithdraw}
+          onWithdrawToWallet={handleVaultWithdraw}
           onInvest={handlePoolInvestment}
           walletAssets={assets}
           activeInvestments={activeInvestments}

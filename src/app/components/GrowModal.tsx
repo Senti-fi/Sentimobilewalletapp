@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, TrendingUp, Lock, Zap, ArrowRight, Plus, Wallet, DollarSign, PieChart, ArrowUpRight, ArrowDownToLine, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, TrendingUp, Lock, Zap, ArrowRight, Plus, Wallet, DollarSign, PieChart, ArrowUpRight, ArrowDownToLine, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { useState } from 'react';
 import LucyChip from './LucyChip';
 import VaultDepositModal from './VaultDepositModal';
@@ -15,6 +15,7 @@ interface GrowModalProps {
   vaultEarned: number;
   onDeposit: (amount: number, asset: string) => void;
   onWithdraw: (amount: number, asset: string) => void;
+  onWithdrawToWallet?: (amount: number, asset: string) => void;
   onInvest: (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => void;
   walletAssets: Array<{
     id: string;
@@ -50,6 +51,8 @@ const opportunities = [
     description: 'Earn interest on USDC with daily compounding',
     protocol: 'Aave',
     tvl: '$2.4B',
+    withdrawalTime: 'Instant',
+    minDeposit: 10,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
@@ -60,6 +63,8 @@ const opportunities = [
     description: 'Provide liquidity to stablecoin pairs',
     protocol: 'Curve',
     tvl: '$1.8B',
+    withdrawalTime: '1-2 hours',
+    minDeposit: 50,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
@@ -70,18 +75,21 @@ const opportunities = [
     description: 'Secure USDT lending with automatic compounding',
     protocol: 'Compound',
     tvl: '$1.2B',
+    withdrawalTime: 'Instant',
+    minDeposit: 10,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
   },
 ];
 
-export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onInvest, walletAssets, activeInvestments, totalWalletBalance }: GrowModalProps) {
+export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance }: GrowModalProps) {
   const [selectedVault, setSelectedVault] = useState<string | null>(null);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedVaultData, setSelectedVaultData] = useState<{name: string, apy: string, protocol: string}>({name: '', apy: '', protocol: ''});
   const [activeTab, setActiveTab] = useState<'vaults' | 'investments'>('vaults');
-  
+  const [showRiskTooltip, setShowRiskTooltip] = useState<string | null>(null);
+
   // Track collapsed state for each investment card
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
   
@@ -135,6 +143,15 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
     setShowInvestModal(true);
   };
 
+  const getRiskDescription = (risk: string) => {
+    if (risk === 'Low') {
+      return 'Low risk vaults use battle-tested lending protocols like Aave and Compound. Your funds are lent to verified borrowers with over-collateralization, minimizing default risk.';
+    } else if (risk === 'Medium') {
+      return 'Medium risk involves providing liquidity to decentralized exchanges. You may experience impermanent loss if token prices diverge, but earn higher yields from trading fees.';
+    }
+    return '';
+  };
+
   return (
     <>
       {showDepositModal && (
@@ -178,9 +195,14 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
         <WithdrawInvestmentModal
           onClose={() => setShowWithdrawInvestmentModal(false)}
           investment={selectedInvestment}
-          onWithdraw={(investmentId: string, amount: number, withdrawEarnings: boolean) => {
-            // Add the withdrawn amount back to vault balance
-            onWithdraw(amount, selectedInvestment.asset);
+          onWithdraw={(investmentId: string, amount: number, withdrawEarnings: boolean, destination: 'vault' | 'wallet') => {
+            if (destination === 'wallet' && onWithdrawToWallet) {
+              // Withdraw directly to main wallet
+              onWithdrawToWallet(amount, selectedInvestment.asset);
+            } else {
+              // Withdraw to vault balance
+              onWithdraw(amount, selectedInvestment.asset);
+            }
           }}
         />
       )}
@@ -365,20 +387,46 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <h4 className="text-gray-900">{opp.name}</h4>
-                                <span className={`px-2 py-0.5 rounded-md text-xs ${
-                                  opp.risk === 'Low' 
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-yellow-100 text-yellow-700'
-                                }`}>
-                                  {opp.risk}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className={`px-2 py-0.5 rounded-md text-xs ${
+                                    opp.risk === 'Low'
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-yellow-100 text-yellow-700'
+                                  }`}>
+                                    {opp.risk}
+                                  </span>
+                                  <div className="relative">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowRiskTooltip(showRiskTooltip === opp.id ? null : opp.id);
+                                      }}
+                                      className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
+                                    >
+                                      <Info className={`w-3.5 h-3.5 ${opp.risk === 'Low' ? 'text-green-600' : 'text-yellow-600'}`} />
+                                    </button>
+                                    {showRiskTooltip === opp.id && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -5 }}
+                                        className="absolute z-10 left-0 top-6 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <p className="mb-2 font-medium">{opp.risk} Risk Explained</p>
+                                        <p className="text-gray-300 leading-relaxed">{getRiskDescription(opp.risk)}</p>
+                                        <div className="absolute -top-1 left-2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                               <p className="text-xs text-gray-500">{opp.description}</p>
                             </div>
                           </div>
 
                           {/* Vault Metrics */}
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                             <div>
                               <p className="text-xs text-gray-500 mb-0.5">APY</p>
                               <div className="flex items-baseline gap-1">
@@ -386,6 +434,10 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                               </div>
                             </div>
                             <div className="text-right">
+                              <p className="text-xs text-gray-500 mb-0.5">Withdrawal</p>
+                              <p className="text-sm text-gray-900">{opp.withdrawalTime}</p>
+                            </div>
+                            <div>
                               <p className="text-xs text-gray-500 mb-0.5">Protocol</p>
                               <p className="text-sm text-gray-900">{opp.protocol}</p>
                             </div>
@@ -396,15 +448,20 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                           </div>
 
                           {/* Action Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full mt-3 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 text-white rounded-xl py-3 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow"
-                            onClick={() => handleInvestClick(opp.name, opp.apy, opp.protocol)}
-                          >
-                            <span className="text-sm">Deposit Now</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </motion.button>
+                          <div className="mt-3">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="w-full bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 text-white rounded-xl py-3 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow"
+                              onClick={() => handleInvestClick(opp.name, opp.apy, opp.protocol)}
+                            >
+                              <span className="text-sm">Deposit Now</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </motion.button>
+                            <p className="text-xs text-gray-500 text-center mt-2">
+                              Minimum deposit: ${opp.minDeposit}
+                            </p>
+                          </div>
                         </motion.div>
                       ))}
                     </div>
