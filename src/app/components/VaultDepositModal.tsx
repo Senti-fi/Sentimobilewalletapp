@@ -199,6 +199,22 @@ export default function VaultDepositModal({ onClose, vaultName, apy, onDeposit, 
                   </div>
                 </div>
 
+                {/* Gas Fee Estimate */}
+                {amount && parseFloat(amount) > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-900 mb-0.5">Estimated Network Fee</p>
+                        <p className="text-xs text-gray-600">Current gas price: ~15 gwei</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-900">~$2.50</p>
+                        <p className="text-xs text-gray-500">$2-5 range</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Deposit button */}
                 <motion.button
                   whileTap={{ scale: 0.98 }}
