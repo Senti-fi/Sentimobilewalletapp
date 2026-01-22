@@ -367,11 +367,6 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
   };
 
   const handleTransactionComplete = (amount: number, asset: string, shouldFail: boolean = false, gasFee: number = 0) => {
-    // Update Dashboard balance if successful
-    if (!shouldFail && selectedContact) {
-      onSend(amount, asset, selectedContact.id, selectedContact.name, gasFee);
-    }
-
     // Create pending transaction first
     const pendingId = Date.now().toString();
     const pendingTransaction: Message = {
@@ -392,8 +387,13 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
 
     // Simulate transaction processing (2-4 seconds)
     const processingTime = 2000 + Math.random() * 2000;
-    
+
     setTimeout(() => {
+      // Update Dashboard balance AFTER transaction completes if successful
+      if (!shouldFail && selectedContact) {
+        onSend(amount, asset, selectedContact.id, selectedContact.name, gasFee);
+      }
+
       setMessagesByContact(prev => ({
         ...prev,
         [selectedContact!.id]: prev[selectedContact!.id].map(msg => {

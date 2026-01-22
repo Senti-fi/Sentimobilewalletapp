@@ -100,10 +100,24 @@ export default function SendModal({ onClose, onOpenLucy, assets, onSend }: SendM
   };
 
   const handleMaxAmount = () => {
-    // Calculate max amount (balance - gas fee)
-    const maxGasFee = calculateGasFee(availableBalance);
-    const maxAmount = Math.max(0, availableBalance - maxGasFee);
-    setAmount(maxAmount.toFixed(2));
+    // Calculate max amount that can be sent including gas
+    // Formula: amount + gas(amount) = balance
+    // If percentage fee applies: amount * 1.005 = balance → amount = balance / 1.005
+    // If minimum fee applies: amount + minFee = balance → amount = balance - minFee
+
+    const minFee = selectedAsset === 'SOL' ? 0.02 : 2;
+    const thresholdForPercentage = minFee / 0.005; // 400 for USDC/USDT, 4 for SOL
+
+    let maxAmount: number;
+    if (availableBalance >= thresholdForPercentage) {
+      // Percentage fee will apply
+      maxAmount = availableBalance / 1.005;
+    } else {
+      // Minimum fee will apply
+      maxAmount = Math.max(0, availableBalance - minFee);
+    }
+
+    setAmount(maxAmount.toFixed(4));
     setError('');
   };
 
