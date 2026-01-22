@@ -124,6 +124,26 @@ export default function Dashboard() {
     bg: string;
   }>>([]);
 
+  // Security and limits state
+  const [trustedRecipients, setTrustedRecipients] = useState<Set<string>>(new Set());
+  const [dailySentAmount, setDailySentAmount] = useState(0);
+  const [lastResetDate, setLastResetDate] = useState(new Date().toDateString());
+
+  // Security limits (for MVP)
+  const TRANSACTION_LIMIT_PER_TX = 5000; // $5,000 per transaction
+  const TRANSACTION_LIMIT_DAILY = 10000; // $10,000 per day
+  const LARGE_AMOUNT_WARNING = 1000; // Warn for amounts > $1,000
+  const BIOMETRIC_THRESHOLD = 500; // Require biometric for > $500
+
+  // Reset daily limit if it's a new day
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (today !== lastResetDate) {
+      setDailySentAmount(0);
+      setLastResetDate(today);
+    }
+  }, [lastResetDate]);
+
   // Add transaction function
   const addTransaction = (transaction: {
     merchant: string;
@@ -191,7 +211,7 @@ export default function Dashboard() {
   const handlePoolInvestment = (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => {
     // Deduct from vault balance
     setVaultBalance(prev => prev - amount);
-    
+
     // Add to active investments
     setActiveInvestments(prev => [...prev, {
       id: `inv-${Date.now()}`,
@@ -203,6 +223,38 @@ export default function Dashboard() {
       startDate: new Date(),
       earned: 0
     }]);
+  };
+
+  // Handle send transaction
+  const handleSend = (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => {
+    const totalAmount = amount + gasFee;
+
+    // Deduct from total balance
+    setTotalBalance(prev => prev - totalAmount);
+
+    // Deduct from specific asset
+    setAssets(prevAssets =>
+      prevAssets.map(a => {
+        if (a.symbol === asset) {
+          return {
+            ...a,
+            balance: a.balance - totalAmount,
+            value: a.symbol === 'SOL' ? (a.balance - totalAmount) * (a.value / a.balance) : a.balance - totalAmount
+          };
+        }
+        return a;
+      })
+    );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: recipientName || recipient,
+      category: 'Send',
+      amount: -amount, // Negative for outgoing
+      icon: Send,
+      color: 'text-red-600',
+      bg: 'bg-red-100',
+    });
   };
 
   const quickActions = [
@@ -430,7 +482,10 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'link' && (
-          <LinkPage />
+          <LinkPage
+            assets={assets}
+            onSend={handleSend}
+          />
         )}
       </div>
 
@@ -486,7 +541,14 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Modals */}
-      {openModal === 'send' && <SendModal onClose={handleModalClose} onOpenLucy={handleOpenLucy} />}
+      {openModal === 'send' && (
+        <SendModal
+          onClose={handleModalClose}
+          onOpenLucy={handleOpenLucy}
+          assets={assets}
+          onSend={handleSend}
+        />
+      )}
       {openModal === 'receive' && <ReceiveModal onClose={handleModalClose} />}
       {openModal === 'swap' && <SwapModal onClose={handleModalClose} />}
       {openModal === 'grow' && (

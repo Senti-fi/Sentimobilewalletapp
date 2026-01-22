@@ -1,21 +1,53 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Check, User } from 'lucide-react';
+import { X, Send, Check, User, AlertCircle } from 'lucide-react';
 import LucyChip from './LucyChip';
 import { mockContacts } from './LinkPage';
+
+interface Asset {
+  id: string;
+  name: string;
+  symbol: string;
+  balance: number;
+  value: number;
+  change: number;
+  changePercent: number;
+  color: string;
+  gradient: string;
+  icon: string;
+}
 
 interface SendModalProps {
   onClose: () => void;
   onOpenLucy?: () => void;
+  assets: Asset[];
+  onSend: (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => void;
 }
 
-export default function SendModal({ onClose, onOpenLucy }: SendModalProps) {
+export default function SendModal({ onClose, onOpenLucy, assets, onSend }: SendModalProps) {
   const [step, setStep] = useState<'form' | 'confirm' | 'success'>('form');
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedAsset, setSelectedAsset] = useState('USDC');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null);
+  const [error, setError] = useState<string>('');
+
+  // Get current asset balance
+  const getCurrentAsset = () => assets.find(a => a.symbol === selectedAsset);
+  const currentAsset = getCurrentAsset();
+  const availableBalance = currentAsset?.balance || 0;
+
+  // Calculate mock gas fee (0.5% of amount or minimum $2, deducted from same token)
+  const calculateGasFee = (sendAmount: number): number => {
+    if (!sendAmount) return 0;
+    const percentageFee = sendAmount * 0.005; // 0.5%
+    const minFee = selectedAsset === 'SOL' ? 0.02 : 2; // Different min for SOL
+    return Math.max(percentageFee, minFee);
+  };
+
+  const gasFee = calculateGasFee(parseFloat(amount) || 0);
+  const totalWithGas = (parseFloat(amount) || 0) + gasFee;
 
   // Filter contacts based on input
   const filteredContacts = mockContacts.filter(contact =>
@@ -36,14 +68,43 @@ export default function SendModal({ onClose, onOpenLucy }: SendModalProps) {
   };
 
   const handleSend = () => {
+    setError('');
+
+    // Validate amount
+    const sendAmount = parseFloat(amount);
+    if (isNaN(sendAmount) || sendAmount <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    // Validate balance (amount + gas must be <= available)
+    if (totalWithGas > availableBalance) {
+      setError(`Insufficient ${selectedAsset} balance (need ${totalWithGas.toFixed(2)} including gas)`);
+      return;
+    }
+
     setStep('confirm');
   };
 
   const handleConfirm = () => {
+    const sendAmount = parseFloat(amount);
+    const recipientName = selectedContact?.name || recipient;
+
+    // Call the onSend callback to update Dashboard state
+    onSend(sendAmount, selectedAsset, recipient, recipientName, gasFee);
+
     setStep('success');
     setTimeout(() => {
       onClose();
     }, 2000);
+  };
+
+  const handleMaxAmount = () => {
+    // Calculate max amount (balance - gas fee)
+    const maxGasFee = calculateGasFee(availableBalance);
+    const maxAmount = Math.max(0, availableBalance - maxGasFee);
+    setAmount(maxAmount.toFixed(2));
+    setError('');
   };
 
   return (
@@ -146,19 +207,37 @@ export default function SendModal({ onClose, onOpenLucy }: SendModalProps) {
                     <input
                       type="number"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        setError('');
+                      }}
                       placeholder="0.00"
                       className="w-full px-4 py-4 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <button 
-                      onClick={() => setAmount('5420.50')}
+                    <button
+                      onClick={handleMaxAmount}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 font-medium"
                     >
                       MAX
                     </button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Available: 5,420.50 {selectedAsset}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Available: {availableBalance.toFixed(2)} {selectedAsset}
+                    {amount && parseFloat(amount) > 0 && (
+                      <span className="text-gray-400 ml-2">
+                        (Est. gas: {gasFee.toFixed(4)} {selectedAsset})
+                      </span>
+                    )}
+                  </p>
                 </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
 
                 <motion.button
                   whileTap={{ scale: 0.98 }}
@@ -193,16 +272,24 @@ export default function SendModal({ onClose, onOpenLucy }: SendModalProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">To</span>
-                    <span className="text-gray-900">{recipient.slice(0, 20)}...</span>
+                    <span className="text-gray-900">{selectedContact?.name || recipient.slice(0, 20) + '...'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Network fee</span>
-                    <span className="text-gray-900">$0.00</span>
+                    <span className="text-gray-600">Gas fee</span>
+                    <span className="text-gray-900">{gasFee.toFixed(4)} {selectedAsset}</span>
                   </div>
                   <div className="pt-4 border-t border-gray-200 flex justify-between">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">{amount} {selectedAsset}</span>
+                    <span className="text-gray-900 font-medium">Total</span>
+                    <span className="text-gray-900 font-medium">{totalWithGas.toFixed(4)} {selectedAsset}</span>
                   </div>
+                </div>
+
+                {/* Gas Abstraction Info */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-900">
+                    Gas fee is deducted from your {selectedAsset} balance
+                  </p>
                 </div>
 
                 <motion.button

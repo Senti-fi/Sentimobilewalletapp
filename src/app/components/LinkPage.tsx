@@ -65,7 +65,25 @@ interface Message {
   status?: 'pending' | 'completed' | 'failed';
 }
 
-export default function LinkPage() {
+interface Asset {
+  id: string;
+  name: string;
+  symbol: string;
+  balance: number;
+  value: number;
+  change: number;
+  changePercent: number;
+  color: string;
+  gradient: string;
+  icon: string;
+}
+
+interface LinkPageProps {
+  assets: Asset[];
+  onSend: (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => void;
+}
+
+export default function LinkPage({ assets, onSend }: LinkPageProps) {
   const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
@@ -348,7 +366,12 @@ export default function LinkPage() {
     }, processingTime);
   };
 
-  const handleTransactionComplete = (amount: number, asset: string, shouldFail: boolean = false) => {
+  const handleTransactionComplete = (amount: number, asset: string, shouldFail: boolean = false, gasFee: number = 0) => {
+    // Update Dashboard balance if successful
+    if (!shouldFail && selectedContact) {
+      onSend(amount, asset, selectedContact.id, selectedContact.name, gasFee);
+    }
+
     // Create pending transaction first
     const pendingId = Date.now().toString();
     const pendingTransaction: Message = {
@@ -639,6 +662,7 @@ export default function LinkPage() {
         <LinkSendModal
           onClose={() => setShowSendModal(false)}
           recipient={selectedContact}
+          assets={assets}
           onTransactionComplete={handleTransactionComplete}
         />
       )}

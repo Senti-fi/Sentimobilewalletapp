@@ -1,6 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CheckCircle, Loader, DollarSign, Info } from 'lucide-react';
+import { X, CheckCircle, Loader, DollarSign, Info, AlertCircle } from 'lucide-react';
+
+interface Asset {
+  id: string;
+  name: string;
+  symbol: string;
+  balance: number;
+  value: number;
+  change: number;
+  changePercent: number;
+  color: string;
+  gradient: string;
+  icon: string;
+}
 
 interface LinkSendModalProps {
   onClose: () => void;
@@ -10,40 +23,70 @@ interface LinkSendModalProps {
     avatar: string;
     color: string;
   };
-  onTransactionComplete: (amount: number, asset: string, failed: boolean) => void;
+  assets: Asset[];
+  onTransactionComplete: (amount: number, asset: string, failed: boolean, gasFee: number) => void;
 }
 
-export default function LinkSendModal({ onClose, recipient, onTransactionComplete }: LinkSendModalProps) {
+export default function LinkSendModal({ onClose, recipient, assets, onTransactionComplete }: LinkSendModalProps) {
   const [amount, setAmount] = useState('');
   const [asset, setAsset] = useState('USDC');
   const [note, setNote] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  // Get current asset balance
+  const getCurrentAsset = () => assets.find(a => a.symbol === asset);
+  const currentAsset = getCurrentAsset();
+  const availableBalance = currentAsset?.balance || 0;
+
+  // Calculate mock gas fee (0.5% of amount or minimum $2, deducted from same token)
+  const calculateGasFee = (sendAmount: number): number => {
+    if (!sendAmount) return 0;
+    const percentageFee = sendAmount * 0.005; // 0.5%
+    const minFee = asset === 'SOL' ? 0.02 : 2; // Different min for SOL
+    return Math.max(percentageFee, minFee);
+  };
+
+  const gasFee = calculateGasFee(parseFloat(amount) || 0);
+  const totalWithGas = (parseFloat(amount) || 0) + gasFee;
 
   const handleSend = () => {
-    if (!amount || parseFloat(amount) <= 0) return;
+    setError('');
+
+    const sendAmount = parseFloat(amount);
+    if (!amount || sendAmount <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    // Validate balance (amount + gas must be <= available)
+    if (totalWithGas > availableBalance) {
+      setError(`Insufficient ${asset} balance (need ${totalWithGas.toFixed(2)} including gas)`);
+      return;
+    }
 
     setIsProcessing(true);
     setHasFailed(false);
 
-    // Randomly decide if transaction will fail (15% chance)
-    const willFail = Math.random() < 0.15;
+    // No random failure for MVP - always succeed
+    const willFail = false;
 
     // Simulate transaction processing
     setTimeout(() => {
       setIsProcessing(false);
-      
+
       if (willFail) {
         setHasFailed(true);
-        onTransactionComplete(parseFloat(amount), asset, true);
+        onTransactionComplete(parseFloat(amount), asset, true, gasFee);
         // Auto-close on failure after showing error
         setTimeout(() => {
           onClose();
         }, 2500);
       } else {
         setIsSuccess(true);
-        onTransactionComplete(parseFloat(amount), asset, false);
+        onTransactionComplete(parseFloat(amount), asset, false, gasFee);
         setTimeout(() => {
           onClose();
         }, 2000);
@@ -198,14 +241,20 @@ export default function LinkSendModal({ onClose, recipient, onTransactionComplet
                       <input
                         type="number"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => {
+                          setAmount(e.target.value);
+                          setError('');
+                        }}
                         placeholder="0.00"
                         className="flex-1 bg-transparent text-2xl focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <select
                       value={asset}
-                      onChange={(e) => setAsset(e.target.value)}
+                      onChange={(e) => {
+                        setAsset(e.target.value);
+                        setError('');
+                      }}
                       className="bg-white border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="USDC">USDC</option>
@@ -213,6 +262,14 @@ export default function LinkSendModal({ onClose, recipient, onTransactionComplet
                       <option value="SOL">SOL</option>
                     </select>
                   </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Available: {availableBalance.toFixed(2)} {asset}
+                    {amount && parseFloat(amount) > 0 && (
+                      <span className="text-gray-400 ml-2">
+                        (Est. gas: {gasFee.toFixed(4)} {asset})
+                      </span>
+                    )}
+                  </p>
                 </div>
 
                 {/* Note (Optional) */}
@@ -227,12 +284,22 @@ export default function LinkSendModal({ onClose, recipient, onTransactionComplet
                   />
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
                 {/* Fee Info */}
                 <div className="bg-blue-50 rounded-xl p-3 flex items-start gap-2">
                   <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm text-blue-900">No fees for link transfers</p>
-                    <p className="text-xs text-blue-700 mt-0.5">Instant delivery using Senti IDs</p>
+                    <p className="text-sm text-blue-900">Instant delivery using Senti IDs</p>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      Network gas fee ({gasFee.toFixed(4)} {asset}) deducted from your {asset} balance
+                    </p>
                   </div>
                 </div>
 
