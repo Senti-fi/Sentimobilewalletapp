@@ -21,10 +21,11 @@ interface SendModalProps {
   onClose: () => void;
   onOpenLucy?: () => void;
   assets: Asset[];
+  totalBalance: number;
   onSend: (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => void;
 }
 
-export default function SendModal({ onClose, onOpenLucy, assets, onSend }: SendModalProps) {
+export default function SendModal({ onClose, onOpenLucy, assets, totalBalance, onSend }: SendModalProps) {
   const [step, setStep] = useState<'form' | 'confirm' | 'success'>('form');
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
@@ -140,7 +141,7 @@ export default function SendModal({ onClose, onOpenLucy, assets, onSend }: SendM
         >
           {step === 'form' && (
             <>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-gray-900">Send Money</h2>
                 <button
                   onClick={onClose}
@@ -148,6 +149,12 @@ export default function SendModal({ onClose, onOpenLucy, assets, onSend }: SendM
                 >
                   <X className="w-5 h-5 text-gray-600" />
                 </button>
+              </div>
+
+              {/* Total Balance Display */}
+              <div className="mb-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100">
+                <p className="text-sm text-gray-600 mb-1">Total Wallet Balance</p>
+                <p className="text-2xl text-gray-900 font-semibold">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
 
               <div className="space-y-4">

@@ -546,6 +546,7 @@ export default function Dashboard() {
           onClose={handleModalClose}
           onOpenLucy={handleOpenLucy}
           assets={assets}
+          totalBalance={totalBalance}
           onSend={handleSend}
         />
       )}
