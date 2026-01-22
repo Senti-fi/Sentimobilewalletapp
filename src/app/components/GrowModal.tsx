@@ -260,8 +260,14 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
           {/* Header */}
           <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
             <div>
-              <h2 className="text-gray-900">Vault</h2>
-              <p className="text-sm text-gray-500">Grow your crypto effortlessly</p>
+              <h2 className="text-gray-900 flex items-center gap-2">
+                AI-Powered Vaults
+                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-md flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  Live
+                </span>
+              </h2>
+              <p className="text-sm text-gray-500">Maximize returns with flexible access</p>
             </div>
             <button
               onClick={onClose}
@@ -580,6 +586,32 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                       <div className="flex-1">
                         <p className="text-gray-900 text-sm mb-1">Flexible Access</p>
                         <p className="text-xs text-gray-600">Withdraw anytime with no lock-up periods</p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Cross-sell to Locked Savings */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Lock className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-gray-900 text-sm mb-1 flex items-center gap-2">
+                          Saving for something specific?
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-md">Up to 15%</span>
+                        </h4>
+                        <p className="text-xs text-gray-600 mb-3">
+                          Lock in <strong>guaranteed 15% APY</strong> with Locked Savings. Perfect for goals like weddings, vacations, or emergency funds.
+                        </p>
+                        <button className="text-xs text-purple-700 hover:text-purple-800 underline">
+                          View Locked Savings →
+                        </button>
                       </div>
                     </div>
                   </motion.div>
