@@ -460,7 +460,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <TransactionHistory />
+              <TransactionHistory transactions={recentTransactions} />
             </motion.div>
           </>
         )}
