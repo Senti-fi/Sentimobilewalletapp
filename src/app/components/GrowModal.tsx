@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, TrendingUp, Lock, Zap, ArrowRight, Plus, Wallet, DollarSign, PieChart, ArrowUpRight, ArrowDownToLine, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { X, TrendingUp, Lock, Zap, ArrowRight, Plus, Wallet, DollarSign, PieChart, ArrowUpRight, ArrowDownToLine, ChevronDown, ChevronUp, Info, Shield, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import LucyChip from './LucyChip';
 import VaultDepositModal from './VaultDepositModal';
@@ -8,6 +8,7 @@ import VaultWithdrawModal from './VaultWithdrawModal';
 import InvestmentDetailsModal from './InvestmentDetailsModal';
 import WithdrawInvestmentModal from './WithdrawInvestmentModal';
 import AddMoreInvestmentModal from './AddMoreInvestmentModal';
+import APYHistoryChart from './APYHistoryChart';
 
 interface GrowModalProps {
   onClose: () => void;
@@ -42,6 +43,21 @@ interface GrowModalProps {
   totalWalletBalance: number;
 }
 
+// Generate mock historical APY data
+const generateHistoricalData = (currentAPY: number, volatility: number = 0.5) => {
+  const data = [];
+  const days = 30;
+  for (let i = 0; i < days; i++) {
+    const variance = (Math.random() - 0.5) * volatility;
+    const apy = currentAPY + variance;
+    data.push({
+      date: new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      apy: Math.max(0, apy)
+    });
+  }
+  return data;
+};
+
 const opportunities = [
   {
     id: '1',
@@ -54,6 +70,8 @@ const opportunities = [
     withdrawalTime: 'Instant',
     minDeposit: 10,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
+    auditLink: 'https://docs.aave.com/developers/deployed-contracts/security-and-audits',
+    historicalData: generateHistoricalData(8.5, 0.8),
   },
   {
     id: '2',
@@ -66,6 +84,8 @@ const opportunities = [
     withdrawalTime: '1-2 hours',
     minDeposit: 50,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
+    auditLink: 'https://curve.fi/audits',
+    historicalData: generateHistoricalData(12.3, 1.5),
   },
   {
     id: '3',
@@ -78,6 +98,8 @@ const opportunities = [
     withdrawalTime: 'Instant',
     minDeposit: 10,
     color: 'from-cyan-400 via-blue-500 to-blue-700',
+    auditLink: 'https://compound.finance/docs/security',
+    historicalData: generateHistoricalData(9.2, 0.7),
   },
 ];
 
@@ -89,6 +111,7 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
   const [selectedVaultData, setSelectedVaultData] = useState<{name: string, apy: string, protocol: string}>({name: '', apy: '', protocol: ''});
   const [activeTab, setActiveTab] = useState<'vaults' | 'investments'>('vaults');
   const [showRiskTooltip, setShowRiskTooltip] = useState<string | null>(null);
+  const [expandedVault, setExpandedVault] = useState<string | null>(null);
 
   // Track collapsed state for each investment card
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
@@ -378,9 +401,7 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          whileHover={{ scale: 1.01 }}
-                          onClick={() => setSelectedVault(opp.id)}
-                          className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+                          className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
                         >
                           {/* Vault Header */}
                           <div className="flex items-start justify-between mb-3">
@@ -431,7 +452,12 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                               <p className="text-xs text-gray-500 mb-0.5">APY</p>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl text-green-600">{opp.apy}%</span>
+                                <span className="text-xs text-blue-600 flex items-center gap-0.5">
+                                  <Zap className="w-3 h-3" />
+                                  AI
+                                </span>
                               </div>
+                              <p className="text-xs text-gray-500">Updated hourly</p>
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-gray-500 mb-0.5">Withdrawal</p>
@@ -439,13 +465,70 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                             </div>
                             <div>
                               <p className="text-xs text-gray-500 mb-0.5">Protocol</p>
-                              <p className="text-sm text-gray-900">{opp.protocol}</p>
+                              <div className="flex items-center gap-1">
+                                <Shield className="w-3 h-3 text-green-600" />
+                                <p className="text-sm text-gray-900">{opp.protocol}</p>
+                              </div>
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-gray-500 mb-0.5">TVL</p>
                               <p className="text-sm text-gray-900">{opp.tvl}</p>
                             </div>
                           </div>
+
+                          {/* Security Badge */}
+                          <a
+                            href={opp.auditLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-2 mt-3 p-2 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                          >
+                            <Shield className="w-4 h-4 text-green-600" />
+                            <div className="flex-1">
+                              <p className="text-xs text-gray-900">Audited & Secure</p>
+                              <p className="text-xs text-gray-500">View security reports</p>
+                            </div>
+                            <ExternalLink className="w-3 h-3 text-gray-400" />
+                          </a>
+
+                          {/* APY History Chart - Expandable */}
+                          {expandedVault === opp.id && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="mt-3"
+                            >
+                              <APYHistoryChart
+                                data={opp.historicalData}
+                                currentAPY={parseFloat(opp.apy)}
+                                period="30d"
+                              />
+                            </motion.div>
+                          )}
+
+                          {/* Toggle Chart Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedVault(expandedVault === opp.id ? null : opp.id);
+                            }}
+                            className="w-full mt-2 py-2 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1"
+                          >
+                            {expandedVault === opp.id ? (
+                              <>
+                                <ChevronUp className="w-4 h-4" />
+                                Hide APY History
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="w-4 h-4" />
+                                Show APY History
+                              </>
+                            )}
+                          </button>
 
                           {/* Action Button */}
                           <div className="mt-3">

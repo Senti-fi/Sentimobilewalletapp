@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Lock, TrendingUp, Calendar, DollarSign, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { X, Lock, TrendingUp, Calendar, DollarSign, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
 import LucyChip from './LucyChip';
 
 interface LockedSavingsModalProps {
@@ -197,13 +197,20 @@ export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsM
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                      <Shield className="w-5 h-5 text-purple-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-gray-900 text-sm mb-1">Higher Yields, Time-Locked</h4>
-                      <p className="text-xs text-gray-600">
-                        Lock your funds for a fixed period and earn up to 15% APY - higher than our standard vaults
+                      <h4 className="text-gray-900 text-sm mb-1 flex items-center gap-2">
+                        Guaranteed Fixed Rates
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-md">Locked In</span>
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Lock in your APY today - guaranteed for the entire period regardless of market changes
                       </p>
+                      <div className="flex items-center gap-1 text-xs text-purple-700 bg-purple-100 px-2 py-1 rounded-md inline-flex">
+                        <TrendingUp className="w-3 h-3" />
+                        Up to 15% APY - higher than standard vaults
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -251,12 +258,15 @@ export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsM
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500">Lock for {period.days} days</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <Shield className="w-3 h-3 text-green-600" />
+                                <p className="text-xs text-green-600">Rate Guaranteed</p>
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-xl text-green-600">{period.apy}%</p>
-                            <p className="text-xs text-gray-500">APY</p>
+                            <p className="text-xs text-gray-500">Fixed APY</p>
                           </div>
                         </div>
                       </motion.button>
@@ -335,6 +345,33 @@ export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsM
                             <span className="text-green-600">
                               ${(parseFloat(amount) + projectedEarnings).toFixed(2)}
                             </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Rate Guarantee Message */}
+                    {amount && parseFloat(amount) > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Shield className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900 mb-1 flex items-center gap-2">
+                              Rate Lock Guarantee
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-md">
+                                {selectedPeriod.apy}% Fixed
+                              </span>
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              Your <strong>{selectedPeriod.apy}% APY is locked in and guaranteed</strong> for the entire {selectedPeriod.label}.
+                              Even if market rates drop to 3%, you'll still earn {selectedPeriod.apy}%.
+                            </p>
                           </div>
                         </div>
                       </motion.div>
