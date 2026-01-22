@@ -20,6 +20,7 @@ interface DashboardTransaction {
   icon: any;
   color: string;
   bg: string;
+  type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
 }
 
 interface TransactionHistoryProps {

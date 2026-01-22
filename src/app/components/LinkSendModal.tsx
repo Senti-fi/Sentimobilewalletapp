@@ -41,12 +41,10 @@ export default function LinkSendModal({ onClose, recipient, assets, onTransactio
   const currentAsset = getCurrentAsset();
   const availableBalance = currentAsset?.balance || 0;
 
-  // Calculate mock gas fee (0.5% of amount or minimum $2, deducted from same token)
+  // Calculate mock gas fee (0.5% of amount, no minimum)
   const calculateGasFee = (sendAmount: number): number => {
     if (!sendAmount) return 0;
-    const percentageFee = sendAmount * 0.005; // 0.5%
-    const minFee = asset === 'SOL' ? 0.02 : 2; // Different min for SOL
-    return Math.max(percentageFee, minFee);
+    return sendAmount * 0.005; // Pure 0.5% with no floor
   };
 
   const gasFee = calculateGasFee(parseFloat(amount) || 0);

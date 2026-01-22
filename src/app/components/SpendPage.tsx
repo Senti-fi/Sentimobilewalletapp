@@ -32,6 +32,7 @@ interface SpendPageProps {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
   }>;
   onAddTransaction: (transaction: {
     merchant: string;
@@ -40,6 +41,7 @@ interface SpendPageProps {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
   }) => void;
 }
 

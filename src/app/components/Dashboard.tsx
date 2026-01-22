@@ -122,6 +122,7 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal'; // Track transaction type
   }>>([]);
 
   // Security and limits state
@@ -152,6 +153,7 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
   }) => {
     const newTransaction = {
       id: Date.now().toString(),
@@ -254,6 +256,7 @@ export default function Dashboard() {
       icon: Send,
       color: 'text-red-600',
       bg: 'bg-red-100',
+      type: 'send',
     });
   };
 
@@ -460,7 +463,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <TransactionHistory transactions={recentTransactions} />
+              <TransactionHistory transactions={recentTransactions.filter(t => t.type !== 'send')} />
             </motion.div>
           </>
         )}
@@ -474,9 +477,9 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'spend' && (
-          <SpendPage 
+          <SpendPage
             onOpenLucy={handleOpenLucy}
-            recentTransactions={recentTransactions}
+            recentTransactions={recentTransactions.filter(t => t.type === 'send')}
             onAddTransaction={addTransaction}
           />
         )}
