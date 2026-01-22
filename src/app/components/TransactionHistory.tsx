@@ -11,21 +11,6 @@ interface Transaction {
   recipient?: string;
 }
 
-interface DashboardTransaction {
-  id: string;
-  merchant: string;
-  category: string;
-  amount: number;
-  date: string;
-  icon: any;
-  color: string;
-  bg: string;
-}
-
-interface TransactionHistoryProps {
-  transactions?: DashboardTransaction[];
-}
-
 const mockTransactions: Transaction[] = [
   {
     id: '1',
@@ -64,10 +49,7 @@ const mockTransactions: Transaction[] = [
   },
 ];
 
-export default function TransactionHistory({ transactions }: TransactionHistoryProps = {}) {
-  // If real transactions are provided, use them; otherwise use mock data
-  const hasRealTransactions = transactions && transactions.length > 0;
-
+export default function TransactionHistory() {
   const getIcon = (type: Transaction['type']) => {
     switch (type) {
       case 'send':
@@ -117,40 +99,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
       </div>
 
       <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-        {/* Show real transactions if available */}
-        {hasRealTransactions && transactions!.map((transaction, index) => {
-          const Icon = transaction.icon;
-          return (
-            <motion.div
-              key={transaction.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${transaction.bg}`}>
-                <Icon className={`w-5 h-5 ${transaction.color}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-900 mb-0.5">{transaction.category}</p>
-                <p className="text-sm text-gray-500 truncate">
-                  {transaction.merchant}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className={`mb-0.5 ${
-                  transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
-                }`}>
-                  {transaction.amount < 0 ? '' : '+'}{transaction.amount.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">{transaction.date}</p>
-              </div>
-            </motion.div>
-          );
-        })}
-
-        {/* Show mock transactions if no real transactions */}
-        {!hasRealTransactions && mockTransactions.map((transaction, index) => (
+        {mockTransactions.map((transaction, index) => (
           <motion.div
             key={transaction.id}
             initial={{ opacity: 0, x: -10 }}
