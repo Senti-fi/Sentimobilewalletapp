@@ -122,7 +122,28 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal'; // Track transaction type
   }>>([]);
+
+  // Security and limits state
+  const [trustedRecipients, setTrustedRecipients] = useState<Set<string>>(new Set());
+  const [dailySentAmount, setDailySentAmount] = useState(0);
+  const [lastResetDate, setLastResetDate] = useState(new Date().toDateString());
+
+  // Security limits (for MVP)
+  const TRANSACTION_LIMIT_PER_TX = 5000; // $5,000 per transaction
+  const TRANSACTION_LIMIT_DAILY = 10000; // $10,000 per day
+  const LARGE_AMOUNT_WARNING = 1000; // Warn for amounts > $1,000
+  const BIOMETRIC_THRESHOLD = 500; // Require biometric for > $500
+
+  // Reset daily limit if it's a new day
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (today !== lastResetDate) {
+      setDailySentAmount(0);
+      setLastResetDate(today);
+    }
+  }, [lastResetDate]);
 
   // Add transaction function
   const addTransaction = (transaction: {
@@ -132,6 +153,7 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
   }) => {
     const newTransaction = {
       id: Date.now().toString(),
@@ -191,7 +213,7 @@ export default function Dashboard() {
   const handlePoolInvestment = (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => {
     // Deduct from vault balance
     setVaultBalance(prev => prev - amount);
-    
+
     // Add to active investments
     setActiveInvestments(prev => [...prev, {
       id: `inv-${Date.now()}`,
@@ -203,6 +225,39 @@ export default function Dashboard() {
       startDate: new Date(),
       earned: 0
     }]);
+  };
+
+  // Handle send transaction
+  const handleSend = (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => {
+    const totalAmount = amount + gasFee;
+
+    // Deduct from total balance
+    setTotalBalance(prev => prev - totalAmount);
+
+    // Deduct from specific asset
+    setAssets(prevAssets =>
+      prevAssets.map(a => {
+        if (a.symbol === asset) {
+          return {
+            ...a,
+            balance: a.balance - totalAmount,
+            value: a.symbol === 'SOL' ? (a.balance - totalAmount) * (a.value / a.balance) : a.balance - totalAmount
+          };
+        }
+        return a;
+      })
+    );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: recipientName || recipient,
+      category: 'Send',
+      amount: -amount, // Negative for outgoing
+      icon: Send,
+      color: 'text-red-600',
+      bg: 'bg-red-100',
+      type: 'send',
+    });
   };
 
   const quickActions = [
@@ -408,7 +463,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <TransactionHistory />
+              <TransactionHistory transactions={recentTransactions.filter(t => t.type !== 'send')} />
             </motion.div>
           </>
         )}
@@ -422,15 +477,18 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'spend' && (
-          <SpendPage 
+          <SpendPage
             onOpenLucy={handleOpenLucy}
-            recentTransactions={recentTransactions}
+            recentTransactions={recentTransactions.filter(t => t.type === 'send')}
             onAddTransaction={addTransaction}
           />
         )}
 
         {activeTab === 'link' && (
-          <LinkPage />
+          <LinkPage
+            assets={assets}
+            onSend={handleSend}
+          />
         )}
       </div>
 
@@ -438,7 +496,7 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute bottom-4 left-4 right-4"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-40"
       >
         <div className="bg-white/80 backdrop-blur-2xl border border-gray-200 rounded-3xl px-4 py-2 shadow-2xl shadow-gray-300/50">
           <div className="flex items-center justify-around">
@@ -486,7 +544,15 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Modals */}
-      {openModal === 'send' && <SendModal onClose={handleModalClose} onOpenLucy={handleOpenLucy} />}
+      {openModal === 'send' && (
+        <SendModal
+          onClose={handleModalClose}
+          onOpenLucy={handleOpenLucy}
+          assets={assets}
+          totalBalance={totalBalance}
+          onSend={handleSend}
+        />
+      )}
       {openModal === 'receive' && <ReceiveModal onClose={handleModalClose} />}
       {openModal === 'swap' && <SwapModal onClose={handleModalClose} />}
       {openModal === 'grow' && (
