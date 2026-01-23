@@ -56,9 +56,9 @@ export default function SettingsPage({
   };
 
   return (
-    <div className="size-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto relative">
+    <div className="h-full w-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
       {/* Header - Fixed */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200">
+      <div className="flex-none px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-10">
         <button
           onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -72,7 +72,7 @@ export default function SettingsPage({
       </div>
 
       {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto pb-24 px-6 pt-6 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-24 px-6 pt-6 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Profile Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

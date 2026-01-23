@@ -111,29 +111,6 @@ export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
             })}
           </div>
 
-          {/* Quick Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-blue-50 border border-blue-200 rounded-2xl p-4"
-          >
-            <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <p className="text-sm text-blue-900 font-medium mb-1">Support Hours</p>
-                <p className="text-sm text-blue-700">
-                  Monday - Friday: 9:00 AM - 6:00 PM PST
-                  <br />
-                  Weekend: 10:00 AM - 4:00 PM PST
-                </p>
-                <p className="text-xs text-blue-600 mt-2">
-                  Average response time: 2-4 hours
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
           {/* Close Button */}
           <button
             onClick={onClose}
