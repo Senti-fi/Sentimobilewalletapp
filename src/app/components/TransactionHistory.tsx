@@ -1,5 +1,7 @@
 import { motion } from 'motion/react';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import TransactionDetailsModal from './TransactionDetailsModal';
 
 interface Transaction {
   id: string;
@@ -66,6 +68,8 @@ const mockTransactions: Transaction[] = [
 ];
 
 export default function TransactionHistory({ transactions }: TransactionHistoryProps = {}) {
+  const [selectedTransaction, setSelectedTransaction] = useState<DashboardTransaction | null>(null);
+
   // If real transactions are provided, use them; otherwise use mock data
   const hasRealTransactions = transactions && transactions.length > 0;
 
@@ -127,7 +131,8 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setSelectedTransaction(transaction)}
+              className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 p-3 -m-3 rounded-xl transition-colors"
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${transaction.bg}`}>
                 <Icon className={`w-5 h-5 ${transaction.color}`} />
@@ -179,6 +184,14 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
           </motion.div>
         ))}
       </div>
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <TransactionDetailsModal
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+        />
+      )}
     </div>
   );
 }

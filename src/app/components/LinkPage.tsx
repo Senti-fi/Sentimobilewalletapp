@@ -62,7 +62,7 @@ interface Message {
   timestamp: Date;
   amount?: number;
   asset?: string;
-  status?: 'pending' | 'completed' | 'failed';
+  status?: 'pending' | 'completed' | 'failed' | 'accepted' | 'declined';
 }
 
 interface Asset {
@@ -310,13 +310,13 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     }
   };
 
-  // Handle incoming transactions from contacts
+  // Handle incoming transactions from contacts (creates a request)
   const handleIncomingTransaction = (amount: number, asset: string) => {
-    const pendingId = Date.now().toString();
-    const pendingTransaction: Message = {
-      id: pendingId,
-      type: 'transaction',
-      content: 'Payment linking',
+    const requestId = Date.now().toString();
+    const requestMessage: Message = {
+      id: requestId,
+      type: 'request',
+      content: `Wants to send you $${amount} ${asset}`,
       sender: 'them',
       timestamp: new Date(),
       amount,
@@ -326,50 +326,66 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
     setMessagesByContact(prev => ({
       ...prev,
-      [selectedContact!.id]: [...prev[selectedContact!.id], pendingTransaction],
+      [selectedContact!.id]: [...prev[selectedContact!.id], requestMessage],
+    }));
+  };
+
+  // Handle accepting a payment request
+  const handleAcceptPayment = (messageId: string) => {
+    const message = messagesByContact[selectedContact!.id].find(m => m.id === messageId);
+    if (!message || !message.amount || !message.asset) return;
+
+    // Update message status to accepted
+    setMessagesByContact(prev => ({
+      ...prev,
+      [selectedContact!.id]: prev[selectedContact!.id].map(msg => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            status: 'accepted',
+            content: `Accepted $${msg.amount} ${msg.asset}`,
+          };
+        }
+        return msg;
+      }),
     }));
 
-    // Randomly decide if transaction will fail (10% chance for incoming)
-    const willFail = Math.random() < 0.1;
-    const processingTime = 2000 + Math.random() * 2000;
-    
+    // Add to account balance via Dashboard callback
+    if (onReceive && selectedContact) {
+      onReceive(message.amount, message.asset, selectedContact.id, selectedContact.name);
+    }
+
+    // Send thank you message
     setTimeout(() => {
+      const thankYouMessage: Message = {
+        id: Date.now().toString(),
+        type: 'text',
+        content: 'Thank you! 🙏',
+        sender: 'me',
+        timestamp: new Date(),
+      };
       setMessagesByContact(prev => ({
         ...prev,
-        [selectedContact!.id]: prev[selectedContact!.id].map(msg => {
-          if (msg.id === pendingId) {
-            return {
-              ...msg,
-              status: willFail ? 'failed' : 'completed',
-              content: willFail ? 'Payment failed' : 'Payment linked',
-            };
-          }
-          return msg;
-        }),
+        [selectedContact!.id]: [...prev[selectedContact!.id], thankYouMessage],
       }));
+    }, 500);
+  };
 
-      // Call onReceive callback to add to Dashboard transaction history
-      if (!willFail && onReceive && selectedContact) {
-        onReceive(amount, asset, selectedContact.id, selectedContact.name);
-      }
-
-      // Send thank you message if successful
-      if (!willFail) {
-        setTimeout(() => {
-          const thankYouMessage: Message = {
-            id: (Date.now() + 3).toString(),
-            type: 'text',
-            content: 'Thank you! 🙏',
-            sender: 'me',
-            timestamp: new Date(),
+  // Handle declining a payment request
+  const handleDeclinePayment = (messageId: string) => {
+    setMessagesByContact(prev => ({
+      ...prev,
+      [selectedContact!.id]: prev[selectedContact!.id].map(msg => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            status: 'declined',
+            content: `Declined payment`,
           };
-          setMessagesByContact(prev => ({
-            ...prev,
-            [selectedContact!.id]: [...prev[selectedContact!.id], thankYouMessage],
-          }));
-        }, 1000);
-      }
-    }, processingTime);
+        }
+        return msg;
+      }),
+    }));
   };
 
   const handleTransactionComplete = (amount: number, asset: string, shouldFail: boolean = false, gasFee: number = 0) => {
@@ -400,22 +416,25 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
         onSend(amount, asset, selectedContact.id, selectedContact.name, gasFee);
       }
 
+      // Simulate recipient accepting or declining (95% accept, 5% decline)
+      const recipientAccepts = Math.random() > 0.05 && !shouldFail;
+
       setMessagesByContact(prev => ({
         ...prev,
         [selectedContact!.id]: prev[selectedContact!.id].map(msg => {
           if (msg.id === pendingId) {
             return {
               ...msg,
-              status: shouldFail ? 'failed' : 'completed',
-              content: shouldFail ? 'Payment failed' : 'Payment linked',
+              status: shouldFail ? 'failed' : recipientAccepts ? 'accepted' : 'declined',
+              content: shouldFail ? 'Payment failed' : recipientAccepts ? 'Payment accepted' : 'Payment declined',
             };
           }
           return msg;
         }),
       }));
 
-      // If successful and contact is online, send a thank you message
-      if (!shouldFail && selectedContact?.online) {
+      // If accepted and contact is online, send a thank you message
+      if (recipientAccepts && selectedContact?.online) {
         setTimeout(() => {
           const thankYouMessages = [
             "Got it! Thanks! 🙏",
@@ -427,6 +446,26 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
             id: (Date.now() + 2).toString(),
             type: 'text',
             content: thankYouMessages[Math.floor(Math.random() * thankYouMessages.length)],
+            sender: 'them',
+            timestamp: new Date(),
+          };
+          setMessagesByContact(prev => ({
+            ...prev,
+            [selectedContact!.id]: [...prev[selectedContact!.id], responseMessage],
+          }));
+        }, 1000);
+      } else if (!recipientAccepts && !shouldFail && selectedContact?.online) {
+        // If declined, send a message explaining why
+        setTimeout(() => {
+          const declineMessages = [
+            "Sorry, I can't accept this right now.",
+            "Thanks, but I'll have to decline.",
+            "I appreciate it, but I can't accept this.",
+          ];
+          const responseMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            type: 'text',
+            content: declineMessages[Math.floor(Math.random() * declineMessages.length)],
             sender: 'them',
             timestamp: new Date(),
           };
@@ -526,12 +565,12 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
   // Chat View
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="h-full w-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-shrink-0 px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200"
+        className="flex-none px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-10"
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -556,20 +595,11 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
             <p className="text-gray-900">{selectedContact.name}</p>
             <p className="text-xs text-gray-500">{selectedContact.id}</p>
           </div>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowSendModal(true)}
-            className="p-2 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-xl"
-          >
-            <DollarSign className="w-5 h-5 text-white" />
-          </motion.button>
         </div>
       </motion.div>
 
       {/* Messages - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.map((message, index) => (
           <motion.div
             key={message.id}
@@ -591,21 +621,63 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                   {formatTime(message.timestamp)}
                 </p>
               </div>
+            ) : message.type === 'request' ? (
+              <div className="max-w-[75%] px-4 py-3 rounded-2xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-purple-600" />
+                  <p className="text-sm text-gray-900">Payment Request</p>
+                </div>
+                <p className="text-2xl text-gray-900 mb-1">
+                  ${message.amount} <span className="text-sm text-gray-600">{message.asset}</span>
+                </p>
+                <p className="text-xs text-gray-500 mb-3">{formatTime(message.timestamp)}</p>
+
+                {message.status === 'pending' ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAcceptPayment(message.id)}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-shadow"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleDeclinePayment(message.id)}
+                      className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                ) : message.status === 'accepted' ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-4 h-4" />
+                    <p className="text-sm font-medium">Payment Accepted</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <XCircle className="w-4 h-4" />
+                    <p className="text-sm font-medium">Payment Declined</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div
                 className={`max-w-[75%] px-4 py-3 rounded-2xl border-2 ${
-                  message.status === 'completed'
+                  message.status === 'accepted'
                     ? message.sender === 'me'
                       ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
                       : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
+                    : message.status === 'declined'
+                    ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'
                     : message.status === 'failed'
                     ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200'
                     : 'bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-200'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  {message.status === 'completed' ? (
+                  {message.status === 'accepted' ? (
                     <CheckCircle className="w-4 h-4 text-green-600" />
+                  ) : message.status === 'declined' ? (
+                    <XCircle className="w-4 h-4 text-gray-600" />
                   ) : message.status === 'failed' ? (
                     <XCircle className="w-4 h-4 text-red-600" />
                   ) : (
@@ -621,6 +693,12 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                       ? 'Linking...'
                       : message.status === 'failed'
                       ? 'Link failed'
+                      : message.status === 'accepted'
+                      ? message.sender === 'me'
+                        ? 'Payment accepted'
+                        : 'You received'
+                      : message.status === 'declined'
+                      ? 'Payment declined'
                       : message.sender === 'me'
                       ? 'You linked'
                       : 'You received'}
@@ -633,6 +711,9 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                 {message.status === 'failed' && (
                   <p className="text-xs text-red-600 mt-2">Transaction failed. Please try again.</p>
                 )}
+                {message.status === 'declined' && message.sender === 'me' && (
+                  <p className="text-xs text-gray-600 mt-2">Recipient declined this payment.</p>
+                )}
               </div>
             )}
           </motion.div>
@@ -641,8 +722,17 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </div>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="flex-shrink-0 px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200">
+      <div className="flex-none px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
         <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowSendModal(true)}
+            className="px-3 py-2.5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center gap-1.5 shadow-md hover:shadow-lg transition-shadow whitespace-nowrap"
+          >
+            <DollarSign className="w-4 h-4 text-white" />
+            <span className="text-white font-medium text-sm">Send</span>
+          </motion.button>
           <input
             type="text"
             value={messageInput}

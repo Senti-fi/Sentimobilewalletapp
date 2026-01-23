@@ -20,6 +20,7 @@ import {
 import LucyChip from './LucyChip';
 import SentiPayModal from './SentiPayModal';
 import CardDrawer from './CardDrawer';
+import TransactionDetailsModal from './TransactionDetailsModal';
 
 interface SpendPageProps {
   onOpenLucy: () => void;
@@ -66,6 +67,7 @@ const cashflowData = [
 export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransaction }: SpendPageProps) {
   const [showSentiPay, setShowSentiPay] = useState(false);
   const [showCardDrawer, setShowCardDrawer] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<SpendPageProps['recentTransactions'][0] | null>(null);
 
   // Default mock transactions
   const defaultTransactions = [
@@ -348,7 +350,8 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="p-4 flex items-center gap-3"
+                onClick={() => setSelectedTransaction(transaction)}
+                className="p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 <div className={`w-10 h-10 ${transaction.bg} rounded-xl flex items-center justify-center`}>
                   <transaction.icon className={`w-5 h-5 ${transaction.color}`} />
@@ -381,10 +384,18 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
       )}
 
       {/* Card Drawer */}
-      <CardDrawer 
-        isOpen={showCardDrawer} 
-        onClose={() => setShowCardDrawer(false)} 
+      <CardDrawer
+        isOpen={showCardDrawer}
+        onClose={() => setShowCardDrawer(false)}
       />
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <TransactionDetailsModal
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+        />
+      )}
     </div>
   );
 }
