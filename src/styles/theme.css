@@ -130,6 +130,14 @@
     @apply border-border outline-ring/50;
   }
 
+  /* CRITICAL: Ensure height cascade for full-height layout */
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

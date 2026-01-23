@@ -522,19 +522,19 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   // Contacts List View
   if (!selectedContact) {
     return (
-      <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex-none px-6 pt-6 pb-4"
+          className="flex-shrink-0 px-6 pt-6 pb-4"
         >
           <h1 className="text-gray-900 mb-2">Link</h1>
           <p className="text-sm text-gray-500">Send money instantly using IDs</p>
         </motion.div>
 
         {/* Search Bar */}
-        <div className="flex-none px-6 mb-4">
+        <div className="flex-shrink-0 px-6 mb-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -593,12 +593,12 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
   // Chat View
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-none px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20"
+        className="flex-shrink-0 px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20"
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -750,7 +750,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </div>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="flex-none px-6 pb-28 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
+      <div className="flex-shrink-0 px-6 pb-28 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
         <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
