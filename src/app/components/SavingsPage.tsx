@@ -9,7 +9,9 @@ import {
   Sparkles,
   DollarSign,
   Flame,
-  Users
+  Users,
+  Trophy,
+  Gift
 } from 'lucide-react';
 import CreateGoalModal from './CreateGoalModal';
 import LockedSavingsModal from './LockedSavingsModal';
@@ -97,56 +99,15 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
     },
   ]);
 
-  // Mock data for locked savings
-  const [lockedSavings, setLockedSavings] = useState<LockedSaving[]>([
-    {
-      id: '1',
-      amount: 1000,
-      asset: 'USDC',
-      duration: 90,
-      apy: '12.5',
-      startDate: '2024-12-01',
-      unlockDate: '2025-03-01',
-      earnings: 31.25,
-    },
-    {
-      id: '2',
-      amount: 500,
-      asset: 'USDC',
-      duration: 30,
-      apy: '8.0',
-      startDate: '2024-11-20',
-      unlockDate: '2024-12-20',
-      earnings: 3.29,
-    },
-    {
-      id: '3',
-      amount: 2000,
-      asset: 'USDC',
-      duration: 180,
-      apy: '14.0',
-      startDate: '2024-10-15',
-      unlockDate: '2025-04-13',
-      earnings: 138.08,
-    },
-    {
-      id: '4',
-      amount: 750,
-      asset: 'USDC',
-      duration: 60,
-      apy: '10.5',
-      startDate: '2024-11-01',
-      unlockDate: '2024-12-31',
-      earnings: 12.95,
-    },
-  ]);
+  // Locked savings (start empty for MVP testing)
+  const [lockedSavings, setLockedSavings] = useState<LockedSaving[]>([]);
 
   // Calculate total savings
   const totalInGoals = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
   const totalLocked = lockedSavings.reduce((sum, ls) => sum + ls.amount, 0);
   
-  // Mock available balance (funds not in goals or locked)
-  const availableSavings = 1250.50;
+  // Available balance (funds not in goals or locked)
+  const [availableSavings, setAvailableSavings] = useState(1250.50);
   
   const totalSavings = availableSavings + totalInGoals + totalLocked;
 
@@ -182,19 +143,33 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   };
 
   const handleDeposit = (amount: number, asset: string) => {
-    // In a real app, this would move funds from wallet to savings
+    // Add funds to available savings (from wallet)
+    setAvailableSavings(prev => prev + amount);
     console.log(`Deposited ${amount} ${asset} to Savings`);
   };
 
   const handleTransfer = (amount: number, asset: string, destination: string) => {
-    // In a real app, this would move funds from savings to wallet or spend
+    // Remove funds from available savings (to wallet/spend)
+    setAvailableSavings(prev => prev - amount);
     console.log(`Transferred ${amount} ${asset} from Savings to ${destination}`);
   };
 
   const handleUnlock = (savingId: string, isEarly: boolean) => {
-    // In a real app, this would unlock the funds and apply penalties if early
-    setLockedSavings(lockedSavings.filter(s => s.id !== savingId));
-    console.log(`Unlocked saving ${savingId}, early: ${isEarly}`);
+    // Find the saving being unlocked
+    const saving = lockedSavings.find(s => s.id === savingId);
+    if (saving) {
+      // Calculate the total amount to return (principal + earnings, minus penalty if early)
+      const totalAmount = isEarly
+        ? saving.amount + (saving.earnings * 0.5) // 50% penalty on earnings if early
+        : saving.amount + saving.earnings;
+
+      // Add unlocked funds back to available savings
+      setAvailableSavings(prev => prev + totalAmount);
+
+      // Remove from locked savings
+      setLockedSavings(lockedSavings.filter(s => s.id !== savingId));
+      console.log(`Unlocked saving ${savingId}, early: ${isEarly}, returned $${totalAmount}`);
+    }
     setSelectedLockedSaving(null);
   };
 
@@ -220,12 +195,22 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   };
 
   const handleConfirmAddFunds = (goalId: string, amount: number) => {
-    // Add the amount to the goal's current amount
-    setGoals(goals.map(g => 
-      g.id === goalId 
-        ? { ...g, currentAmount: g.currentAmount + amount }
-        : g
-    ));
+    // Add the amount to the goal's current amount and recalculate behind status
+    setGoals(goals.map(g => {
+      if (g.id === goalId) {
+        const newCurrentAmount = g.currentAmount + amount;
+        const daysLeft = getDaysRemaining(g.deadline);
+        const monthsLeft = Math.floor(daysLeft / 30);
+        const expectedAmount = g.monthlyTarget * monthsLeft;
+        const shouldBeAt = g.targetAmount - expectedAmount;
+
+        // If new amount meets or exceeds where we should be, remove behind status
+        const isBehind = newCurrentAmount < shouldBeAt;
+
+        return { ...g, currentAmount: newCurrentAmount, isBehind };
+      }
+      return g;
+    }));
     setGoalToAddFunds(null);
   };
 
@@ -303,43 +288,43 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
 
   return (
     <div className="h-full overflow-y-auto pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* Header - Simplified */}
-      <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-8 pb-10 text-white">
+      {/* Header - Compact */}
+      <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Header with Streak Badge */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold mb-1">Savings</h1>
-              <p className="text-sm text-white/80">Build your future, one step at a time</p>
+              <h1 className="text-2xl font-bold mb-0.5">Savings</h1>
+              <p className="text-xs text-white/80">Build your future, one step at a time</p>
             </div>
             {saveStreak > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", delay: 0.2 }}
-                className="flex items-center gap-2 bg-gradient-to-br from-orange-400 to-pink-500 px-4 py-2 rounded-full shadow-lg"
+                className="flex items-center gap-1.5 bg-gradient-to-br from-orange-400 to-pink-500 px-3 py-1.5 rounded-full shadow-lg"
               >
-                <Flame className="w-5 h-5 text-white" />
-                <span className="font-bold text-white">{saveStreak}</span>
+                <Flame className="w-4 h-4 text-white" />
+                <span className="font-bold text-white text-sm">{saveStreak}</span>
               </motion.div>
             )}
           </div>
 
-          {/* Total Savings - Clean Focus with Growth */}
-          <div className="text-center mb-6">
-            <p className="text-sm text-white/70 mb-2">Total Savings</p>
+          {/* Total Savings - Compact */}
+          <div className="text-center mb-5">
+            <p className="text-xs text-white/70 mb-1">Total Savings</p>
             <motion.h2
-              className="text-6xl font-bold mb-2"
+              className="text-5xl font-bold mb-1.5"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
               ${totalSavings.toFixed(2)}
             </motion.h2>
-            <div className="flex items-center justify-center gap-3 text-sm">
+            <div className="flex items-center justify-center gap-2 text-xs">
               <span className="text-white/80">
                 {goals.length} goals • {lockedSavings.length} locked
               </span>
@@ -347,29 +332,47 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
                 <>
                   <span className="text-white/40">•</span>
                   <span className="text-green-300 font-medium">
-                    ↑ {totalGrowthPercent.toFixed(1)}% growth
+                    ↑ {totalGrowthPercent.toFixed(1)}%
                   </span>
                 </>
               )}
             </div>
           </div>
 
-          {/* Single Manage Funds Button */}
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowDepositModal(true)}
-            className="w-full bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl hover:bg-white transition-colors"
-          >
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
+          {/* Action Buttons - Deposit & Transfer */}
+          <div className="grid grid-cols-2 gap-3">
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowDepositModal(true)}
+              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg hover:bg-white transition-colors"
+            >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-900 font-semibold text-sm">Deposit</p>
+                  <p className="text-xs text-gray-600">Add funds</p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-gray-900 font-semibold">Manage Funds</p>
-                <p className="text-xs text-gray-600">Deposit or transfer</p>
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowTransferModal(true)}
+              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg hover:bg-white transition-colors"
+            >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-900 font-semibold text-sm">Transfer</p>
+                  <p className="text-xs text-gray-600">Move funds</p>
+                </div>
               </div>
-            </div>
-          </motion.button>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
 
@@ -713,6 +716,52 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
               </>
             )}
           </div>
+        </div>
+
+        {/* Rewards Section - Compact */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="w-5 h-5 text-gray-900" />
+            <h3 className="text-gray-900 text-lg font-semibold">Rewards</h3>
+          </div>
+
+          {/* Rewards Summary Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 rounded-2xl p-5 border border-orange-100"
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
+                <Gift className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-1">Total Earned</p>
+                <h3 className="text-3xl font-bold text-gray-900">${totalRewards.toFixed(2)}</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <p className="text-xs text-gray-600">Streak</p>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{saveStreak} days</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <p className="text-xs text-gray-600">Completed</p>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{completedGoals} goals</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-4 text-center">
+              Keep saving to unlock more rewards! 🎉
+            </p>
+          </motion.div>
         </div>
 
       </div>
