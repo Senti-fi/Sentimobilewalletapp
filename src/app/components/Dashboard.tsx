@@ -530,12 +530,12 @@ export default function Dashboard() {
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto relative">
-      {/* Minimalist Header - Hidden for tabs with their own headers */}
+      {/* Minimalist Header - FIXED at top for all tabs except link/settings */}
       {activeTab !== 'link' && activeTab !== 'settings' && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-6 pt-6 pb-4 flex items-center justify-between"
+          className="flex-none px-6 pt-6 pb-4 flex items-center justify-between bg-gradient-to-br from-gray-50 to-blue-50/30 z-10"
         >
         <div className="flex items-center gap-3">
           <motion.div 
@@ -571,10 +571,10 @@ export default function Dashboard() {
       )}
 
       {/* Main Content */}
-      <div className={`flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+      <div className={`flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
         activeTab === 'link' || activeTab === 'settings'
-          ? '' // No scrolling or padding for fixed-header tabs (they manage their own)
-          : 'overflow-y-auto pb-20 px-6 space-y-5' // Full scrolling for regular tabs
+          ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
+          : 'overflow-y-auto pb-28 px-6 space-y-5' // Full scrolling for regular tabs with extra padding
       }`}>
         {activeTab === 'home' && (
           <>
