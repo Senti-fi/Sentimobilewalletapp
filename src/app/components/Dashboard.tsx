@@ -88,17 +88,58 @@ const mockAssets: Asset[] = [
 ];
 
 export default function Dashboard() {
+  // Load initial state from localStorage or use defaults
+  const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Handle Date objects for investments
+        if (key === 'senti_investments' && Array.isArray(parsed)) {
+          return parsed.map(inv => ({
+            ...inv,
+            startDate: new Date(inv.startDate)
+          })) as T;
+        }
+        // Handle transactions - restore icon functions
+        if (key === 'senti_transactions' && Array.isArray(parsed)) {
+          return parsed.map(t => ({
+            ...t,
+            icon: getIconFromName(t.icon)
+          })) as T;
+        }
+        return parsed;
+      }
+    } catch (error) {
+      console.error(`Error loading ${key} from localStorage:`, error);
+    }
+    return defaultValue;
+  };
+
+  // Helper to restore icon functions from names
+  const getIconFromName = (iconName: string) => {
+    const iconMap: { [key: string]: any } = {
+      Send,
+      Download,
+      LockKeyhole,
+      TrendingUp,
+      ArrowLeftRight,
+      ShoppingBag
+    };
+    return iconMap[iconName] || Send;
+  };
+
   const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
-  const [totalBalance, setTotalBalance] = useState(13170.50);
+  const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 13170.50));
   const [balanceVisible, setBalanceVisible] = useState(true);
-  const [assets, setAssets] = useState(mockAssets);
+  const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
   const [selectedAsset, setSelectedAsset] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   // Vault balances
-  const [vaultBalance, setVaultBalance] = useState(0);
-  const [vaultEarned, setVaultEarned] = useState(0);
+  const [vaultBalance, setVaultBalance] = useState(() => loadFromStorage('senti_vaultBalance', 0));
+  const [vaultEarned, setVaultEarned] = useState(() => loadFromStorage('senti_vaultEarned', 0));
 
   // Active investments in specific pools
   const [activeInvestments, setActiveInvestments] = useState<Array<{
@@ -110,7 +151,7 @@ export default function Dashboard() {
     protocol: string;
     startDate: Date;
     earned: number;
-  }>>([]);
+  }>>(() => loadFromStorage('senti_investments', []));
 
   // Transactions state
   const [recentTransactions, setRecentTransactions] = useState<Array<{
@@ -123,7 +164,7 @@ export default function Dashboard() {
     color: string;
     bg: string;
     type: 'send' | 'vault' | 'investment' | 'swap' | 'internal'; // Track transaction type
-  }>>([]);
+  }>>(() => loadFromStorage('senti_transactions', []));
 
   // Security and limits state
   const [trustedRecipients, setTrustedRecipients] = useState<Set<string>>(new Set());
@@ -135,6 +176,61 @@ export default function Dashboard() {
   const TRANSACTION_LIMIT_DAILY = 10000; // $10,000 per day
   const LARGE_AMOUNT_WARNING = 1000; // Warn for amounts > $1,000
   const BIOMETRIC_THRESHOLD = 500; // Require biometric for > $500
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('senti_totalBalance', JSON.stringify(totalBalance));
+  }, [totalBalance]);
+
+  useEffect(() => {
+    localStorage.setItem('senti_assets', JSON.stringify(assets));
+  }, [assets]);
+
+  useEffect(() => {
+    localStorage.setItem('senti_vaultBalance', JSON.stringify(vaultBalance));
+  }, [vaultBalance]);
+
+  useEffect(() => {
+    localStorage.setItem('senti_vaultEarned', JSON.stringify(vaultEarned));
+  }, [vaultEarned]);
+
+  useEffect(() => {
+    localStorage.setItem('senti_investments', JSON.stringify(activeInvestments));
+  }, [activeInvestments]);
+
+  useEffect(() => {
+    // Filter out icon functions before storing (they can't be serialized)
+    const transactionsToStore = recentTransactions.map(t => ({
+      ...t,
+      icon: t.icon.name || 'Send' // Store icon name instead of function
+    }));
+    localStorage.setItem('senti_transactions', JSON.stringify(transactionsToStore));
+  }, [recentTransactions]);
+
+  // Calculate earnings for investments based on time elapsed
+  useEffect(() => {
+    if (activeInvestments.length === 0) return;
+
+    const updateInvestmentEarnings = () => {
+      setActiveInvestments(prev => prev.map(inv => {
+        const daysSinceStart = Math.floor((Date.now() - new Date(inv.startDate).getTime()) / (1000 * 60 * 60 * 24));
+        const dailyRate = parseFloat(inv.apy) / 100 / 365;
+        const totalEarned = inv.amount * dailyRate * daysSinceStart;
+        return {
+          ...inv,
+          earned: totalEarned
+        };
+      }));
+    };
+
+    // Update immediately
+    updateInvestmentEarnings();
+
+    // Update every hour to simulate earnings growth
+    const interval = setInterval(updateInvestmentEarnings, 60 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [activeInvestments.length]);
 
   // Reset daily limit if it's a new day
   useEffect(() => {
