@@ -135,12 +135,12 @@ export default function LucyPage() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-6 pt-6 pb-4"
+        className="flex-none px-6 pt-6 pb-4"
       >
         <div className="flex items-center gap-3 mb-2">
           {/* Lucy Avatar */}
@@ -160,7 +160,7 @@ export default function LucyPage() {
       </motion.div>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.length === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -271,7 +271,7 @@ export default function LucyPage() {
       </div>
 
       {/* Input */}
-      <div className="px-6 pb-6 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
+      <div className="flex-none px-6 pb-24 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
         <div className="flex items-center gap-2">
           <input
             type="text"
