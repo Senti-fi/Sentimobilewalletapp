@@ -323,36 +323,32 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
           </div>
 
           {/* Deposit & Transfer Buttons */}
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowDepositModal(true)}
-              className="w-full bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white transition-colors shadow-lg"
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 border border-white/20 hover:bg-white transition-colors shadow-lg flex flex-col items-center gap-2"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                  <ArrowDownToLine className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-gray-900 font-medium">Deposit</p>
-                  <p className="text-xs text-gray-500">Add funds to savings</p>
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <ArrowDownToLine className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-center">
+                <p className="text-gray-900 font-medium text-sm">Deposit</p>
+                <p className="text-xs text-gray-500">Add funds</p>
               </div>
             </motion.button>
 
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowTransferModal(true)}
-              className="w-full bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white transition-colors shadow-lg"
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 border border-white/20 hover:bg-white transition-colors shadow-lg flex flex-col items-center gap-2"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <ArrowUpFromLine className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-gray-900 font-medium">Transfer</p>
-                  <p className="text-xs text-gray-500">Move funds to wallet</p>
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <ArrowUpFromLine className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-center">
+                <p className="text-gray-900 font-medium text-sm">Transfer</p>
+                <p className="text-xs text-gray-500">Move funds</p>
               </div>
             </motion.button>
           </div>

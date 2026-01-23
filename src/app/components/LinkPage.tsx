@@ -90,39 +90,62 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const [messageInput, setMessageInput] = useState('');
   const [showSendModal, setShowSendModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
+  // Load messages from localStorage
+  const loadMessages = (): Record<string, Message[]> => {
+    try {
+      const stored = localStorage.getItem('senti_messages');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Convert timestamp strings back to Date objects
+        const messagesWithDates: Record<string, Message[]> = {};
+        Object.keys(parsed).forEach(contactId => {
+          messagesWithDates[contactId] = parsed[contactId].map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+        });
+        return messagesWithDates;
+      }
+    } catch (error) {
+      console.error('Error loading messages from localStorage:', error);
+    }
+    // Return default messages if nothing in storage
+    return {
+      '@alex.senti': [
+        {
+          id: '1',
+          type: 'text',
+          content: 'Hey! How are you?',
+          sender: 'them',
+          timestamp: new Date(Date.now() - 3600000),
+        },
+        {
+          id: '2',
+          type: 'text',
+          content: 'I\'m doing great! Thanks for asking.',
+          sender: 'me',
+          timestamp: new Date(Date.now() - 3500000),
+        },
+        {
+          id: '3',
+          type: 'transaction',
+          content: 'Payment linked',
+          sender: 'me',
+          timestamp: new Date(Date.now() - 2900000),
+          amount: 150,
+          asset: 'USDC',
+          status: 'accepted',
+        },
+      ],
+      '@sarah.senti': [],
+      '@mike.senti': [],
+      '@emma.senti': [],
+    };
+  };
+
   // Store messages per contact using contact ID as key
-  const [messagesByContact, setMessagesByContact] = useState<Record<string, Message[]>>({
-    '@alex.senti': [
-      {
-        id: '1',
-        type: 'text',
-        content: 'Hey! How are you?',
-        sender: 'them',
-        timestamp: new Date(Date.now() - 3600000),
-      },
-      {
-        id: '2',
-        type: 'text',
-        content: 'I\'m doing great! Thanks for asking.',
-        sender: 'me',
-        timestamp: new Date(Date.now() - 3500000),
-      },
-      {
-        id: '3',
-        type: 'transaction',
-        content: 'Payment linked',
-        sender: 'me',
-        timestamp: new Date(Date.now() - 2900000),
-        amount: 150,
-        asset: 'USDC',
-        status: 'completed',
-      },
-    ],
-    '@sarah.senti': [],
-    '@mike.senti': [],
-    '@emma.senti': [],
-  });
+  const [messagesByContact, setMessagesByContact] = useState<Record<string, Message[]>>(loadMessages);
 
   // Get messages for the selected contact
   const messages = selectedContact ? (messagesByContact[selectedContact.id] || []) : [];
@@ -131,6 +154,11 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     contact.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('senti_messages', JSON.stringify(messagesByContact));
+  }, [messagesByContact]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -565,12 +593,12 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
   // Chat View
   return (
-    <div className="h-full w-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-none px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-10"
+        className="flex-none px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20"
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -599,7 +627,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </motion.div>
 
       {/* Messages - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.map((message, index) => (
           <motion.div
             key={message.id}
