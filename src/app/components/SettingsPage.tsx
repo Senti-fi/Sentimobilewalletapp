@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
+import HelpSupportModal from './HelpSupportModal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -32,6 +33,7 @@ export default function SettingsPage({
 }: SettingsPageProps) {
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
+  const [showHelpSupport, setShowHelpSupport] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
 
   const walletId = '0x92d7...a81f';
@@ -55,8 +57,8 @@ export default function SettingsPage({
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto relative">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200">
         <button
           onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -69,7 +71,7 @@ export default function SettingsPage({
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto pb-24 px-6 pt-6 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Profile Card */}
         <motion.div
@@ -273,7 +275,10 @@ export default function SettingsPage({
           </button>
 
           {/* Help & Support */}
-          <button className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+          <button
+            onClick={() => setShowHelpSupport(true)}
+            className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+          >
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0">
               <HelpCircle className="w-6 h-6 text-white" />
             </div>
@@ -323,6 +328,9 @@ export default function SettingsPage({
           currentEmail={userEmail}
           onClose={() => setShowEditEmail(false)}
         />
+      )}
+      {showHelpSupport && (
+        <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
       )}
     </div>
   );

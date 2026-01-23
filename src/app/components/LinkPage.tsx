@@ -643,6 +643,15 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       {/* Message Input - Fixed at bottom */}
       <div className="flex-shrink-0 px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200">
         <div className="flex items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowSendModal(true)}
+            className="px-4 py-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow"
+          >
+            <DollarSign className="w-5 h-5 text-white" />
+            <span className="text-white font-medium text-sm">Send $</span>
+          </motion.button>
           <input
             type="text"
             value={messageInput}
