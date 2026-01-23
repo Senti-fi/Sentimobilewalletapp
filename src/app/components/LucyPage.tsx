@@ -160,7 +160,7 @@ export default function LucyPage() {
       </motion.div>
 
       {/* Chat Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-28 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.length === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -271,7 +271,7 @@ export default function LucyPage() {
       </div>
 
       {/* Input */}
-      <div className="flex-none px-6 pb-24 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
+      <div className="flex-none px-6 pb-28 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
         <div className="flex items-center gap-2">
           <input
             type="text"
