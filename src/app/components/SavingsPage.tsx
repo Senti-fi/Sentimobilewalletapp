@@ -1,23 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Target, 
-  Plus, 
-  Lock, 
-  Gift, 
-  TrendingUp, 
+import {
+  Target,
+  Plus,
+  Lock,
+  Gift,
   AlertTriangle,
   ChevronRight,
   Sparkles,
-  Calendar,
   DollarSign,
   Trophy,
   Flame,
-  Users,
-  ArrowDownToLine,
-  ArrowUpFromLine
+  Users
 } from 'lucide-react';
-import LucyChip from './LucyChip';
 import CreateGoalModal from './CreateGoalModal';
 import LockedSavingsModal from './LockedSavingsModal';
 import SavingsDepositModal from './SavingsDepositModal';
@@ -286,96 +281,131 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
 
   return (
     <div className="h-full overflow-y-auto pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 px-6 pt-6 pb-8 text-white">
+      {/* Header - Simplified */}
+      <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-8 pb-10 text-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex items-center justify-between mb-6">
+          {/* Header with Streak Badge */}
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl mb-1">Savings</h1>
-              <p className="text-sm text-white/80">Build your future, one goal at a time</p>
+              <h1 className="text-3xl font-bold mb-1">Savings</h1>
+              <p className="text-sm text-white/80">Build your future, one step at a time</p>
             </div>
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <Target className="w-6 h-6" />
-            </div>
+            {saveStreak > 0 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2 }}
+                className="flex items-center gap-2 bg-gradient-to-br from-orange-400 to-pink-500 px-4 py-2 rounded-full shadow-lg"
+              >
+                <Flame className="w-5 h-5 text-white" />
+                <span className="font-bold text-white">{saveStreak}</span>
+              </motion.div>
+            )}
           </div>
 
-          {/* Total Savings Card */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-5 border border-white/20 mb-4">
+          {/* Total Savings - Clean Focus */}
+          <div className="text-center mb-6">
             <p className="text-sm text-white/70 mb-2">Total Savings</p>
-            <h2 className="text-4xl mb-4">${totalSavings.toFixed(2)}</h2>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <p className="text-xs text-white/70 mb-1">Available</p>
-                <p className="text-lg">${availableSavings.toFixed(2)}</p>
+            <motion.h2
+              className="text-6xl font-bold mb-2"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              ${totalSavings.toFixed(2)}
+            </motion.h2>
+            <p className="text-sm text-white/80">
+              {goals.length} goals • {lockedSavings.length} locked
+            </p>
+          </div>
+
+          {/* Single Manage Funds Button */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowDepositModal(true)}
+            className="w-full bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl hover:bg-white transition-colors"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-xs text-white/70 mb-1">In Goals</p>
-                <p className="text-lg">${totalInGoals.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/70 mb-1">Locked</p>
-                <p className="text-lg">${totalLocked.toFixed(2)}</p>
+              <div className="text-center">
+                <p className="text-gray-900 font-semibold">Manage Funds</p>
+                <p className="text-xs text-gray-600">Deposit or transfer</p>
               </div>
             </div>
-          </div>
-
-          {/* Deposit & Transfer Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowDepositModal(true)}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 border border-white/20 hover:bg-white transition-colors shadow-lg flex flex-col items-center gap-2"
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <ArrowDownToLine className="w-4 h-4 text-white" />
-              </div>
-              <div className="text-center">
-                <p className="text-gray-900 font-medium text-sm">Deposit</p>
-                <p className="text-xs text-gray-500">Add funds</p>
-              </div>
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowTransferModal(true)}
-              className="bg-white/90 backdrop-blur-sm rounded-2xl p-3 border border-white/20 hover:bg-white transition-colors shadow-lg flex flex-col items-center gap-2"
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <ArrowUpFromLine className="w-4 h-4 text-white" />
-              </div>
-              <div className="text-center">
-                <p className="text-gray-900 font-medium text-sm">Transfer</p>
-                <p className="text-xs text-gray-500">Move funds</p>
-              </div>
-            </motion.button>
-          </div>
+          </motion.button>
         </motion.div>
       </div>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-6 py-6 space-y-8">
+        {/* Smart Priority Card */}
+        {goals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100"
+          >
+            {goals.some(g => g.isBehind) ? (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  <h3 className="text-gray-900 font-semibold">Action Needed</h3>
+                </div>
+                {(() => {
+                  const behindGoal = goals.find(g => g.isBehind);
+                  if (behindGoal) {
+                    return (
+                      <>
+                        <p className="text-gray-700 mb-4 text-sm">
+                          <span className="font-medium">{behindGoal.name}</span> needs ${behindGoal.monthlyTarget} this month to stay on track
+                        </p>
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setGoalToAddFunds(behindGoal);
+                          }}
+                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-3 font-medium shadow-md"
+                        >
+                          Add Funds Now
+                        </motion.button>
+                      </>
+                    );
+                  }
+                })()}
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-green-600" />
+                  <h3 className="text-gray-900 font-semibold">You're on track!</h3>
+                </div>
+                <p className="text-gray-700 text-sm">
+                  All your goals are progressing well. Keep up the great work! 🎉
+                </p>
+              </>
+            )}
+          </motion.div>
+        )}
+
         {/* Savings Goals Section */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-gray-900">Savings Goals</h3>
+              <h3 className="text-gray-900 text-lg font-semibold">Savings Goals</h3>
               <p className="text-xs text-gray-500">{goals.length} active goals</p>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowCreateGoal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
             >
               <Plus className="w-4 h-4" />
-              <span className="text-sm">New Goal</span>
+              <span className="text-sm font-medium">New Goal</span>
             </motion.button>
-          </div>
-
-          {/* Lucy Recommendation */}
-          <div className="mb-4">
-            <LucyChip text="How much should I save monthly for my goals?" />
           </div>
 
           {/* Goals List */}
@@ -487,31 +517,31 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
 
         {/* Locked Savings Section */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-gray-900">Locked Savings</h3>
+              <h3 className="text-gray-900 text-lg font-semibold">Locked Savings</h3>
               <p className="text-xs text-gray-500">Earn higher yields with time-locks</p>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowLockedSavings(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
             >
               <Lock className="w-4 h-4" />
-              <span className="text-sm">Lock Funds</span>
+              <span className="text-sm font-medium">Lock Funds</span>
             </motion.button>
           </div>
 
           {/* Locked Savings List */}
           <div className="space-y-3">
             {lockedSavings.length === 0 ? (
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 text-center border border-purple-100">
-                <Lock className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                <h4 className="text-gray-900 mb-2">No Locked Savings Yet</h4>
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 text-center border border-blue-100">
+                <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <h4 className="text-gray-900 font-semibold mb-2">No Locked Savings Yet</h4>
                 <p className="text-sm text-gray-600 mb-4">Lock your funds for 30-365 days and earn up to 15% APY</p>
                 <button
                   onClick={() => setShowLockedSavings(true)}
-                  className="text-sm text-purple-600 hover:text-purple-700"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Learn More →
                 </button>
@@ -526,28 +556,28 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
                     transition={{ delay: index * 0.05 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedLockedSaving(saving)}
-                    className="w-full bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-100 hover:border-purple-300 transition-colors"
+                    className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:border-blue-200 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
                           <Lock className="w-6 h-6 text-white" />
                         </div>
                         <div className="text-left">
-                          <h4 className="text-gray-900">{saving.amount} {saving.asset}</h4>
+                          <h4 className="text-gray-900 font-semibold">{saving.amount} {saving.asset}</h4>
                           <p className="text-xs text-gray-600">{saving.duration} days lock</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-green-600">{saving.apy}% APY</p>
+                        <p className="text-sm text-green-600 font-semibold">{saving.apy}% APY</p>
                         <p className="text-xs text-gray-500">+${saving.earnings.toFixed(2)}</p>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-purple-200">
+                    <div className="pt-3 border-t border-gray-100">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-600">Unlocks on</span>
-                        <span className="text-gray-900">{new Date(saving.unlockDate).toLocaleDateString()}</span>
+                        <span className="text-gray-900 font-medium">{new Date(saving.unlockDate).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </motion.button>
@@ -561,19 +591,19 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
                     transition={{ delay: 0.1 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowAllLockedSavings(true)}
-                    className="w-full bg-white rounded-2xl p-4 border-2 border-purple-200 hover:border-purple-400 transition-colors"
+                    className="w-full bg-white rounded-2xl p-4 border-2 border-blue-200 hover:border-blue-400 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                          <Lock className="w-5 h-5 text-purple-600" />
+                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="text-left">
-                          <p className="text-gray-900 text-sm">View All Locked Savings</p>
+                          <p className="text-gray-900 text-sm font-medium">View All Locked Savings</p>
                           <p className="text-xs text-gray-600">{lockedSavings.length} active locks</p>
                         </div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-purple-600" />
+                      <ChevronRight className="w-5 h-5 text-blue-600" />
                     </div>
                   </motion.button>
                 )}
@@ -582,109 +612,56 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
           </div>
         </div>
 
-        {/* Rewards Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Gift className="w-5 h-5 text-gray-900" />
-            <h3 className="text-gray-900">Rewards</h3>
+        {/* Rewards Section - Coming Soon Teaser */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden"
+        >
+          {/* Coming Soon Badge */}
+          <div className="absolute top-4 right-4 z-10">
+            <span className="bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+              COMING SOON
+            </span>
           </div>
 
-          {/* Total Rewards Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 rounded-2xl p-5 text-white mb-4 shadow-lg"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5" />
-              <p className="text-sm text-white/90">Total Rewards Earned</p>
+          {/* Teaser Card */}
+          <div className="bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 rounded-2xl p-6 border border-blue-100 relative">
+            {/* Subtle blur overlay for "disabled" effect */}
+            <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-2xl pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-gray-900 text-lg font-semibold">Rewards & Achievements</h3>
+                  <p className="text-xs text-gray-600">Earn rewards for saving consistently</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-4">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span>Save streak bonuses</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Gift className="w-4 h-4 text-pink-500" />
+                  <span>Milestone rewards</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Users className="w-4 h-4 text-blue-500" />
+                  <span>Referral bonuses</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-4 italic">
+                Stay tuned! We're building something special for consistent savers like you.
+              </p>
             </div>
-            <h3 className="text-4xl mb-4">${totalRewards.toFixed(2)}</h3>
-            <div className="flex gap-3">
-              <div className="flex-1 bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Flame className="w-4 h-4" />
-                  <p className="text-xs text-white/80">Save Streak</p>
-                </div>
-                <p className="text-xl">{saveStreak} days</p>
-              </div>
-              <div className="flex-1 bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Target className="w-4 h-4" />
-                  <p className="text-xs text-white/80">Completed</p>
-                </div>
-                <p className="text-xl">{completedGoals} goals</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Reward Opportunities */}
-          <div className="space-y-3">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-gray-900 text-sm mb-1">30-Day Streak Bonus</h4>
-                  <p className="text-xs text-gray-600 mb-2">Save for 30 consecutive days</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-green-400 to-emerald-500"
-                        style={{ width: `${(saveStreak / 30) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-600">{saveStreak}/30</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-green-600">+$25</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-gray-900 text-sm mb-1">Save More, Earn More</h4>
-                  <p className="text-xs text-gray-600">Unlock higher reward tiers</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-gray-900 text-sm mb-1">Referral Bonus</h4>
-                  <p className="text-xs text-gray-600">Invite friends and earn $10 each</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Modals */}
