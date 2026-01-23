@@ -569,7 +569,11 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 px-6 space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className={`flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+        activeTab === 'link' || activeTab === 'settings'
+          ? '' // No scrolling or padding for fixed-header tabs (they manage their own)
+          : 'overflow-y-auto pb-20 px-6 space-y-5' // Full scrolling for regular tabs
+      }`}>
         {activeTab === 'home' && (
           <>
             {/* Total Balance Section */}
