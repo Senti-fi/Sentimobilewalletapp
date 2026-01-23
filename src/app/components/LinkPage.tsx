@@ -522,19 +522,19 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   // Contacts List View
   if (!selectedContact) {
     return (
-      <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-6 pt-6 pb-4"
+          className="flex-none px-6 pt-6 pb-4"
         >
           <h1 className="text-gray-900 mb-2">Link</h1>
           <p className="text-sm text-gray-500">Send money instantly using IDs</p>
         </motion.div>
 
         {/* Search Bar */}
-        <div className="px-6 mb-4">
+        <div className="flex-none px-6 mb-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -548,7 +548,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
         </div>
 
         {/* Contacts List */}
-        <div className="flex-1 overflow-y-auto px-6 space-y-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-gray-900">Contacts</h3>
             <span className="text-xs text-gray-500">{filteredContacts.length} contacts</span>
@@ -627,7 +627,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </motion.div>
 
       {/* Messages - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3 z-[5] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.map((message, index) => (
           <motion.div
             key={message.id}
