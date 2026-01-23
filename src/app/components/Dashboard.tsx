@@ -529,7 +529,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="size-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto relative">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
       {/* Minimalist Header - FIXED at top for all tabs except link/settings */}
       {activeTab !== 'link' && activeTab !== 'settings' && (
         <motion.div
