@@ -135,12 +135,12 @@ export default function LucyPage() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-none px-6 pt-6 pb-4"
+        className="flex-shrink-0 px-6 pt-6 pb-4"
       >
         <div className="flex items-center gap-3 mb-2">
           {/* Lucy Avatar */}
@@ -271,7 +271,7 @@ export default function LucyPage() {
       </div>
 
       {/* Input */}
-      <div className="flex-none px-6 pb-28 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
+      <div className="flex-shrink-0 px-6 pb-28 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
         <div className="flex items-center gap-2">
           <input
             type="text"

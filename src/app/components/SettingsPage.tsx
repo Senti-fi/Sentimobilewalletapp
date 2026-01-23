@@ -56,9 +56,9 @@ export default function SettingsPage({
   };
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
       {/* Header - Fixed */}
-      <div className="flex-none px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-10">
+      <div className="flex-shrink-0 px-6 pt-6 pb-4 flex items-center gap-4 bg-white/80 backdrop-blur-xl border-b border-gray-200 z-10">
         <button
           onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
