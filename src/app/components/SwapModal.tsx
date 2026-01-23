@@ -5,9 +5,10 @@ import LucyChip from './LucyChip';
 
 interface SwapModalProps {
   onClose: () => void;
+  onBuy?: (amount: number, asset: string, paidAmount: number, paidCurrency: string) => void;
 }
 
-export default function SwapModal({ onClose }: SwapModalProps) {
+export default function SwapModal({ onClose, onBuy }: SwapModalProps) {
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [fromAsset, setFromAsset] = useState('USD');
@@ -69,6 +70,17 @@ export default function SwapModal({ onClose }: SwapModalProps) {
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);
+
+      // Call onBuy callback to add transaction to history
+      if (onBuy) {
+        onBuy(
+          parseFloat(toAmount),
+          toAsset,
+          parseFloat(fromAmount),
+          fromAsset
+        );
+      }
+
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
@@ -199,7 +211,6 @@ export default function SwapModal({ onClose }: SwapModalProps) {
                       <option value="UGX">UGX</option>
                     </select>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Available: $10,000.00</p>
                 </div>
 
                 {/* To */}

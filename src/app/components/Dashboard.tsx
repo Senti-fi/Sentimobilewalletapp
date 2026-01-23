@@ -26,7 +26,7 @@ import ReceiveModal from './ReceiveModal';
 import SwapModal from './SwapModal';
 import GrowModal from './GrowModal';
 import TransactionHistory from './TransactionHistory';
-import SettingsModal from './SettingsModal';
+import SettingsPage from './SettingsPage';
 import LucyPage from './LucyPage';
 import Logo from './Logo';
 import SavingsPage from './SavingsPage';
@@ -88,7 +88,7 @@ const mockAssets: Asset[] = [
 ];
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [totalBalance, setTotalBalance] = useState(13170.50);
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -167,12 +167,12 @@ export default function Dashboard() {
   const handleVaultDeposit = (amount: number, asset: string) => {
     // Update vault balance
     setVaultBalance(prev => prev + amount);
-    
+
     // Deduct from total balance (money is leaving the main wallet)
     setTotalBalance(prev => prev - amount);
-    
+
     // Deduct from main wallet assets
-    setAssets(prevAssets => 
+    setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
           return {
@@ -184,18 +184,29 @@ export default function Dashboard() {
         return a;
       })
     );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: 'Vault Deposit',
+      category: 'Vault',
+      amount: -amount, // Negative because money is leaving main wallet
+      icon: LockKeyhole,
+      color: 'text-purple-600',
+      bg: 'bg-purple-100',
+      type: 'vault',
+    });
   };
 
   // Handle withdrawal from vault balance to main wallet
   const handleVaultWithdraw = (amount: number, asset: string) => {
     // Deduct from vault balance
     setVaultBalance(prev => prev - amount);
-    
+
     // Add to total balance (money is returning to the main wallet)
     setTotalBalance(prev => prev + amount);
-    
+
     // Add to main wallet assets
-    setAssets(prevAssets => 
+    setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
           return {
@@ -207,6 +218,17 @@ export default function Dashboard() {
         return a;
       })
     );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: 'Vault Withdrawal',
+      category: 'Vault',
+      amount: amount, // Positive because money is returning to main wallet
+      icon: LockKeyhole,
+      color: 'text-purple-600',
+      bg: 'bg-purple-100',
+      type: 'vault',
+    });
   };
 
   // Handle investment into specific pool
@@ -225,6 +247,17 @@ export default function Dashboard() {
       startDate: new Date(),
       earned: 0
     }]);
+
+    // Add to transaction history
+    addTransaction({
+      merchant: `${vaultName} Investment`,
+      category: 'Investment',
+      amount: -amount, // Negative because funds are being invested
+      icon: TrendingUp,
+      color: 'text-blue-600',
+      bg: 'bg-blue-100',
+      type: 'investment',
+    });
   };
 
   // Handle send transaction
@@ -257,6 +290,68 @@ export default function Dashboard() {
       color: 'text-red-600',
       bg: 'bg-red-100',
       type: 'send',
+    });
+  };
+
+  // Handle receive transaction (money received from Link contacts)
+  const handleReceive = (amount: number, asset: string, sender: string, senderName: string) => {
+    // Add to total balance
+    setTotalBalance(prev => prev + amount);
+
+    // Add to specific asset
+    setAssets(prevAssets =>
+      prevAssets.map(a => {
+        if (a.symbol === asset) {
+          return {
+            ...a,
+            balance: a.balance + amount,
+            value: a.symbol === 'SOL' ? (a.balance + amount) * (a.value / a.balance) : a.balance + amount
+          };
+        }
+        return a;
+      })
+    );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: `From ${senderName}`,
+      category: 'Received',
+      amount: amount, // Positive for incoming
+      icon: Download,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'internal',
+    });
+  };
+
+  // Handle buy transaction (purchasing crypto with fiat)
+  const handleBuy = (amount: number, asset: string, paidAmount: number, paidCurrency: string) => {
+    // Add to total balance (crypto purchased)
+    setTotalBalance(prev => prev + amount);
+
+    // Add to specific asset
+    setAssets(prevAssets =>
+      prevAssets.map(a => {
+        if (a.symbol === asset) {
+          return {
+            ...a,
+            balance: a.balance + amount,
+            value: a.symbol === 'SOL' ? (a.balance + amount) * (a.value / a.balance) : a.balance + amount
+          };
+        }
+        return a;
+      })
+    );
+
+    // Add to transaction history
+    addTransaction({
+      merchant: `Buy ${asset}`,
+      category: 'Purchase',
+      amount: amount, // Positive for incoming crypto
+      icon: ShoppingBag,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'internal',
     });
   };
 
@@ -329,10 +424,10 @@ export default function Dashboard() {
           >
             <Bell className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
           </motion.button>
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setOpenModal('settings')}
+            onClick={() => setActiveTab('settings')}
             className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
           >
             <Settings className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
@@ -488,6 +583,16 @@ export default function Dashboard() {
           <LinkPage
             assets={assets}
             onSend={handleSend}
+            onReceive={handleReceive}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsPage
+            onClose={() => setActiveTab('home')}
+            totalBalance={totalBalance}
+            activeGoals={4}
+            totalRewards={2300}
           />
         )}
       </div>
@@ -554,7 +659,7 @@ export default function Dashboard() {
         />
       )}
       {openModal === 'receive' && <ReceiveModal onClose={handleModalClose} />}
-      {openModal === 'swap' && <SwapModal onClose={handleModalClose} />}
+      {openModal === 'swap' && <SwapModal onClose={handleModalClose} onBuy={handleBuy} />}
       {openModal === 'grow' && (
         <GrowModal
           onClose={handleModalClose}
