@@ -81,9 +81,10 @@ interface Asset {
 interface LinkPageProps {
   assets: Asset[];
   onSend: (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => void;
+  onReceive?: (amount: number, asset: string, sender: string, senderName: string) => void;
 }
 
-export default function LinkPage({ assets, onSend }: LinkPageProps) {
+export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
@@ -347,6 +348,11 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
         }),
       }));
 
+      // Call onReceive callback to add to Dashboard transaction history
+      if (!willFail && onReceive && selectedContact) {
+        onReceive(amount, asset, selectedContact.id, selectedContact.name);
+      }
+
       // Send thank you message if successful
       if (!willFail) {
         setTimeout(() => {
@@ -521,11 +527,11 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
   // Chat View
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
-      {/* Chat Header */}
+      {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200"
+        className="flex-shrink-0 px-6 pt-6 pb-4 bg-white/80 backdrop-blur-xl border-b border-gray-200"
       >
         <div className="flex items-center gap-4">
           <motion.button
@@ -562,8 +568,8 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
         </div>
       </motion.div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+      {/* Messages - Scrollable */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.map((message, index) => (
           <motion.div
             key={message.id}
@@ -634,8 +640,8 @@ export default function LinkPage({ assets, onSend }: LinkPageProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200">
+      {/* Message Input - Fixed at bottom */}
+      <div className="flex-shrink-0 px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200">
         <div className="flex items-center gap-2">
           <input
             type="text"
