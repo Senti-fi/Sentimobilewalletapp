@@ -530,12 +530,13 @@ export default function Dashboard() {
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto relative">
-      {/* Minimalist Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="px-6 pt-6 pb-4 flex items-center justify-between"
-      >
+      {/* Minimalist Header - Hidden for tabs with their own headers */}
+      {activeTab !== 'link' && activeTab !== 'settings' && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-6 pt-6 pb-4 flex items-center justify-between"
+        >
         <div className="flex items-center gap-3">
           <motion.div 
             whileHover={{ scale: 1.05 }}
@@ -567,6 +568,7 @@ export default function Dashboard() {
           </motion.button>
         </div>
       </motion.div>
+      )}
 
       {/* Main Content */}
       <div className={`flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${

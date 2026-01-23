@@ -548,7 +548,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
         </div>
 
         {/* Contacts List */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 space-y-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 space-y-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-gray-900">Contacts</h3>
             <span className="text-xs text-gray-500">{filteredContacts.length} contacts</span>
@@ -750,7 +750,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </div>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="flex-none px-6 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
+      <div className="flex-none px-6 pb-24 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
         <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
