@@ -153,6 +153,43 @@ export default function Dashboard() {
     earned: number;
   }>>(() => loadFromStorage('senti_investments', []));
 
+  // Default transactions with external wallet examples
+  const defaultTransactions = [
+    {
+      id: 'external-1',
+      merchant: 'From 0x742d...0bEb',
+      category: 'Received',
+      amount: 250.00,
+      date: '2 hours ago',
+      icon: Download,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'internal' as const,
+    },
+    {
+      id: 'external-2',
+      merchant: 'From 0x8f3a...9c2D',
+      category: 'Received',
+      amount: 125.50,
+      date: '5 hours ago',
+      icon: Download,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'internal' as const,
+    },
+    {
+      id: 'external-3',
+      merchant: 'From 0x1bc7...4eF8',
+      category: 'Received',
+      amount: 500.00,
+      date: 'Yesterday',
+      icon: Download,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'internal' as const,
+    },
+  ];
+
   // Transactions state
   const [recentTransactions, setRecentTransactions] = useState<Array<{
     id: string;
@@ -164,7 +201,7 @@ export default function Dashboard() {
     color: string;
     bg: string;
     type: 'send' | 'vault' | 'investment' | 'swap' | 'internal'; // Track transaction type
-  }>>(() => loadFromStorage('senti_transactions', []));
+  }>>(() => loadFromStorage('senti_transactions', defaultTransactions));
 
   // Security and limits state
   const [trustedRecipients, setTrustedRecipients] = useState<Set<string>>(new Set());
