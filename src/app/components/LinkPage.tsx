@@ -522,7 +522,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   // Contacts List View
   if (!selectedContact) {
     return (
-      <div className="h-full w-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -593,7 +593,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
   // Chat View
   return (
-    <div className="h-full w-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
