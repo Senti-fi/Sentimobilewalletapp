@@ -41,8 +41,9 @@ export default function TransactionDetailsModal({ transaction, onClose }: Transa
   };
 
   const getTransactionStatus = () => {
-    // Most transactions are completed, some might be pending
-    return transaction.date === 'Just now' ? 'pending' : 'completed';
+    // All transactions in history are completed by default
+    // Only show pending if explicitly marked (future enhancement)
+    return 'completed';
   };
 
   const status = getTransactionStatus();
