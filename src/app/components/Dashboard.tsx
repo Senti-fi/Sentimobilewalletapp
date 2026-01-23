@@ -26,7 +26,7 @@ import ReceiveModal from './ReceiveModal';
 import SwapModal from './SwapModal';
 import GrowModal from './GrowModal';
 import TransactionHistory from './TransactionHistory';
-import SettingsModal from './SettingsModal';
+import SettingsPage from './SettingsPage';
 import LucyPage from './LucyPage';
 import Logo from './Logo';
 import SavingsPage from './SavingsPage';
@@ -88,7 +88,7 @@ const mockAssets: Asset[] = [
 ];
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [totalBalance, setTotalBalance] = useState(13170.50);
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -329,10 +329,10 @@ export default function Dashboard() {
           >
             <Bell className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
           </motion.button>
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setOpenModal('settings')}
+            onClick={() => setActiveTab('settings')}
             className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
           >
             <Settings className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
@@ -488,6 +488,15 @@ export default function Dashboard() {
           <LinkPage
             assets={assets}
             onSend={handleSend}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsPage
+            onClose={() => setActiveTab('home')}
+            totalBalance={totalBalance}
+            activeGoals={4}
+            totalRewards={2300}
           />
         )}
       </div>
