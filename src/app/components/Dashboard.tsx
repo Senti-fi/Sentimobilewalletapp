@@ -32,6 +32,7 @@ import Logo from './Logo';
 import SavingsPage from './SavingsPage';
 import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
+import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
 
@@ -780,7 +781,17 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'lucy' && (
-          <LucyPage />
+          <LucyPage
+            walletContext={useWalletContext({
+              totalBalance,
+              assets,
+              vaultBalance,
+              transactions: recentTransactions,
+            })}
+            onOpenSendModal={() => setOpenModal('send')}
+            onOpenDepositModal={() => setOpenModal('grow')}
+            onOpenSwapModal={() => setOpenModal('swap')}
+          />
         )}
 
         {activeTab === 'spend' && (
