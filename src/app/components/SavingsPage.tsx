@@ -53,9 +53,21 @@ interface LockedSaving {
 
 interface SavingsPageProps {
   onOpenLucy: () => void;
+  onSavingsDeposit?: (amount: number) => void;
+  onSavingsWithdraw?: (amount: number, destination: string) => void;
+  onSavingsLock?: (amount: number, days: number, apy: string) => void;
+  onSavingsUnlock?: (amount: number, penalty: number) => void;
+  onGoalContribution?: (amount: number, goalName: string) => void;
 }
 
-export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
+export default function SavingsPage({
+  onOpenLucy,
+  onSavingsDeposit,
+  onSavingsWithdraw,
+  onSavingsLock,
+  onSavingsUnlock,
+  onGoalContribution,
+}: SavingsPageProps) {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
@@ -146,6 +158,9 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
     // Deduct from available savings
     setAvailableSavings(prev => prev - savingData.amount);
 
+    // Log transaction to history
+    onSavingsLock?.(savingData.amount, savingData.duration, savingData.apy);
+
     setLockedSavings([...lockedSavings, newSaving]);
     setShowLockedSavings(false);
   };
@@ -153,12 +168,20 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   const handleDeposit = (amount: number, asset: string) => {
     // Add funds to available savings (from wallet)
     setAvailableSavings(prev => prev + amount);
+
+    // Log transaction to history
+    onSavingsDeposit?.(amount);
+
     console.log(`Deposited ${amount} ${asset} to Savings`);
   };
 
   const handleTransfer = (amount: number, asset: string, destination: string) => {
     // Remove funds from available savings (to wallet/spend)
     setAvailableSavings(prev => prev - amount);
+
+    // Log transaction to history
+    onSavingsWithdraw?.(amount, destination);
+
     console.log(`Transferred ${amount} ${asset} from Savings to ${destination}`);
   };
 
@@ -167,12 +190,16 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
     const saving = lockedSavings.find(s => s.id === savingId);
     if (saving) {
       // Calculate the total amount to return (principal + earnings, minus penalty if early)
+      const penalty = isEarly ? (saving.earnings * 0.5) : 0; // 50% penalty on earnings if early
       const totalAmount = isEarly
-        ? saving.amount + (saving.earnings * 0.5) // 50% penalty on earnings if early
+        ? saving.amount + (saving.earnings * 0.5)
         : saving.amount + saving.earnings;
 
       // Add unlocked funds back to available savings
       setAvailableSavings(prev => prev + totalAmount);
+
+      // Log transaction to history
+      onSavingsUnlock?.(totalAmount, penalty);
 
       // Remove from locked savings
       setLockedSavings(lockedSavings.filter(s => s.id !== savingId));
@@ -203,6 +230,14 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   };
 
   const handleConfirmAddFunds = (goalId: string, amount: number) => {
+    // Find the goal being funded
+    const goal = goals.find(g => g.id === goalId);
+
+    // Log transaction to history
+    if (goal) {
+      onGoalContribution?.(amount, goal.name);
+    }
+
     // Add the amount to the goal's current amount and check for completion
     const updatedGoals = goals.map(g => {
       if (g.id === goalId) {
