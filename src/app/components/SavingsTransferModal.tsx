@@ -227,7 +227,7 @@ export default function SavingsTransferModal({ onClose, onTransfer, savingsBalan
                         <option value="SOL">SOL</option>
                       </select>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">Available in Savings: {availableBalance.toFixed(2)} {asset}</p>
+                    <p className="text-sm text-gray-500 mt-2">Available to Use: {availableBalance.toFixed(2)} {asset}</p>
                   </div>
                 </div>
 

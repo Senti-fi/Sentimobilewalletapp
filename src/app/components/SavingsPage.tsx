@@ -955,7 +955,7 @@ export default function SavingsPage({
         <SavingsTransferModal
           onClose={() => setShowTransferModal(false)}
           onTransfer={handleTransfer}
-          savingsBalance={totalSavings}
+          savingsBalance={availableSavings}
         />
       )}
 
