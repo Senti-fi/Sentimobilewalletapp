@@ -11,7 +11,11 @@ import {
   Flame,
   Users,
   Trophy,
-  Gift
+  Gift,
+  TrendingUp,
+  Wallet,
+  CreditCard,
+  ArrowRight
 } from 'lucide-react';
 import CreateGoalModal from './CreateGoalModal';
 import LockedSavingsModal from './LockedSavingsModal';
@@ -195,22 +199,35 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   };
 
   const handleConfirmAddFunds = (goalId: string, amount: number) => {
-    // Add the amount to the goal's current amount and recalculate behind status
-    setGoals(goals.map(g => {
+    // Add the amount to the goal's current amount and check for completion
+    const updatedGoals = goals.map(g => {
       if (g.id === goalId) {
         const newCurrentAmount = g.currentAmount + amount;
+
+        // Check if goal is now complete (100%)
+        if (newCurrentAmount >= g.targetAmount) {
+          // Auto-transfer completed goal funds to Available Savings
+          setAvailableSavings(prev => prev + newCurrentAmount);
+          // Remove the completed goal
+          setTimeout(() => {
+            setGoals(goals.filter(goal => goal.id !== goalId));
+          }, 100);
+          return null; // Will be filtered out
+        }
+
+        // If not complete, recalculate behind status
         const daysLeft = getDaysRemaining(g.deadline);
         const monthsLeft = Math.floor(daysLeft / 30);
         const expectedAmount = g.monthlyTarget * monthsLeft;
         const shouldBeAt = g.targetAmount - expectedAmount;
-
-        // If new amount meets or exceeds where we should be, remove behind status
         const isBehind = newCurrentAmount < shouldBeAt;
 
         return { ...g, currentAmount: newCurrentAmount, isBehind };
       }
       return g;
-    }));
+    }).filter(g => g !== null) as Goal[];
+
+    setGoals(updatedGoals);
     setGoalToAddFunds(null);
   };
 
@@ -377,6 +394,63 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
       </div>
 
       <div className="px-6 py-6 space-y-8">
+        {/* Available Savings Card with Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-200 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs text-gray-600 mb-1">💰 Available to Use</p>
+              <h3 className="text-3xl font-bold text-gray-900">
+                ${availableSavings.toFixed(2)}
+              </h3>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-600 mb-4">
+            Funds ready to add to goals, lock for interest, or withdraw
+          </p>
+
+          {/* Quick Actions Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {goals.length > 0 && (
+              <button
+                onClick={() => setGoalToAddFunds(sortedGoals[0])}
+                className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
+              >
+                <Target className="w-4 h-4 text-blue-600 mb-1.5" />
+                <p className="text-xs font-semibold text-gray-900">Add to Goal</p>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowLockedSavings(true)}
+              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
+            >
+              <Lock className="w-4 h-4 text-purple-600 mb-1.5" />
+              <p className="text-xs font-semibold text-gray-900">Lock & Earn</p>
+            </button>
+
+            <button
+              onClick={() => setShowTransferModal(true)}
+              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
+            >
+              <Wallet className="w-4 h-4 text-cyan-600 mb-1.5" />
+              <p className="text-xs font-semibold text-gray-900">To Wallet</p>
+            </button>
+
+            <button
+              onClick={() => setShowTransferModal(true)}
+              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
+            >
+              <CreditCard className="w-4 h-4 text-orange-600 mb-1.5" />
+              <p className="text-xs font-semibold text-gray-900">To Spend</p>
+            </button>
+          </div>
+        </motion.div>
+
         {/* This Month Progress Card */}
         {thisMonthSaved > 0 && (
           <motion.div
@@ -531,62 +605,77 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
                 )}
 
                 {sortedGoals.slice(0, 1).map((goal, index) => (
-                  <motion.button
+                  <motion.div
                     key={goal.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setCameFromAllGoals(false);
-                      setSelectedGoal(goal);
-                    }}
-                    className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:border-blue-200 transition-colors"
+                    className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm relative"
                   >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`w-12 h-12 bg-gradient-to-br ${goal.color} rounded-xl flex items-center justify-center text-2xl`}>
-                        {goal.emoji}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-1">
-                          <div className="text-left">
-                            <h4 className="text-gray-900">{goal.name}</h4>
-                            <p className="text-xs text-gray-500">{getDaysRemaining(goal.deadline)} days left</p>
-                          </div>
-                          {goal.isBehind && (
-                            <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg">
-                              <AlertTriangle className="w-3 h-3 text-yellow-600" />
-                              <span className="text-xs text-yellow-700">Behind</span>
+                    {/* Quick Add Button */}
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setGoalToAddFunds(goal);
+                      }}
+                      className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-shadow z-10"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </motion.button>
+
+                    <button
+                      onClick={() => {
+                        setCameFromAllGoals(false);
+                        setSelectedGoal(goal);
+                      }}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className={`w-12 h-12 bg-gradient-to-br ${goal.color} rounded-xl flex items-center justify-center text-2xl`}>
+                          {goal.emoji}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-1 pr-8">
+                            <div className="text-left">
+                              <h4 className="text-gray-900 font-semibold">{goal.name}</h4>
+                              <p className="text-xs text-gray-500">{getDaysRemaining(goal.deadline)} days left</p>
                             </div>
-                          )}
+                            {goal.isBehind && (
+                              <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg">
+                                <AlertTriangle className="w-3 h-3 text-yellow-600" />
+                                <span className="text-xs text-yellow-700">Behind</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-600">${goal.currentAmount.toFixed(2)} saved</span>
-                        <span className="text-gray-900">${goal.targetAmount.toFixed(2)}</span>
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-gray-600">${goal.currentAmount.toFixed(2)} saved</span>
+                          <span className="text-gray-900 font-semibold">${goal.targetAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${getProgress(goal.currentAmount, goal.targetAmount)}%` }}
+                            transition={{ duration: 1, delay: index * 0.1 }}
+                            className={`h-full bg-gradient-to-r ${goal.color}`}
+                          />
+                        </div>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${getProgress(goal.currentAmount, goal.targetAmount)}%` }}
-                          transition={{ duration: 1, delay: index * 0.1 }}
-                          className={`h-full bg-gradient-to-r ${goal.color}`}
-                        />
-                      </div>
-                    </div>
 
-                    {/* Target Info */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <div className="text-xs text-gray-600 text-left">
-                        Monthly target: <span className="text-gray-900">${goal.monthlyTarget}</span>
+                      {/* Target Info */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div className="text-xs text-gray-600 text-left">
+                          Monthly target: <span className="text-gray-900 font-medium">${goal.monthlyTarget}</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </div>
-                  </motion.button>
+                    </button>
+                  </motion.div>
                 ))}
 
                 {/* View All Goals Button */}
@@ -718,50 +807,116 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
           </div>
         </div>
 
-        {/* Rewards Section - Compact */}
+        {/* Rewards Section - Full */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="w-5 h-5 text-gray-900" />
             <h3 className="text-gray-900 text-lg font-semibold">Rewards</h3>
           </div>
 
-          {/* Rewards Summary Card */}
+          {/* Total Rewards Earned Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 rounded-2xl p-5 border border-orange-100"
+            className="bg-gradient-to-br from-orange-400 via-pink-500 to-pink-600 rounded-2xl p-5 text-white mb-4 shadow-lg"
           >
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
-                <Gift className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-1">Total Earned</p>
-                <h3 className="text-3xl font-bold text-gray-900">${totalRewards.toFixed(2)}</h3>
-              </div>
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-5 h-5 text-white" />
+              <p className="text-sm text-white/90">Total Rewards Earned</p>
             </div>
+            <h3 className="text-4xl font-bold mb-4">${totalRewards.toFixed(2)}</h3>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <p className="text-xs text-gray-600">Streak</p>
+                  <Flame className="w-4 h-4 text-white" />
+                  <p className="text-xs text-white/80">Save Streak</p>
                 </div>
-                <p className="text-lg font-bold text-gray-900">{saveStreak} days</p>
+                <p className="text-xl font-bold">{saveStreak} days</p>
               </div>
-              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Target className="w-4 h-4 text-blue-500" />
-                  <p className="text-xs text-gray-600">Completed</p>
+                  <Target className="w-4 h-4 text-white" />
+                  <p className="text-xs text-white/80">Completed</p>
                 </div>
-                <p className="text-lg font-bold text-gray-900">{completedGoals} goals</p>
+                <p className="text-xl font-bold">{completedGoals} goals</p>
               </div>
             </div>
-
-            <p className="text-xs text-gray-500 mt-4 text-center">
-              Keep saving to unlock more rewards! 🎉
-            </p>
           </motion.div>
+
+          {/* Reward Opportunities */}
+          <div className="space-y-3">
+            {/* 30-Day Streak Bonus */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-gray-900 text-sm font-semibold">30-Day Streak Bonus</h4>
+                    <span className="text-sm font-bold text-green-600">+$25</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">Save for 30 consecutive days</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all"
+                        style={{ width: `${(saveStreak / 30) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-600 font-medium">{saveStreak}/30</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Save More, Earn More */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-gray-900 text-sm font-semibold">Save More, Earn More</h4>
+                    <p className="text-xs text-gray-600">Unlock higher reward tiers</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+            </motion.div>
+
+            {/* Referral Bonus */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-gray-900 text-sm font-semibold">Referral Bonus</h4>
+                    <p className="text-xs text-gray-600">Invite friends and earn $10 each</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+            </motion.div>
+          </div>
         </div>
 
       </div>
