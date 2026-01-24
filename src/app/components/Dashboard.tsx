@@ -215,6 +215,14 @@ export default function Dashboard() {
   const LARGE_AMOUNT_WARNING = 1000; // Warn for amounts > $1,000
   const BIOMETRIC_THRESHOLD = 500; // Require biometric for > $500
 
+  // Wallet context for Lucy AI
+  const walletContext = useWalletContext({
+    totalBalance,
+    assets,
+    vaultBalance,
+    transactions: recentTransactions,
+  });
+
   // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('senti_totalBalance', JSON.stringify(totalBalance));
@@ -782,12 +790,7 @@ export default function Dashboard() {
 
         {activeTab === 'lucy' && (
           <LucyPage
-            walletContext={useWalletContext({
-              totalBalance,
-              assets,
-              vaultBalance,
-              transactions: recentTransactions,
-            })}
+            walletContext={walletContext}
             onOpenSendModal={() => setOpenModal('send')}
             onOpenDepositModal={() => setOpenModal('grow')}
             onOpenSwapModal={() => setOpenModal('swap')}
