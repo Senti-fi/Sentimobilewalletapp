@@ -7,19 +7,15 @@ import {
   AlertTriangle,
   ChevronRight,
   Sparkles,
-  DollarSign,
   Flame,
   Users,
   Trophy,
   Gift,
   TrendingUp,
-  Wallet,
-  CreditCard,
   ArrowRight
 } from 'lucide-react';
 import CreateGoalModal from './CreateGoalModal';
 import LockedSavingsModal from './LockedSavingsModal';
-import SavingsDepositModal from './SavingsDepositModal';
 import SavingsTransferModal from './SavingsTransferModal';
 import UnlockSavingsModal from './UnlockSavingsModal';
 import ViewAllLockedSavingsModal from './ViewAllLockedSavingsModal';
@@ -53,10 +49,21 @@ interface LockedSaving {
 
 interface SavingsPageProps {
   onOpenLucy: () => void;
+  walletBalance: number;
+  onSavingsWithdraw?: (amount: number, destination: string) => void;
+  onSavingsLock?: (amount: number, days: number, apy: string) => void;
+  onSavingsUnlock?: (amount: number, penalty: number) => void;
+  onGoalContribution?: (amount: number, goalName: string) => void;
 }
 
-export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
-  const [showDepositModal, setShowDepositModal] = useState(false);
+export default function SavingsPage({
+  onOpenLucy,
+  walletBalance,
+  onSavingsWithdraw,
+  onSavingsLock,
+  onSavingsUnlock,
+  onGoalContribution,
+}: SavingsPageProps) {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showLockedSavings, setShowLockedSavings] = useState(false);
@@ -109,9 +116,10 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   // Calculate total savings
   const totalInGoals = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
   const totalLocked = lockedSavings.reduce((sum, ls) => sum + ls.amount, 0);
-  
-  // Available balance (funds not in goals or locked)
-  const [availableSavings, setAvailableSavings] = useState(1250.50);
+
+  // Available balance (funds from unlocked savings and completed goals, ready to withdraw)
+  // Note: Goal contributions and Lock & Earn now pull from main wallet, not from this balance
+  const [availableSavings, setAvailableSavings] = useState(1250.50); // Mock initial balance for demo
   
   const totalSavings = availableSavings + totalInGoals + totalLocked;
 
@@ -143,22 +151,21 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
       ...savingData,
     };
 
-    // Deduct from available savings
-    setAvailableSavings(prev => prev - savingData.amount);
+    // Funds come from main wallet, not from availableSavings
+    // Log transaction to history
+    onSavingsLock?.(savingData.amount, savingData.duration, savingData.apy);
 
     setLockedSavings([...lockedSavings, newSaving]);
     setShowLockedSavings(false);
   };
 
-  const handleDeposit = (amount: number, asset: string) => {
-    // Add funds to available savings (from wallet)
-    setAvailableSavings(prev => prev + amount);
-    console.log(`Deposited ${amount} ${asset} to Savings`);
-  };
-
   const handleTransfer = (amount: number, asset: string, destination: string) => {
     // Remove funds from available savings (to wallet/spend)
     setAvailableSavings(prev => prev - amount);
+
+    // Log transaction to history
+    onSavingsWithdraw?.(amount, destination);
+
     console.log(`Transferred ${amount} ${asset} from Savings to ${destination}`);
   };
 
@@ -167,12 +174,16 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
     const saving = lockedSavings.find(s => s.id === savingId);
     if (saving) {
       // Calculate the total amount to return (principal + earnings, minus penalty if early)
+      const penalty = isEarly ? (saving.earnings * 0.5) : 0; // 50% penalty on earnings if early
       const totalAmount = isEarly
-        ? saving.amount + (saving.earnings * 0.5) // 50% penalty on earnings if early
+        ? saving.amount + (saving.earnings * 0.5)
         : saving.amount + saving.earnings;
 
       // Add unlocked funds back to available savings
       setAvailableSavings(prev => prev + totalAmount);
+
+      // Log transaction to history
+      onSavingsUnlock?.(totalAmount, penalty);
 
       // Remove from locked savings
       setLockedSavings(lockedSavings.filter(s => s.id !== savingId));
@@ -203,6 +214,14 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
   };
 
   const handleConfirmAddFunds = (goalId: string, amount: number) => {
+    // Find the goal being funded
+    const goal = goals.find(g => g.id === goalId);
+
+    // Log transaction to history
+    if (goal) {
+      onGoalContribution?.(amount, goal.name);
+    }
+
     // Add the amount to the goal's current amount and check for completion
     const updatedGoals = goals.map(g => {
       if (g.id === goalId) {
@@ -360,22 +379,6 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
             </div>
           </div>
 
-          {/* Single Deposit Button */}
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowDepositModal(true)}
-            className="w-full bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:bg-white transition-colors"
-          >
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-center">
-                <p className="text-gray-900 font-semibold">Deposit to Savings</p>
-                <p className="text-xs text-gray-600">Add funds from wallet</p>
-              </div>
-            </div>
-          </motion.button>
         </motion.div>
       </div>
 
@@ -396,27 +399,19 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
           </div>
 
           <p className="text-xs text-gray-600 mb-4">
-            Funds ready to add to goals, lock for interest, or withdraw
+            Funds from unlocked savings and completed goals, ready to withdraw
           </p>
 
-          {/* Quick Actions Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setShowLockedSavings(true)}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
-            >
-              <Lock className="w-4 h-4 text-blue-600 mb-1.5" />
-              <p className="text-xs font-semibold text-gray-900">Lock & Earn</p>
-            </button>
-
-            <button
-              onClick={() => setShowTransferModal(true)}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
-            >
-              <ArrowRight className="w-4 h-4 text-cyan-600 mb-1.5" />
-              <p className="text-xs font-semibold text-gray-900">Withdraw</p>
-            </button>
-          </div>
+          {/* Quick Action - Withdraw */}
+          <button
+            onClick={() => setShowTransferModal(true)}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <ArrowRight className="w-4 h-4" />
+              <p className="text-sm font-semibold">Withdraw to Wallet</p>
+            </div>
+          </button>
         </motion.div>
 
         {/* This Month Progress Card */}
@@ -908,19 +903,11 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
         />
       )}
 
-      {showDepositModal && (
-        <SavingsDepositModal
-          onClose={() => setShowDepositModal(false)}
-          onDeposit={handleDeposit}
-          goal={goalToAddFunds}
-        />
-      )}
-
       {showTransferModal && (
         <SavingsTransferModal
           onClose={() => setShowTransferModal(false)}
           onTransfer={handleTransfer}
-          savingsBalance={totalSavings}
+          savingsBalance={availableSavings}
         />
       )}
 
@@ -979,7 +966,7 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
         <AddFundsToGoalModal
           onClose={() => setGoalToAddFunds(null)}
           goal={goalToAddFunds}
-          savingsBalance={availableSavings}
+          savingsBalance={walletBalance}
           onAddFunds={handleConfirmAddFunds}
         />
       )}

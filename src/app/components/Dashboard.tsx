@@ -200,7 +200,7 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
-    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal'; // Track transaction type
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal' | 'savings'; // Track transaction type
   }>>(() => loadFromStorage('senti_transactions', defaultTransactions));
 
   // Security and limits state
@@ -286,7 +286,7 @@ export default function Dashboard() {
     icon: any;
     color: string;
     bg: string;
-    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal';
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal' | 'savings';
   }) => {
     const newTransaction = {
       id: Date.now().toString(),
@@ -485,6 +485,72 @@ export default function Dashboard() {
       color: 'text-green-600',
       bg: 'bg-green-100',
       type: 'internal',
+    });
+  };
+
+  // Handle savings deposit
+  const handleSavingsDeposit = (amount: number) => {
+    addTransaction({
+      merchant: 'Savings Account',
+      category: 'Deposit to Savings',
+      amount: -amount, // Negative because money is leaving main wallet
+      icon: PiggyBank,
+      color: 'text-cyan-600',
+      bg: 'bg-cyan-100',
+      type: 'savings',
+    });
+  };
+
+  // Handle savings withdrawal
+  const handleSavingsWithdraw = (amount: number, destination: string) => {
+    addTransaction({
+      merchant: `To ${destination}`,
+      category: 'Savings Withdrawal',
+      amount: amount, // Positive because money is returning
+      icon: Download,
+      color: 'text-green-600',
+      bg: 'bg-green-100',
+      type: 'savings',
+    });
+  };
+
+  // Handle locked savings (Lock & Earn)
+  const handleSavingsLock = (amount: number, days: number, apy: string) => {
+    addTransaction({
+      merchant: `${days}-Day Lock (${apy}% APY)`,
+      category: 'Locked Savings',
+      amount: -amount, // Negative because money is being locked
+      icon: LockKeyhole,
+      color: 'text-blue-600',
+      bg: 'bg-blue-100',
+      type: 'savings',
+    });
+  };
+
+  // Handle savings unlock
+  const handleSavingsUnlock = (amount: number, penalty: number) => {
+    const netAmount = amount - penalty;
+    addTransaction({
+      merchant: penalty > 0 ? `Unlocked (${penalty.toFixed(2)} penalty)` : 'Unlocked',
+      category: 'Savings Unlock',
+      amount: netAmount, // Net amount after penalty
+      icon: LockKeyhole,
+      color: penalty > 0 ? 'text-orange-600' : 'text-green-600',
+      bg: penalty > 0 ? 'bg-orange-100' : 'bg-green-100',
+      type: 'savings',
+    });
+  };
+
+  // Handle goal contribution
+  const handleGoalContribution = (amount: number, goalName: string) => {
+    addTransaction({
+      merchant: goalName,
+      category: 'Goal Contribution',
+      amount: -amount, // Negative because money is allocated to goal
+      icon: TrendingUp,
+      color: 'text-cyan-600',
+      bg: 'bg-cyan-100',
+      type: 'savings',
     });
   };
 
@@ -697,13 +763,20 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <TransactionHistory transactions={recentTransactions.filter(t => t.type !== 'send')} />
+              <TransactionHistory transactions={recentTransactions} />
             </motion.div>
           </>
         )}
 
         {activeTab === 'savings' && (
-          <SavingsPage onOpenLucy={handleOpenLucy} />
+          <SavingsPage
+            onOpenLucy={handleOpenLucy}
+            onSavingsDeposit={handleSavingsDeposit}
+            onSavingsWithdraw={handleSavingsWithdraw}
+            onSavingsLock={handleSavingsLock}
+            onSavingsUnlock={handleSavingsUnlock}
+            onGoalContribution={handleGoalContribution}
+          />
         )}
 
         {activeTab === 'lucy' && (
