@@ -99,7 +99,7 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
       deadline: '2025-10-01',
       monthlyTarget: 200,
       emoji: '✈️',
-      color: 'from-purple-400 to-indigo-500',
+      color: 'from-cyan-400 to-blue-500',
     },
   ]);
 
@@ -142,6 +142,10 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
       id: Date.now().toString(),
       ...savingData,
     };
+
+    // Deduct from available savings
+    setAvailableSavings(prev => prev - savingData.amount);
+
     setLockedSavings([...lockedSavings, newSaving]);
     setShowLockedSavings(false);
   };
@@ -356,40 +360,22 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
             </div>
           </div>
 
-          {/* Action Buttons - Deposit & Transfer */}
-          <div className="grid grid-cols-2 gap-3">
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowDepositModal(true)}
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg hover:bg-white transition-colors"
-            >
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-900 font-semibold text-sm">Deposit</p>
-                  <p className="text-xs text-gray-600">Add funds</p>
-                </div>
+          {/* Single Deposit Button */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowDepositModal(true)}
+            className="w-full bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:bg-white transition-colors"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-white" />
               </div>
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowTransferModal(true)}
-              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg hover:bg-white transition-colors"
-            >
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-900 font-semibold text-sm">Transfer</p>
-                  <p className="text-xs text-gray-600">Move funds</p>
-                </div>
+              <div className="text-center">
+                <p className="text-gray-900 font-semibold">Deposit to Savings</p>
+                <p className="text-xs text-gray-600">Add funds from wallet</p>
               </div>
-            </motion.button>
-          </div>
+            </div>
+          </motion.button>
         </motion.div>
       </div>
 
@@ -414,22 +400,12 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
           </p>
 
           {/* Quick Actions Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {goals.length > 0 && (
-              <button
-                onClick={() => setGoalToAddFunds(sortedGoals[0])}
-                className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
-              >
-                <Target className="w-4 h-4 text-blue-600 mb-1.5" />
-                <p className="text-xs font-semibold text-gray-900">Add to Goal</p>
-              </button>
-            )}
-
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setShowLockedSavings(true)}
               className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
             >
-              <Lock className="w-4 h-4 text-purple-600 mb-1.5" />
+              <Lock className="w-4 h-4 text-blue-600 mb-1.5" />
               <p className="text-xs font-semibold text-gray-900">Lock & Earn</p>
             </button>
 
@@ -437,16 +413,8 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
               onClick={() => setShowTransferModal(true)}
               className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
             >
-              <Wallet className="w-4 h-4 text-cyan-600 mb-1.5" />
-              <p className="text-xs font-semibold text-gray-900">To Wallet</p>
-            </button>
-
-            <button
-              onClick={() => setShowTransferModal(true)}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-3 hover:bg-white transition-colors text-left"
-            >
-              <CreditCard className="w-4 h-4 text-orange-600 mb-1.5" />
-              <p className="text-xs font-semibold text-gray-900">To Spend</p>
+              <ArrowRight className="w-4 h-4 text-cyan-600 mb-1.5" />
+              <p className="text-xs font-semibold text-gray-900">Withdraw</p>
             </button>
           </div>
         </motion.div>
@@ -541,12 +509,11 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-green-600" />
-                  <h3 className="text-gray-900 font-semibold">You're on track!</h3>
+                <div className="mb-3">
+                  <h3 className="text-gray-900 font-semibold text-lg">🎉 You're on track!</h3>
                 </div>
                 <p className="text-gray-700 text-sm">
-                  All your goals are progressing well. Keep up the great work! 🎉
+                  All your goals are progressing well. Keep up the great work!
                 </p>
               </>
             )}
@@ -905,8 +872,8 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-cyan-600" />
                   </div>
                   <div>
                     <h4 className="text-gray-900 text-sm font-semibold">Referral Bonus</h4>
@@ -934,6 +901,10 @@ export default function SavingsPage({ onOpenLucy }: SavingsPageProps) {
         <LockedSavingsModal
           onClose={() => setShowLockedSavings(false)}
           onCreate={handleCreateLockedSaving}
+          onExploreVaults={() => {
+            // TODO: Navigate to Vault page when implemented
+            console.log('Navigate to Vault page');
+          }}
         />
       )}
 

@@ -6,17 +6,18 @@ import LucyChip from './LucyChip';
 interface LockedSavingsModalProps {
   onClose: () => void;
   onCreate: (savingData: any) => void;
+  onExploreVaults?: () => void;
 }
 
 const lockPeriods = [
   { days: 30, apy: '10.5', label: '30 Days', color: 'from-blue-400 to-cyan-500' },
-  { days: 60, apy: '11.8', label: '60 Days', color: 'from-purple-400 to-blue-500' },
-  { days: 90, apy: '12.5', label: '90 Days', color: 'from-purple-400 to-pink-500', popular: true },
-  { days: 180, apy: '13.9', label: '180 Days', color: 'from-pink-400 to-rose-500' },
-  { days: 365, apy: '15.0', label: '1 Year', color: 'from-orange-400 to-red-500', highest: true },
+  { days: 60, apy: '11.8', label: '60 Days', color: 'from-cyan-400 to-blue-500' },
+  { days: 90, apy: '12.5', label: '90 Days', color: 'from-blue-500 to-cyan-600', popular: true },
+  { days: 180, apy: '13.9', label: '180 Days', color: 'from-cyan-500 to-blue-600' },
+  { days: 365, apy: '15.0', label: '1 Year', color: 'from-blue-600 to-cyan-700', highest: true },
 ];
 
-export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsModalProps) {
+export default function LockedSavingsModal({ onClose, onCreate, onExploreVaults }: LockedSavingsModalProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<typeof lockPeriods[0] | null>(null);
   const [amount, setAmount] = useState('');
   const [asset, setAsset] = useState('USDC');
@@ -117,7 +118,7 @@ export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsM
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   className="mb-6"
                 >
-                  <Loader className="w-16 h-16 text-purple-600" />
+                  <Loader className="w-16 h-16 text-blue-600" />
                 </motion.div>
                 <h3 className="text-gray-900 mb-2">Locking Your Savings</h3>
                 <p className="text-gray-600 text-center">Securing your funds for {selectedPeriod?.label}...</p>
@@ -251,7 +252,13 @@ export default function LockedSavingsModal({ onClose, onCreate }: LockedSavingsM
                       <p className="text-xs text-gray-600 mb-3">
                         Grow idle cash in <strong>AI-powered Vaults</strong> with flexible access. Withdraw anytime when opportunity knocks.
                       </p>
-                      <button className="text-xs text-blue-700 hover:text-blue-800 underline">
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onExploreVaults?.();
+                        }}
+                        className="text-xs text-blue-700 hover:text-blue-800 underline font-medium"
+                      >
                         Explore Vaults →
                       </button>
                     </div>
