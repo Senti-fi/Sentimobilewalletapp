@@ -162,7 +162,7 @@ export default function AddFundsToGoalModal({
                 {/* Available Balance */}
                 <div className="bg-blue-50 rounded-xl p-4 mb-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-600">Available in Savings</p>
+                    <p className="text-sm text-gray-600">Available in Wallet</p>
                     <p className="text-lg text-gray-900">${savingsBalance.toFixed(2)}</p>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function AddFundsToGoalModal({
                   {amountNum > savingsBalance && (
                     <div className="flex items-center gap-2 mt-3 text-red-600">
                       <AlertTriangle className="w-4 h-4" />
-                      <p className="text-sm">Insufficient savings balance</p>
+                      <p className="text-sm">Insufficient wallet balance</p>
                     </div>
                   )}
                 </div>
