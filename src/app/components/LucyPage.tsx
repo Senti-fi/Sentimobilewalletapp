@@ -10,7 +10,6 @@ import {
   Clock,
   Loader2,
   AlertCircle,
-  RefreshCw,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import lucyService, { Message, WalletContext } from '../../services/lucyService';
@@ -270,7 +269,7 @@ export default function LucyPage({
             msg.id === lucyMessageId
               ? {
                   ...msg,
-                  text: 'I apologize, but I encountered an error. Please try again or check if the backend service is running.',
+                  text: 'I apologize, but I\'m having trouble connecting right now. Please try again in a moment.',
                   isStreaming: false,
                 }
               : msg
@@ -344,26 +343,13 @@ export default function LucyPage({
               <div className="relative">
                 <Sparkles className="w-7 h-7 text-white" strokeWidth={2} />
               </div>
-              {/* Online/Offline indicator */}
-              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
-                backendStatus === 'online' ? 'bg-green-500' : backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
-              }`}></div>
             </div>
             <div>
               <h1 className="text-gray-900 flex items-center gap-2">
                 Lucy
-                {backendStatus === 'checking' && (
-                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                )}
               </h1>
               <p className="text-sm text-gray-500">
-                {backendStatus === 'online'
-                  ? 'AI Assistant'
-                  : backendStatus === 'offline'
-                  ? 'Offline - Auto-reconnecting...'
-                  : retryCount > 0
-                  ? `Connecting... (${retryCount}/4)`
-                  : 'Connecting...'}
+                AI Assistant
               </p>
             </div>
           </div>
@@ -380,29 +366,6 @@ export default function LucyPage({
             </motion.button>
           )}
         </div>
-
-        {/* Backend offline warning */}
-        {backendStatus === 'offline' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700"
-          >
-            <Loader2 className="w-4 h-4 flex-shrink-0 animate-spin" />
-            <span className="flex-1">
-              Backend starting... Auto-reconnecting every 5s.
-              <span className="block text-xs mt-0.5 text-amber-600">
-                Run <code className="bg-amber-100 px-1 rounded">pnpm dev</code> if not started
-              </span>
-            </span>
-            <button
-              onClick={checkBackendHealthWithRetry}
-              className="p-1 hover:bg-amber-100 rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
       </motion.div>
 
       {/* Chat Messages */}
@@ -424,8 +387,7 @@ export default function LucyPage({
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleQuickAction(action.query)}
-                  disabled={backendStatus !== 'online'}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left group"
                 >
                   <div className={`w-10 h-10 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mb-3 shadow-md group-hover:shadow-lg transition-shadow`}>
                     <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
@@ -512,7 +474,7 @@ export default function LucyPage({
                       whileHover={{ scale: 1.02, x: 2 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleQuickAction(suggestion)}
-                      disabled={isStreaming || backendStatus !== 'online'}
+                      disabled={isStreaming}
                       className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group border border-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Zap className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
@@ -549,15 +511,15 @@ export default function LucyPage({
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSendMessage()}
-            placeholder={backendStatus === 'online' ? 'Ask Lucy anything...' : 'Backend offline...'}
-            disabled={isStreaming || backendStatus !== 'online'}
+            placeholder="Ask Lucy anything..."
+            disabled={isStreaming}
             className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <motion.button
-            whileHover={!isStreaming && backendStatus === 'online' ? { scale: 1.05 } : {}}
-            whileTap={!isStreaming && backendStatus === 'online' ? { scale: 0.95 } : {}}
+            whileHover={!isStreaming ? { scale: 1.05 } : {}}
+            whileTap={!isStreaming ? { scale: 0.95 } : {}}
             onClick={() => handleSendMessage()}
-            disabled={!inputMessage.trim() || isStreaming || backendStatus !== 'online'}
+            disabled={!inputMessage.trim() || isStreaming}
             className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isStreaming ? (
