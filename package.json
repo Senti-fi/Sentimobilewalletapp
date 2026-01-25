@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
-    "server": "tsx server/index.ts",
-    "dev:all": "concurrently \"pnpm dev\" \"pnpm server\" --names \"frontend,backend\" --prefix-colors \"cyan,yellow\""
+    "dev": "concurrently \"vite\" \"tsx server/index.ts\" --names \"frontend,backend\" --prefix-colors \"cyan,yellow\"",
+    "dev:frontend": "vite",
+    "dev:backend": "tsx server/index.ts",
+    "server": "tsx server/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

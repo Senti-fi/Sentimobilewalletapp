@@ -70,6 +70,8 @@ export default function LucyPage({
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [retryCount, setRetryCount] = useState(0);
+  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recentConversations = chatStorage.getRecentConversations(3);
 
@@ -91,10 +93,39 @@ export default function LucyPage({
     }
   }, []);
 
-  // Check backend health on mount
+  // Check backend health on mount and set up periodic checks
   useEffect(() => {
-    checkBackendHealth();
+    checkBackendHealthWithRetry();
+
+    // Set up periodic health checks every 5 seconds when offline
+    return () => {
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+      }
+    };
   }, []);
+
+  // Set up periodic health checks when offline
+  useEffect(() => {
+    if (backendStatus === 'offline') {
+      // Retry every 5 seconds when offline
+      healthCheckIntervalRef.current = setInterval(() => {
+        checkBackendHealth();
+      }, 5000);
+    } else {
+      // Clear interval when online
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+        healthCheckIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+      }
+    };
+  }, [backendStatus]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -113,6 +144,33 @@ export default function LucyPage({
     setBackendStatus('checking');
     const isHealthy = await lucyService.healthCheck();
     setBackendStatus(isHealthy ? 'online' : 'offline');
+    if (isHealthy) {
+      setRetryCount(0);
+    }
+  };
+
+  const checkBackendHealthWithRetry = async (maxRetries = 4) => {
+    setBackendStatus('checking');
+
+    for (let i = 0; i < maxRetries; i++) {
+      const isHealthy = await lucyService.healthCheck();
+
+      if (isHealthy) {
+        setBackendStatus('online');
+        setRetryCount(0);
+        return;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s, 8s
+      if (i < maxRetries - 1) {
+        const delay = Math.pow(2, i) * 1000;
+        setRetryCount(i + 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    setBackendStatus('offline');
+    setRetryCount(0);
   };
 
   const handleSendMessage = async (message?: string) => {
@@ -299,7 +357,13 @@ export default function LucyPage({
                 )}
               </h1>
               <p className="text-sm text-gray-500">
-                {backendStatus === 'online' ? 'AI Assistant' : backendStatus === 'offline' ? 'Offline' : 'Connecting...'}
+                {backendStatus === 'online'
+                  ? 'AI Assistant'
+                  : backendStatus === 'offline'
+                  ? 'Offline - Auto-reconnecting...'
+                  : retryCount > 0
+                  ? `Connecting... (${retryCount}/4)`
+                  : 'Connecting...'}
               </p>
             </div>
           </div>
@@ -322,13 +386,18 @@ export default function LucyPage({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"
+            className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700"
           >
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span className="flex-1">Backend service is offline. Start the server to use AI features.</span>
+            <Loader2 className="w-4 h-4 flex-shrink-0 animate-spin" />
+            <span className="flex-1">
+              Backend starting... Auto-reconnecting every 5s.
+              <span className="block text-xs mt-0.5 text-amber-600">
+                Run <code className="bg-amber-100 px-1 rounded">pnpm dev</code> if not started
+              </span>
+            </span>
             <button
-              onClick={checkBackendHealth}
-              className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+              onClick={checkBackendHealthWithRetry}
+              className="p-1 hover:bg-amber-100 rounded-lg transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
