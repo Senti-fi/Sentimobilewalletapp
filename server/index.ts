@@ -2,15 +2,41 @@ import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Get the directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root (one level up from server directory)
+const envPath = path.resolve(__dirname, '..', '.env');
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.error('❌ Error loading .env file:', result.error.message);
+  console.error('Expected .env location:', envPath);
+} else {
+  console.log('✅ Loaded .env from:', envPath);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Anthropic client
+// Initialize Anthropic client with validation
+const apiKey = process.env.ANTHROPIC_API_KEY;
+if (!apiKey || apiKey.trim() === '') {
+  console.error('❌ ANTHROPIC_API_KEY is not set in environment variables!');
+  console.error('Expected .env location:', envPath);
+  console.error('Please ensure .env file exists with a valid ANTHROPIC_API_KEY');
+  console.error('Get your API key from: https://console.anthropic.com/');
+  process.exit(1);
+}
+
+console.log('✅ Anthropic API key loaded successfully');
+
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  apiKey: apiKey,
 });
 
 app.use(cors());
