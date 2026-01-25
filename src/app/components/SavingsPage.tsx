@@ -399,19 +399,31 @@ export default function SavingsPage({
           </div>
 
           <p className="text-xs text-gray-600 mb-4">
-            Funds from unlocked savings and completed goals, ready to withdraw
+            Funds ready to add to goals, lock for interest, or withdraw
           </p>
 
-          {/* Quick Action - Withdraw */}
-          <button
-            onClick={() => setShowTransferModal(true)}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <ArrowRight className="w-4 h-4" />
-              <p className="text-sm font-semibold">Withdraw to Wallet</p>
-            </div>
-          </button>
+          {/* Quick Actions - Lock & Earn and Withdraw */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowLockedSavings(true)}
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Lock className="w-4 h-4" />
+                <p className="text-sm font-semibold">Lock & Earn</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowTransferModal(true)}
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <ArrowRight className="w-4 h-4" />
+                <p className="text-sm font-semibold">Withdraw</p>
+              </div>
+            </button>
+          </div>
         </motion.div>
 
         {/* This Month Progress Card */}

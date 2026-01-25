@@ -32,6 +32,7 @@ import Logo from './Logo';
 import SavingsPage from './SavingsPage';
 import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
+import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
 
@@ -213,6 +214,14 @@ export default function Dashboard() {
   const TRANSACTION_LIMIT_DAILY = 10000; // $10,000 per day
   const LARGE_AMOUNT_WARNING = 1000; // Warn for amounts > $1,000
   const BIOMETRIC_THRESHOLD = 500; // Require biometric for > $500
+
+  // Wallet context for Lucy AI
+  const walletContext = useWalletContext({
+    totalBalance,
+    assets,
+    vaultBalance,
+    transactions: recentTransactions,
+  });
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -780,7 +789,12 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'lucy' && (
-          <LucyPage />
+          <LucyPage
+            walletContext={walletContext}
+            onOpenSendModal={() => setOpenModal('send')}
+            onOpenDepositModal={() => setOpenModal('grow')}
+            onOpenSwapModal={() => setOpenModal('swap')}
+          />
         )}
 
         {activeTab === 'spend' && (

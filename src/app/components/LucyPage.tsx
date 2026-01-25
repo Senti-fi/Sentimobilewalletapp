@@ -1,13 +1,26 @@
-import { motion } from 'motion/react';
-import { Sparkles, Send, TrendingUp, Wallet, DollarSign, HelpCircle, Zap, ArrowRight, Clock } from 'lucide-react';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Sparkles,
+  Send,
+  TrendingUp,
+  Wallet,
+  HelpCircle,
+  Zap,
+  ArrowRight,
+  Clock,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import lucyService, { Message, WalletContext } from '../../services/lucyService';
+import chatStorage from '../../services/chatStorage';
 
-interface Message {
-  id: string;
-  type: 'user' | 'lucy';
-  text: string;
-  timestamp: Date;
-  suggestions?: string[];
+interface LucyPageProps {
+  walletContext?: WalletContext;
+  onOpenSendModal?: () => void;
+  onOpenDepositModal?: () => void;
+  onOpenSwapModal?: () => void;
 }
 
 const quickActions = [
@@ -45,26 +58,68 @@ const quickActions = [
   },
 ];
 
-const recentConversations = [
-  { id: '1', preview: 'How do I earn yield on USDC?', time: '2 hours ago' },
-  { id: '2', preview: 'Send $50 to Alex', time: 'Yesterday' },
-  { id: '3', preview: 'What are the best vaults?', time: '2 days ago' },
-];
-
-export default function LucyPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'lucy',
-      text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
-      timestamp: new Date(),
-    },
-  ]);
+export default function LucyPage({
+  walletContext = {},
+  onOpenSendModal,
+  onOpenDepositModal,
+  onOpenSwapModal,
+}: LucyPageProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const recentConversations = chatStorage.getRecentConversations(3);
 
-  const handleSendMessage = (message?: string) => {
+  // Load conversation history on mount
+  useEffect(() => {
+    const savedMessages = chatStorage.loadCurrentConversation();
+    if (savedMessages && savedMessages.length > 0) {
+      setMessages(savedMessages);
+    } else {
+      // Start with welcome message
+      setMessages([
+        {
+          id: '1',
+          type: 'lucy',
+          text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, []);
+
+  // Check backend health on mount
+  useEffect(() => {
+    checkBackendHealth();
+  }, []);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Save conversation whenever messages change
+  useEffect(() => {
+    if (messages.length > 1) {
+      // Only save if there's more than welcome message
+      chatStorage.saveConversation(messages);
+    }
+  }, [messages]);
+
+  const checkBackendHealth = async () => {
+    setBackendStatus('checking');
+    const isHealthy = await lucyService.healthCheck();
+    setBackendStatus(isHealthy ? 'online' : 'offline');
+  };
+
+  const handleSendMessage = async (message?: string) => {
     const messageText = message || inputMessage;
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || isStreaming) return;
+
+    setError(null);
 
     // Add user message
     const userMessage: Message = {
@@ -77,61 +132,142 @@ export default function LucyPage() {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
 
-    // Simulate Lucy response with suggestions
-    setTimeout(() => {
-      const lucyResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'lucy',
-        text: generateResponse(messageText),
-        timestamp: new Date(),
-        suggestions: generateSuggestions(messageText),
-      };
-      setMessages(prev => [...prev, lucyResponse]);
-    }, 1000);
+    // Check if action should be executed
+    checkAndExecuteAction(messageText);
+
+    // Create placeholder for Lucy's streaming response
+    const lucyMessageId = (Date.now() + 1).toString();
+    const lucyMessage: Message = {
+      id: lucyMessageId,
+      type: 'lucy',
+      text: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+
+    setMessages(prev => [...prev, lucyMessage]);
+    setIsStreaming(true);
+
+    // Get conversation history for context
+    const conversationHistory = [...messages, userMessage];
+
+    // Stream response from Lucy
+    lucyService.streamChat(
+      conversationHistory,
+      walletContext,
+      // On token received
+      (token: string) => {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === lucyMessageId
+              ? { ...msg, text: msg.text + token }
+              : msg
+          )
+        );
+      },
+      // On complete
+      async () => {
+        setIsStreaming(false);
+
+        // Mark message as no longer streaming
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === lucyMessageId
+              ? { ...msg, isStreaming: false }
+              : msg
+          )
+        );
+
+        // Generate suggestions
+        setIsLoadingSuggestions(true);
+        try {
+          const suggestions = await lucyService.generateSuggestions(
+            messageText,
+            walletContext
+          );
+
+          if (suggestions.length > 0) {
+            setMessages(prev =>
+              prev.map(msg =>
+                msg.id === lucyMessageId
+                  ? { ...msg, suggestions }
+                  : msg
+              )
+            );
+          }
+        } catch (err) {
+          console.error('Failed to generate suggestions:', err);
+        } finally {
+          setIsLoadingSuggestions(false);
+        }
+      },
+      // On error
+      (error: Error) => {
+        setIsStreaming(false);
+        setError(error.message);
+
+        // Replace streaming message with error
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === lucyMessageId
+              ? {
+                  ...msg,
+                  text: 'I apologize, but I encountered an error. Please try again or check if the backend service is running.',
+                  isStreaming: false,
+                }
+              : msg
+          )
+        );
+      }
+    );
   };
 
-  const generateResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes('balance')) {
-      return 'Your total balance is $13,170.50. This includes:\n• USDC: $5,420.50\n• USDT: $3,500.00\n• SOL: $4,250.00\n\nYou\'re up +2.4% today! 📈';
-    }
-    
-    if (lowerQuery.includes('vault') || lowerQuery.includes('earn') || lowerQuery.includes('yield')) {
-      return 'I found 3 great vault options for you:\n\n1. USDC Vault - 8.5% APY (Low risk)\n2. Balanced Portfolio - 12.3% APY (Medium risk)\n3. High Yield Strategy - 18.9% APY (Higher risk)\n\nThe USDC Vault is perfect for beginners. Want me to help you deposit?';
-    }
-    
-    if (lowerQuery.includes('send') || lowerQuery.includes('transfer')) {
-      return 'I can help you send money! You can:\n\n• Send to a wallet address\n• Send to an email or @username\n• Use recent contacts\n\nJust tell me who you want to send to and how much. Or I can open the Send modal for you.';
-    }
-    
-    if (lowerQuery.includes('fee') || lowerQuery.includes('gas')) {
-      return 'Great question! Network fees (gas fees) are super low on Senti:\n\n• Transfers: $0.00 (we cover it!)\n• Vault deposits: $0.00\n• Swaps: ~$0.01\n\nWe use Layer 2 technology to keep costs near zero. You won\'t pay traditional Ethereum gas fees! 🎉';
-    }
-    
-    return 'I\'m here to help! I can assist you with:\n\n• Checking your balance and portfolio\n• Finding the best vaults to earn yield\n• Sending and receiving money\n• Explaining DeFi concepts simply\n• Managing your transactions\n\nWhat would you like to know more about?';
-  };
+  const checkAndExecuteAction = async (message: string) => {
+    try {
+      const actionResult = await lucyService.checkAction(message, walletContext);
 
-  const generateSuggestions = (query: string): string[] | undefined => {
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes('balance')) {
-      return ['Show transaction history', 'How can I grow this?'];
+      if (actionResult.confidence > 0.7) {
+        // High confidence, execute action
+        switch (actionResult.action) {
+          case 'send':
+            onOpenSendModal?.();
+            break;
+          case 'deposit':
+            onOpenDepositModal?.();
+            break;
+          case 'swap':
+            onOpenSwapModal?.();
+            break;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check action:', err);
     }
-    
-    if (lowerQuery.includes('vault')) {
-      return ['Tell me more about USDC Vault', 'How do I deposit?', 'What are the risks?'];
-    }
-    
-    if (lowerQuery.includes('send')) {
-      return ['Open Send modal', 'Show recent contacts'];
-    }
-    
-    return undefined;
   };
 
   const handleQuickAction = (query: string) => {
     handleSendMessage(query);
+  };
+
+  const handleLoadConversation = (conversationId: string) => {
+    const conversation = chatStorage.getConversation(conversationId);
+    if (conversation) {
+      setMessages(conversation.messages);
+      sessionStorage.setItem('current_conversation_id', conversationId);
+    }
+  };
+
+  const handleNewConversation = () => {
+    chatStorage.startNewConversation();
+    setMessages([
+      {
+        id: '1',
+        type: 'lucy',
+        text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
+        timestamp: new Date(),
+      },
+    ]);
+    setError(null);
   };
 
   return (
@@ -142,21 +278,62 @@ export default function LucyPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex-shrink-0 px-6 pt-6 pb-4"
       >
-        <div className="flex items-center gap-3 mb-2">
-          {/* Lucy Avatar */}
-          <div className="relative w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
-            <div className="relative">
-              <Sparkles className="w-7 h-7 text-white" strokeWidth={2} />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            {/* Lucy Avatar */}
+            <div className="relative w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="relative">
+                <Sparkles className="w-7 h-7 text-white" strokeWidth={2} />
+              </div>
+              {/* Online/Offline indicator */}
+              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
+                backendStatus === 'online' ? 'bg-green-500' : backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+              }`}></div>
             </div>
-            {/* Online indicator */}
-            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+            <div>
+              <h1 className="text-gray-900 flex items-center gap-2">
+                Lucy
+                {backendStatus === 'checking' && (
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                )}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {backendStatus === 'online' ? 'AI Assistant' : backendStatus === 'offline' ? 'Offline' : 'Connecting...'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-gray-900">Lucy</h1>
-            <p className="text-sm text-gray-500">Your AI Assistant</p>
-          </div>
+
+          {/* New conversation button */}
+          {messages.length > 1 && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleNewConversation}
+              className="px-3 py-2 bg-white rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              New Chat
+            </motion.button>
+          )}
         </div>
+
+        {/* Backend offline warning */}
+        {backendStatus === 'offline' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"
+          >
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="flex-1">Backend service is offline. Start the server to use AI features.</span>
+            <button
+              onClick={checkBackendHealth}
+              className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Chat Messages */}
@@ -178,7 +355,8 @@ export default function LucyPage() {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleQuickAction(action.query)}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left group"
+                  disabled={backendStatus !== 'online'}
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className={`w-10 h-10 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mb-3 shadow-md group-hover:shadow-lg transition-shadow`}>
                     <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
@@ -190,29 +368,31 @@ export default function LucyPage() {
             </div>
 
             {/* Recent Conversations */}
-            <div className="mt-6">
-              <p className="text-sm text-gray-600 mb-3">Recent conversations:</p>
-              <div className="space-y-2">
-                {recentConversations.map((conv, index) => (
-                  <motion.button
-                    key={conv.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => handleQuickAction(conv.preview)}
-                    className="w-full bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm border border-gray-100 text-left group"
-                  >
-                    <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-700 truncate">{conv.preview}</p>
-                    </div>
-                    <span className="text-xs text-gray-400">{conv.time}</span>
-                  </motion.button>
-                ))}
+            {recentConversations.length > 0 && (
+              <div className="mt-6">
+                <p className="text-sm text-gray-600 mb-3">Recent conversations:</p>
+                <div className="space-y-2">
+                  {recentConversations.map((conv, index) => (
+                    <motion.button
+                      key={conv.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.05 }}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => handleLoadConversation(conv.id)}
+                      className="w-full bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm border border-gray-100 text-left group"
+                    >
+                      <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-700 truncate">{conv.preview}</p>
+                      </div>
+                      <span className="text-xs text-gray-400">{conv.time}</span>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         )}
 
@@ -242,10 +422,17 @@ export default function LucyPage() {
                 }`}
               >
                 <p className="text-sm whitespace-pre-line">{message.text}</p>
+                {message.isStreaming && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="inline-block w-2 h-4 bg-blue-500 ml-1 rounded"
+                  />
+                )}
               </div>
-              
+
               {/* Suggestions */}
-              {message.suggestions && message.suggestions.length > 0 && (
+              {message.suggestions && message.suggestions.length > 0 && !message.isStreaming && (
                 <div className="mt-2 space-y-1.5">
                   {message.suggestions.map((suggestion, idx) => (
                     <motion.button
@@ -256,7 +443,8 @@ export default function LucyPage() {
                       whileHover={{ scale: 1.02, x: 2 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleQuickAction(suggestion)}
-                      className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group border border-blue-100"
+                      disabled={isStreaming || backendStatus !== 'online'}
+                      className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group border border-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Zap className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
                       <span className="text-sm text-blue-700 flex-1">{suggestion}</span>
@@ -268,6 +456,20 @@ export default function LucyPage() {
             </div>
           </motion.div>
         ))}
+
+        {/* Error message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"
+          >
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <p>{error}</p>
+          </motion.div>
+        )}
+
+        <div ref={chatEndRef} />
       </div>
 
       {/* Input */}
@@ -277,18 +479,23 @@ export default function LucyPage() {
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="Ask Lucy anything..."
-            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSendMessage()}
+            placeholder={backendStatus === 'online' ? 'Ask Lucy anything...' : 'Backend offline...'}
+            disabled={isStreaming || backendStatus !== 'online'}
+            className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={!isStreaming && backendStatus === 'online' ? { scale: 1.05 } : {}}
+            whileTap={!isStreaming && backendStatus === 'online' ? { scale: 0.95 } : {}}
             onClick={() => handleSendMessage()}
-            disabled={!inputMessage.trim()}
+            disabled={!inputMessage.trim() || isStreaming || backendStatus !== 'online'}
             className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-5 h-5 text-white" />
+            {isStreaming ? (
+              <Loader2 className="w-5 h-5 text-white animate-spin" />
+            ) : (
+              <Send className="w-5 h-5 text-white" />
+            )}
           </motion.button>
         </div>
       </div>
