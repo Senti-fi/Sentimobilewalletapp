@@ -40,7 +40,7 @@ app.post('/api/chat', async (req, res) => {
 
     // Create streaming response from Claude
     const stream = await anthropic.messages.stream({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((msg: any) => ({
@@ -81,7 +81,7 @@ app.post('/api/suggestions', async (req, res) => {
     const { lastMessage, walletContext } = req.body;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022', // Use Haiku for quick suggestions (cheaper & faster)
+      model: 'claude-haiku-4-5-20251001', // Use Haiku for quick suggestions (cheaper & faster)
       max_tokens: 150,
       system: `You are Lucy, an AI assistant for Senti wallet. Generate 2-3 short, actionable follow-up suggestions based on the user's last message. Return ONLY a JSON array of strings, no other text.`,
       messages: [
@@ -116,7 +116,7 @@ app.post('/api/check-action', async (req, res) => {
     const { message, walletContext } = req.body;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 100,
       system: `You are Lucy, an AI assistant for Senti wallet. Determine if the user's message requires executing an action. Return ONLY a JSON object with this format: {"action": "send" | "deposit" | "swap" | "none", "confidence": 0-1}`,
       messages: [
