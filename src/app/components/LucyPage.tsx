@@ -72,6 +72,7 @@ export default function LucyPage({
   const [retryCount, setRetryCount] = useState(0);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recentConversations = chatStorage.getRecentConversations(3);
 
   // Load conversation history on mount
@@ -126,9 +127,23 @@ export default function LucyPage({
     };
   }, [backendStatus]);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change (debounced for performance)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Clear any existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Debounce scrolling to avoid excessive reflows during streaming
+    scrollTimeoutRef.current = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, [messages]);
 
   // Save conversation whenever messages change
@@ -328,7 +343,7 @@ export default function LucyPage({
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -345,7 +360,7 @@ export default function LucyPage({
               </div>
             </div>
             <div>
-              <h1 className="text-gray-900 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 Lucy
               </h1>
               <p className="text-sm text-gray-500">
@@ -369,7 +384,7 @@ export default function LucyPage({
       </motion.div>
 
       {/* Chat Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-28 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {messages.length === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -377,7 +392,7 @@ export default function LucyPage({
             className="space-y-3 mb-4"
           >
             <p className="text-sm text-gray-600 mb-3">Quick actions:</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {quickActions.map((action, index) => (
                 <motion.button
                   key={action.id}
@@ -436,7 +451,7 @@ export default function LucyPage({
             transition={{ delay: index * 0.05 }}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className="max-w-[85%]">
+            <div className="max-w-[90%] sm:max-w-[85%] md:max-w-[80%]">
               {message.type === 'lucy' && (
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-6 h-6 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
@@ -463,26 +478,36 @@ export default function LucyPage({
               </div>
 
               {/* Suggestions */}
-              {message.suggestions && message.suggestions.length > 0 && !message.isStreaming && (
-                <div className="mt-2 space-y-1.5">
-                  {message.suggestions.map((suggestion, idx) => (
-                    <motion.button
-                      key={idx}
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 + idx * 0.1 }}
-                      whileHover={{ scale: 1.02, x: 2 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleQuickAction(suggestion)}
-                      disabled={isStreaming}
-                      className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group border border-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Zap className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm text-blue-700 flex-1">{suggestion}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
-                    </motion.button>
-                  ))}
-                </div>
+              {!message.isStreaming && (
+                <>
+                  {isLoadingSuggestions && index === messages.length - 1 && (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                      <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                      <span className="text-sm text-blue-700">Generating suggestions...</span>
+                    </div>
+                  )}
+                  {message.suggestions && message.suggestions.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {message.suggestions.map((suggestion, idx) => (
+                        <motion.button
+                          key={idx}
+                          initial={{ opacity: 0, x: -5 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 + idx * 0.1 }}
+                          whileHover={{ scale: 1.02, x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleQuickAction(suggestion)}
+                          disabled={isStreaming}
+                          className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group border border-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                          <span className="text-sm text-blue-700 flex-1">{suggestion}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </motion.div>
@@ -504,13 +529,13 @@ export default function LucyPage({
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-6 pb-28 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
+      <div className="flex-shrink-0 px-6 pb-24 pt-3 bg-white/50 backdrop-blur-lg border-t border-gray-100">
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !isStreaming && handleSendMessage()}
+            onKeyDown={(e) => e.key === 'Enter' && !isStreaming && handleSendMessage()}
             placeholder="Ask Lucy anything..."
             disabled={isStreaming}
             className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"

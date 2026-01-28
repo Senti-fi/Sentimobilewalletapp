@@ -90,6 +90,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const [messageInput, setMessageInput] = useState('');
   const [showSendModal, setShowSendModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages from localStorage
   const loadMessages = (): Record<string, Message[]> => {
@@ -160,9 +161,23 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     localStorage.setItem('senti_messages', JSON.stringify(messagesByContact));
   }, [messagesByContact]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (debounced for performance)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Clear any existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Debounce scrolling to avoid excessive reflows
+    scrollTimeoutRef.current = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, [messages]);
 
   // Simulate contact responses with contextual awareness
@@ -522,7 +537,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   // Contacts List View
   if (!selectedContact) {
     return (
-      <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -548,7 +563,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
         </div>
 
         {/* Contacts List */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-28 space-y-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 space-y-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-gray-900">Contacts</h3>
             <span className="text-xs text-gray-500">{filteredContacts.length} contacts</span>
@@ -593,7 +608,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
   // Chat View
   return (
-    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
       {/* Chat Header - Fixed */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -638,7 +653,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
           >
             {message.type === 'text' ? (
               <div
-                className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
+                className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] px-4 py-2.5 rounded-2xl ${
                   message.sender === 'me'
                     ? 'bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 text-white'
                     : 'bg-white text-gray-900 border border-gray-100'
@@ -650,7 +665,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                 </p>
               </div>
             ) : message.type === 'request' ? (
-              <div className="max-w-[75%] px-4 py-3 rounded-2xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+              <div className="max-w-[85%] sm:max-w-[75%] md:max-w-[70%] px-4 py-3 rounded-2xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-4 h-4 text-purple-600" />
                   <p className="text-sm text-gray-900">Payment Request</p>
@@ -689,7 +704,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
               </div>
             ) : (
               <div
-                className={`max-w-[75%] px-4 py-3 rounded-2xl border-2 ${
+                className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] px-4 py-3 rounded-2xl border-2 ${
                   message.status === 'accepted'
                     ? message.sender === 'me'
                       ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
@@ -750,7 +765,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       </div>
 
       {/* Message Input - Fixed at bottom */}
-      <div className="flex-shrink-0 px-6 pb-28 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
+      <div className="flex-shrink-0 px-6 pb-24 pt-3 bg-white/80 backdrop-blur-xl border-t border-gray-200 z-10">
         <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -765,7 +780,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
             type="text"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Type a message..."
             className="flex-1 px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
