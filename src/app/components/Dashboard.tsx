@@ -32,6 +32,7 @@ import Logo from './Logo';
 import SavingsPage from './SavingsPage';
 import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
+import PortfolioAnalyticsPage from './PortfolioAnalyticsPage';
 import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
@@ -130,7 +131,7 @@ export default function Dashboard() {
     return iconMap[iconName] || Send;
   };
 
-  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'analytics' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 13170.50));
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -605,8 +606,8 @@ export default function Dashboard() {
 
   return (
     <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
-      {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy */}
-      {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && (
+      {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy/analytics */}
+      {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && activeTab !== 'analytics' && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -647,7 +648,7 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={`flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy'
+        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
           : 'overflow-y-auto pb-24 px-6 space-y-5' // Full scrolling for regular tabs with reduced padding
       }`}>
@@ -824,6 +825,15 @@ export default function Dashboard() {
             totalRewards={2300}
           />
         )}
+
+        {activeTab === 'analytics' && (
+          <PortfolioAnalyticsPage
+            assets={assets}
+            totalBalance={totalBalance}
+            vaultBalance={vaultBalance}
+            onClose={() => setActiveTab('home')}
+          />
+        )}
       </div>
 
       {/* Floating Bottom Navigation */}
@@ -836,10 +846,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-around">
             {[
               { id: 'home', label: 'Home', icon: Home },
+              { id: 'analytics', label: 'Analytics', icon: Activity },
               { id: 'savings', label: 'Savings', icon: PiggyBank },
               { id: 'lucy', label: 'Lucy', icon: Sparkles },
               { id: 'spend', label: 'Spend', icon: CreditCard },
-              { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
