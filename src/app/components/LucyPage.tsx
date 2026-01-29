@@ -10,16 +10,46 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  ArrowUpDown,
+  LockKeyhole,
+  Download,
+  DollarSign,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import lucyService, { Message, WalletContext } from '../../services/lucyService';
 import chatStorage from '../../services/chatStorage';
+
+// Quick action button interface
+interface QuickActionButton {
+  id: string;
+  label: string;
+  icon: any;
+  action: () => void;
+  variant?: 'primary' | 'secondary' | 'success';
+}
+
+// Extended message interface to include action buttons and special content
+interface ExtendedMessage extends Message {
+  actionButtons?: QuickActionButton[];
+  balanceDisplay?: boolean;
+}
 
 interface LucyPageProps {
   walletContext?: WalletContext;
   onOpenSendModal?: () => void;
   onOpenDepositModal?: () => void;
   onOpenSwapModal?: () => void;
+  onAddTransaction?: (transaction: {
+    merchant: string;
+    category: string;
+    amount: number;
+    icon: any;
+    color: string;
+    bg: string;
+    type: 'send' | 'vault' | 'investment' | 'swap' | 'internal' | 'savings';
+  }) => void;
+  onVaultDeposit?: (amount: number, asset: string) => void;
+  onVaultWithdraw?: (amount: number, asset: string) => void;
 }
 
 const quickActions = [
@@ -32,24 +62,38 @@ const quickActions = [
   },
   {
     id: '2',
-    title: 'Best Vaults',
-    icon: TrendingUp,
-    query: 'Show me the best vault options',
-    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-  },
-  {
-    id: '3',
     title: 'Send Money',
     icon: Send,
     query: 'I want to send money',
     gradient: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
+    id: '3',
+    title: 'Best Vaults',
+    icon: TrendingUp,
+    query: 'Show me the best vault options to grow my money',
+    gradient: 'from-green-500 via-emerald-500 to-teal-600',
+  },
+  {
     id: '4',
+    title: 'Deposit to Vault',
+    icon: LockKeyhole,
+    query: 'I want to put money in a vault',
+    gradient: 'from-purple-500 via-purple-600 to-indigo-600',
+  },
+  {
+    id: '5',
+    title: 'Swap Assets',
+    icon: ArrowUpDown,
+    query: 'I want to swap my assets',
+    gradient: 'from-orange-500 via-red-500 to-pink-600',
+  },
+  {
+    id: '6',
     title: 'Explain Fees',
     icon: HelpCircle,
     query: 'Explain network fees to me',
-    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
+    gradient: 'from-gray-500 via-gray-600 to-slate-700',
   },
 ];
 
@@ -58,8 +102,11 @@ export default function LucyPage({
   onOpenSendModal,
   onOpenDepositModal,
   onOpenSwapModal,
+  onAddTransaction,
+  onVaultDeposit,
+  onVaultWithdraw,
 }: LucyPageProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -237,14 +284,28 @@ export default function LucyPage({
       async () => {
         setIsStreaming(false);
 
-        // Mark message as no longer streaming
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === lucyMessageId
-              ? { ...msg, isStreaming: false }
-              : msg
-          )
-        );
+        // Mark message as no longer streaming and add action buttons
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => {
+            if (msg.id === lucyMessageId) {
+              // Get Lucy's response text for context
+              const lucyResponseText = msg.text;
+              const actionButtons = createActionButtons(messageText, lucyResponseText);
+              const isBalanceQuery = messageText.toLowerCase().includes('balance') ||
+                                     messageText.toLowerCase().includes('how much') ||
+                                     messageText.toLowerCase().includes('total');
+
+              return {
+                ...msg,
+                isStreaming: false,
+                actionButtons: actionButtons.length > 0 ? actionButtons : undefined,
+                balanceDisplay: isBalanceQuery,
+              };
+            }
+            return msg;
+          });
+          return updatedMessages;
+        });
 
         // Generate suggestions
         setIsLoadingSuggestions(true);
@@ -288,6 +349,80 @@ export default function LucyPage({
         );
       }
     );
+  };
+
+  // Helper to create action buttons based on message context
+  const createActionButtons = (messageText: string, lucyResponse: string = ''): QuickActionButton[] => {
+    const buttons: QuickActionButton[] = [];
+    const lowerMessage = messageText.toLowerCase();
+    const lowerResponse = lucyResponse.toLowerCase();
+    const combined = lowerMessage + ' ' + lowerResponse;
+
+    // Check for send money intent
+    if (combined.includes('send') || combined.includes('transfer') ||
+        combined.includes('pay') || lowerMessage.includes('money to')) {
+      buttons.push({
+        id: 'send-action',
+        label: 'Send Money',
+        icon: Send,
+        action: () => {
+          onOpenSendModal?.();
+          // Log that Lucy helped with this action
+          if (onAddTransaction) {
+            setTimeout(() => {
+              // This will be called after modal is used
+            }, 100);
+          }
+        },
+        variant: 'primary',
+      });
+    }
+
+    // Check for deposit/vault intent
+    if (combined.includes('vault') || combined.includes('deposit') ||
+        combined.includes('save') || combined.includes('grow') ||
+        combined.includes('earn') || combined.includes('apy')) {
+      buttons.push({
+        id: 'deposit-action',
+        label: 'Deposit to Vault',
+        icon: LockKeyhole,
+        action: () => {
+          onOpenDepositModal?.();
+        },
+        variant: 'success',
+      });
+    }
+
+    // Check for swap intent
+    if (combined.includes('swap') || combined.includes('exchange') ||
+        combined.includes('convert') || combined.includes('trade')) {
+      buttons.push({
+        id: 'swap-action',
+        label: 'Swap Assets',
+        icon: ArrowUpDown,
+        action: () => {
+          onOpenSwapModal?.();
+        },
+        variant: 'secondary',
+      });
+    }
+
+    // Check for receive intent
+    if (combined.includes('receive') || combined.includes('get money') ||
+        combined.includes('address') || lowerMessage.includes('wallet address')) {
+      buttons.push({
+        id: 'receive-action',
+        label: 'Receive Money',
+        icon: Download,
+        action: () => {
+          // Could open receive modal here
+          console.log('Receive action triggered');
+        },
+        variant: 'secondary',
+      });
+    }
+
+    return buttons;
   };
 
   const checkAndExecuteAction = async (message: string) => {
@@ -388,7 +523,7 @@ export default function LucyPage({
             className="space-y-3 mb-4"
           >
             <p className="text-sm text-gray-600 mb-3">Quick actions:</p>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {quickActions.map((action, index) => (
                 <motion.button
                   key={action.id}
@@ -470,7 +605,82 @@ export default function LucyPage({
                     className="inline-block w-2 h-4 bg-blue-500 ml-1 rounded"
                   />
                 )}
+
+                {/* Visual Balance Display */}
+                {!message.isStreaming && message.balanceDisplay && walletContext.totalBalance !== undefined && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-4 space-y-3"
+                  >
+                    {/* Total Balance Card */}
+                    <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-xl p-4 text-white shadow-lg">
+                      <p className="text-xs opacity-90 mb-1">Total Balance</p>
+                      <p className="text-3xl font-bold">${walletContext.totalBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    </div>
+
+                    {/* Asset Breakdown */}
+                    {walletContext.balances && (
+                      <div className="grid grid-cols-1 gap-2">
+                        {Object.entries(walletContext.balances).map(([asset, balance]) => {
+                          if (!balance || balance === 0) return null;
+
+                          const assetColors: { [key: string]: string } = {
+                            usdc: 'from-blue-500 to-blue-600',
+                            usdt: 'from-teal-500 to-cyan-500',
+                            sol: 'from-purple-600 to-indigo-700',
+                          };
+
+                          return (
+                            <div
+                              key={asset}
+                              className={`bg-gradient-to-r ${assetColors[asset.toLowerCase()] || 'from-gray-500 to-gray-600'} rounded-lg p-3 flex items-center justify-between text-white shadow-md`}
+                            >
+                              <div>
+                                <p className="text-xs opacity-90">{asset.toUpperCase()}</p>
+                                <p className="text-lg font-semibold">{balance.toLocaleString()}</p>
+                              </div>
+                              <Wallet className="w-5 h-5 opacity-75" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
+
+              {/* Quick Action Buttons */}
+              {!message.isStreaming && message.actionButtons && message.actionButtons.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-3 flex flex-wrap gap-2"
+                >
+                  {message.actionButtons.map((button) => {
+                    const variantStyles = {
+                      primary: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700',
+                      secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300',
+                      success: 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700',
+                    };
+
+                    return (
+                      <motion.button
+                        key={button.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={button.action}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm shadow-md transition-all ${variantStyles[button.variant || 'primary']}`}
+                      >
+                        <button.icon className="w-4 h-4" />
+                        {button.label}
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
 
               {/* Suggestions */}
               {!message.isStreaming && (

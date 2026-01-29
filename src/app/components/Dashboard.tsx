@@ -794,6 +794,9 @@ export default function Dashboard() {
             onOpenSendModal={() => setOpenModal('send')}
             onOpenDepositModal={() => setOpenModal('grow')}
             onOpenSwapModal={() => setOpenModal('swap')}
+            onAddTransaction={addTransaction}
+            onVaultDeposit={handleVaultDeposit}
+            onVaultWithdraw={handleVaultWithdraw}
           />
         )}
 
