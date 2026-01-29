@@ -26,34 +26,30 @@ const quickActions = [
   {
     id: '1',
     title: 'Check Balance',
-    description: 'View your total portfolio',
     icon: Wallet,
     query: 'What\'s my total balance?',
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
     id: '2',
     title: 'Best Vaults',
-    description: 'Find top earning options',
     icon: TrendingUp,
     query: 'Show me the best vault options',
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
     id: '3',
     title: 'Send Money',
-    description: 'Transfer to someone',
     icon: Send,
     query: 'I want to send money',
-    gradient: 'from-green-500 to-emerald-500',
+    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
   },
   {
     id: '4',
     title: 'Explain Fees',
-    description: 'Understand gas costs',
     icon: HelpCircle,
     query: 'Explain network fees to me',
-    gradient: 'from-orange-500 to-red-500',
+    gradient: 'from-cyan-400 via-blue-500 to-blue-700',
   },
 ];
 
@@ -399,16 +395,15 @@ export default function LucyPage({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 + index * 0.05 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => handleQuickAction(action.query)}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left group"
+                  className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
                 >
-                  <div className={`w-10 h-10 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mb-3 shadow-md group-hover:shadow-lg transition-shadow`}>
+                  <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center shadow-md`}>
                     <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
                   </div>
-                  <p className="text-sm text-gray-900 mb-1">{action.title}</p>
-                  <p className="text-xs text-gray-500">{action.description}</p>
+                  <span className="text-xs text-gray-700">{action.title}</span>
                 </motion.button>
               ))}
             </div>
