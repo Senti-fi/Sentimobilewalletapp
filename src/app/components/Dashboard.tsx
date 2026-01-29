@@ -850,6 +850,7 @@ export default function Dashboard() {
               { id: 'savings', label: 'Savings', icon: PiggyBank },
               { id: 'lucy', label: 'Lucy', icon: Sparkles },
               { id: 'spend', label: 'Spend', icon: CreditCard },
+              { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
