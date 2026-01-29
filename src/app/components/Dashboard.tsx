@@ -593,6 +593,13 @@ export default function Dashboard() {
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'grow' as ModalType,
     },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: Activity,
+      gradient: 'from-purple-400 via-indigo-500 to-indigo-700',
+      modal: null,
+    },
   ];
 
   const handleModalClose = () => {
@@ -697,7 +704,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+              className="grid grid-cols-3 sm:grid-cols-5 gap-3"
             >
               {quickActions.map((action, index) => (
                 <motion.button
@@ -707,7 +714,7 @@ export default function Dashboard() {
                   transition={{ delay: 0.3 + index * 0.05 }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setOpenModal(action.modal)}
+                  onClick={() => action.id === 'analytics' ? setActiveTab('analytics') : setOpenModal(action.modal)}
                   className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
                 >
                   <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center shadow-md`}>
@@ -846,7 +853,6 @@ export default function Dashboard() {
           <div className="flex items-center justify-around">
             {[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'analytics', label: 'Analytics', icon: Activity },
               { id: 'savings', label: 'Savings', icon: PiggyBank },
               { id: 'lucy', label: 'Lucy', icon: Sparkles },
               { id: 'spend', label: 'Spend', icon: CreditCard },
