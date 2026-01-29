@@ -712,7 +712,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+              className="grid grid-cols-2 sm:grid-cols-5 gap-3"
             >
               {quickActions.map((action, index) => (
                 <motion.button
@@ -733,7 +733,7 @@ export default function Dashboard() {
               ))}
 
               {/* More Button with Dropdown */}
-              <div className="relative">
+              <div className="relative col-span-2 sm:col-span-1">
                 <motion.button
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -763,7 +763,7 @@ export default function Dashboard() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full mt-2 right-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                      className="absolute top-full mt-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
                     >
                       {moreActions.map((action, index) => (
                         <motion.button
