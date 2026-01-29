@@ -54,6 +54,7 @@ interface SavingsPageProps {
   onSavingsLock?: (amount: number, days: number, apy: string) => void;
   onSavingsUnlock?: (amount: number, penalty: number) => void;
   onGoalContribution?: (amount: number, goalName: string) => void;
+  onExploreVaults?: () => void;
 }
 
 export default function SavingsPage({
@@ -63,6 +64,7 @@ export default function SavingsPage({
   onSavingsLock,
   onSavingsUnlock,
   onGoalContribution,
+  onExploreVaults,
 }: SavingsPageProps) {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
@@ -327,7 +329,7 @@ export default function SavingsPage({
   const sortedGoals = getSortedGoals();
 
   return (
-    <div className="h-full overflow-y-auto pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header - Compact */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
         <motion.div
@@ -909,8 +911,7 @@ export default function SavingsPage({
           onClose={() => setShowLockedSavings(false)}
           onCreate={handleCreateLockedSaving}
           onExploreVaults={() => {
-            // TODO: Navigate to Vault page when implemented
-            console.log('Navigate to Vault page');
+            onExploreVaults?.();
           }}
         />
       )}
