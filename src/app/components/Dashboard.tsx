@@ -639,7 +639,7 @@ export default function Dashboard() {
           </motion.div>
           <div>
             <p className="text-xs text-gray-500">Welcome back</p>
-            <p className="text-gray-900">{username}</p>
+            <p className="text-gray-900">{username}<span className="text-blue-500">.senti</span></p>
           </div>
         </div>
         <div className="flex items-center gap-1">
