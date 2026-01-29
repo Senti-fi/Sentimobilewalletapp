@@ -54,6 +54,7 @@ interface SavingsPageProps {
   onSavingsLock?: (amount: number, days: number, apy: string) => void;
   onSavingsUnlock?: (amount: number, penalty: number) => void;
   onGoalContribution?: (amount: number, goalName: string) => void;
+  onExploreVaults?: () => void;
 }
 
 export default function SavingsPage({
@@ -63,6 +64,7 @@ export default function SavingsPage({
   onSavingsLock,
   onSavingsUnlock,
   onGoalContribution,
+  onExploreVaults,
 }: SavingsPageProps) {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
@@ -909,8 +911,7 @@ export default function SavingsPage({
           onClose={() => setShowLockedSavings(false)}
           onCreate={handleCreateLockedSaving}
           onExploreVaults={() => {
-            // TODO: Navigate to Vault page when implemented
-            console.log('Navigate to Vault page');
+            onExploreVaults?.();
           }}
         />
       )}
