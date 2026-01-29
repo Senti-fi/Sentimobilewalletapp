@@ -16,8 +16,9 @@ export default function App() {
     setTimeout(() => {
       const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed');
       const hasWallet = localStorage.getItem('senti_wallet_address');
-      
-      if (hasCompletedOnboarding && hasWallet) {
+      const hasUserId = localStorage.getItem('senti_user_id');
+
+      if (hasCompletedOnboarding && hasWallet && hasUserId) {
         setAppState('dashboard');
         setIsWalletCreated(true);
       } else if (hasCompletedOnboarding) {
@@ -33,10 +34,17 @@ export default function App() {
     setAppState('signup');
   };
 
-  const handleSignUpComplete = () => {
-    // Simulate wallet creation
+  const handleSignUpComplete = (userData: { email: string; username: string; userId: string }) => {
+    // Store user data
+    localStorage.setItem('senti_user_id', userData.userId);
+    localStorage.setItem('senti_username', userData.username);
+    localStorage.setItem('senti_user_email', userData.email);
+    localStorage.setItem('senti_user_handle', `@${userData.username}.senti`);
+
+    // Generate wallet address
     const mockWalletAddress = '0x' + Math.random().toString(16).substring(2, 42);
     localStorage.setItem('senti_wallet_address', mockWalletAddress);
+
     setIsWalletCreated(true);
     setAppState('dashboard');
   };

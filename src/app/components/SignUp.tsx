@@ -1,30 +1,70 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, Sparkles } from 'lucide-react';
+import { Mail, Lock, Sparkles, User, AlertCircle } from 'lucide-react';
 
 interface SignUpProps {
-  onComplete: () => void;
+  onComplete: (userData: { email: string; username: string; userId: string }) => void;
 }
+
+// Generate a unique user ID
+const generateUserId = (): string => {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `SENTI-${timestamp}-${randomPart}`;
+};
+
+// Validate username (alphanumeric and underscores only, 3-20 chars)
+const isValidUsername = (username: string): boolean => {
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  return usernameRegex.test(username);
+};
 
 export default function SignUp({ onComplete }: SignUpProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleUsernameChange = (value: string) => {
+    // Remove spaces and convert to lowercase
+    const cleanedUsername = value.toLowerCase().replace(/\s/g, '');
+    setUsername(cleanedUsername);
+
+    if (cleanedUsername && !isValidUsername(cleanedUsername)) {
+      setUsernameError('Username must be 3-20 characters (letters, numbers, underscores only)');
+    } else {
+      setUsernameError('');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidUsername(username)) {
+      setUsernameError('Please enter a valid username');
+      return;
+    }
+
     setIsCreating(true);
+
+    // Generate unique user ID
+    const userId = generateUserId();
 
     // Simulate wallet creation with delay
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    onComplete();
+
+    onComplete({ email, username, userId });
   };
 
   const handleSocialSignIn = async (provider: string) => {
+    // For social sign-in, generate a username from provider
+    const generatedUsername = `user_${Math.random().toString(36).substring(2, 10)}`;
+    const userId = generateUserId();
+
     setIsCreating(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    onComplete();
+    onComplete({ email: `${generatedUsername}@${provider}.com`, username: generatedUsername, userId });
   };
 
   if (isCreating) {
@@ -106,6 +146,35 @@ export default function SignUp({ onComplete }: SignUpProps) {
 
           {/* Sign Up Form */}
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+            <div>
+              <label className="block text-gray-700 mb-2">Username</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  placeholder="Choose a username"
+                  required
+                  className={`w-full pl-12 pr-20 py-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    usernameError ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">.senti</span>
+              </div>
+              {usernameError && (
+                <div className="flex items-center gap-1 mt-1 text-red-500 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{usernameError}</span>
+                </div>
+              )}
+              {username && !usernameError && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Your handle will be: <span className="text-blue-600 font-medium">@{username}.senti</span>
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="block text-gray-700 mb-2">Email</label>
               <div className="relative">

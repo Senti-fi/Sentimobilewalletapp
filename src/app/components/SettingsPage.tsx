@@ -35,17 +35,30 @@ export default function SettingsPage({
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState(false);
 
-  const walletId = '0x92d7...a81f';
-  const userEmail = 'oxsenti@mail.com';
-  const userPhone = '+1 (415) 555-0189';
-  const username = 'OxSenti';
-  const handle = '@oxsenti';
+  // Load user data from localStorage
+  const fullWalletAddress = localStorage.getItem('senti_wallet_address') || '0x0000000000000000000000000000000000000000';
+  const walletId = fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4);
+  const userEmail = localStorage.getItem('senti_user_email') || 'user@mail.com';
+  const userPhone = '+1 (415) 555-0189'; // Phone remains as placeholder
+  const username = localStorage.getItem('senti_username') || 'User';
+  const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
+  const userId = localStorage.getItem('senti_user_id') || '';
+
+  // Get user initials from username
+  const userInitials = username.slice(0, 2).toUpperCase();
 
   const handleCopyWallet = () => {
-    navigator.clipboard.writeText(walletId);
+    navigator.clipboard.writeText(fullWalletAddress);
     setCopiedWallet(true);
     setTimeout(() => setCopiedWallet(false), 2000);
+  };
+
+  const handleCopyUserId = () => {
+    navigator.clipboard.writeText(userId);
+    setCopiedUserId(true);
+    setTimeout(() => setCopiedUserId(false), 2000);
   };
 
   const handleSignOut = () => {
@@ -81,7 +94,7 @@ export default function SettingsPage({
         >
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
-              OS
+              {userInitials}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -169,7 +182,7 @@ export default function SettingsPage({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-900 font-mono">{walletId}</p>
-                <p className="text-xs text-gray-500">Wallet ID</p>
+                <p className="text-xs text-gray-500">Wallet Address</p>
               </div>
               <button
                 onClick={handleCopyWallet}
@@ -182,6 +195,29 @@ export default function SettingsPage({
                 )}
               </button>
             </div>
+
+            {/* User ID */}
+            {userId && (
+              <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-cyan-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 font-mono">{userId}</p>
+                  <p className="text-xs text-gray-500">Unique User ID</p>
+                </div>
+                <button
+                  onClick={handleCopyUserId}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  {copiedUserId ? (
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 
