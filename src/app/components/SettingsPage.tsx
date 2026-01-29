@@ -14,6 +14,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useState } from 'react';
+import { useClerk } from '@clerk/clerk-react';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
@@ -31,6 +32,7 @@ export default function SettingsPage({
   activeGoals = 4,
   totalRewards = 2300
 }: SettingsPageProps) {
+  const { signOut } = useClerk();
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
@@ -45,6 +47,7 @@ export default function SettingsPage({
   const username = localStorage.getItem('senti_username') || 'User';
   const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
   const userId = localStorage.getItem('senti_user_id') || '';
+  const userImage = localStorage.getItem('senti_user_image') || '';
 
   // Get user initials from username
   const userInitials = username.slice(0, 2).toUpperCase();
@@ -61,10 +64,21 @@ export default function SettingsPage({
     setTimeout(() => setCopiedUserId(false), 2000);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out? Your wallet will remain safe.')) {
-      localStorage.clear();
-      window.location.reload();
+      try {
+        // Sign out from Clerk
+        await signOut();
+        // Clear local storage
+        localStorage.clear();
+        // Reload the page
+        window.location.reload();
+      } catch (error) {
+        console.error('Sign out error:', error);
+        // Fallback: just clear localStorage and reload
+        localStorage.clear();
+        window.location.reload();
+      }
     }
   };
 
@@ -93,9 +107,17 @@ export default function SettingsPage({
           className="bg-white rounded-3xl p-6 shadow-sm"
         >
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
-              {userInitials}
-            </div>
+            {userImage ? (
+              <img
+                src={userImage}
+                alt={username}
+                className="w-16 h-16 rounded-2xl object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
+                {userInitials}
+              </div>
+            )}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-gray-900 text-lg font-medium">{username}</h2>
