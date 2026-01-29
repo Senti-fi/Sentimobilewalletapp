@@ -573,6 +573,7 @@ export default function Dashboard() {
       icon: Send,
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'send' as ModalType,
+      action: null as (() => void) | null,
     },
     {
       id: 'receive',
@@ -580,6 +581,7 @@ export default function Dashboard() {
       icon: Download,
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'receive' as ModalType,
+      action: null as (() => void) | null,
     },
     {
       id: 'buy',
@@ -587,6 +589,7 @@ export default function Dashboard() {
       icon: ShoppingBag,
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'swap' as ModalType,
+      action: null as (() => void) | null,
     },
     {
       id: 'vault',
@@ -594,6 +597,15 @@ export default function Dashboard() {
       icon: LockKeyhole,
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'grow' as ModalType,
+      action: null as (() => void) | null,
+    },
+    {
+      id: 'more',
+      label: 'More',
+      icon: MoreHorizontal,
+      gradient: 'from-gray-400 via-gray-500 to-slate-600',
+      modal: null as ModalType,
+      action: () => setActiveTab('analytics'),
     },
   ];
 
@@ -620,7 +632,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
+    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto overflow-x-hidden">
       {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy/analytics */}
       {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && activeTab !== 'analytics' && (
         <motion.div
@@ -662,10 +674,10 @@ export default function Dashboard() {
       )}
 
       {/* Main Content */}
-      <div className={`flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+      <div className={`flex-1 min-h-0 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
         activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
-          : 'overflow-y-auto pb-24 px-6 space-y-5' // Full scrolling for regular tabs with reduced padding
+          : 'overflow-y-auto overflow-x-hidden pb-24 px-6 space-y-5' // Full scrolling for regular tabs with reduced padding
       }`}>
         {activeTab === 'home' && (
           <>
@@ -722,7 +734,13 @@ export default function Dashboard() {
                   transition={{ delay: 0.3 + index * 0.05 }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setOpenModal(action.modal)}
+                  onClick={() => {
+                    if (action.action) {
+                      action.action();
+                    } else if (action.modal) {
+                      setOpenModal(action.modal);
+                    }
+                  }}
                   className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
                 >
                   <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center shadow-md`}>
