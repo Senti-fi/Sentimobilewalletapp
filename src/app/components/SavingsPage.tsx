@@ -327,7 +327,7 @@ export default function SavingsPage({
   const sortedGoals = getSortedGoals();
 
   return (
-    <div className="h-full overflow-y-auto pb-28 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header - Compact */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
         <motion.div

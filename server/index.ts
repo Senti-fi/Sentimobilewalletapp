@@ -2,15 +2,41 @@ import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Get the directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root (one level up from server directory)
+const envPath = path.resolve(__dirname, '..', '.env');
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.error('❌ Error loading .env file:', result.error.message);
+  console.error('Expected .env location:', envPath);
+} else {
+  console.log('✅ Loaded .env from:', envPath);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Anthropic client
+// Initialize Anthropic client with validation
+const apiKey = process.env.ANTHROPIC_API_KEY;
+if (!apiKey || apiKey.trim() === '') {
+  console.error('❌ ANTHROPIC_API_KEY is not set in environment variables!');
+  console.error('Expected .env location:', envPath);
+  console.error('Please ensure .env file exists with a valid ANTHROPIC_API_KEY');
+  console.error('Get your API key from: https://console.anthropic.com/');
+  process.exit(1);
+}
+
+console.log('✅ Anthropic API key loaded successfully');
+
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  apiKey: apiKey,
 });
 
 app.use(cors());
@@ -41,7 +67,7 @@ app.post('/api/chat', async (req, res) => {
     // Create streaming response from Claude
     const stream = await anthropic.messages.stream({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 1024,
+      max_tokens: 512,
       system: systemPrompt,
       messages: messages.map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
@@ -164,9 +190,16 @@ Key features to highlight:
 Personality:
 - Friendly, helpful, and encouraging
 - Use simple language, avoid jargon
-- Be concise but informative
+- Be concise and compact - keep responses short (2-3 sentences max)
 - Celebrate user wins and progress
 - Proactively suggest ways to grow their money
+
+CRITICAL FORMATTING RULES:
+- NEVER use markdown formatting (no asterisks, no bold, no italic)
+- NEVER use special characters for emphasis
+- Use plain text only - write naturally without any markup
+- Keep responses compact and to the point
+- Break long responses into short, digestible sentences
 
 IMPORTANT RULES:
 - Never give specific financial advice or guarantee returns
@@ -174,7 +207,7 @@ IMPORTANT RULES:
 - Be accurate about fees and APY rates
 - If you don't know something, say so
 - Format numbers as USD with $ symbol (e.g., $1,234.56)
-- Use emojis sparingly and appropriately`;
+- Avoid using emojis`;
 
   if (walletContext) {
     return `${basePrompt}

@@ -605,8 +605,8 @@ export default function Dashboard() {
 
   return (
     <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto">
-      {/* Minimalist Header - FIXED at top for all tabs except link/settings */}
-      {activeTab !== 'link' && activeTab !== 'settings' && (
+      {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy */}
+      {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -647,9 +647,9 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={`flex-1 min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-        activeTab === 'link' || activeTab === 'settings'
+        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
-          : 'overflow-y-auto pb-28 px-6 space-y-5' // Full scrolling for regular tabs with extra padding
+          : 'overflow-y-auto pb-24 px-6 space-y-5' // Full scrolling for regular tabs with reduced padding
       }`}>
         {activeTab === 'home' && (
           <>
@@ -696,7 +696,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-4 gap-3"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
             >
               {quickActions.map((action, index) => (
                 <motion.button
