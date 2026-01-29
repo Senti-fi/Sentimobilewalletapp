@@ -856,6 +856,7 @@ export default function Dashboard() {
             onSavingsLock={handleSavingsLock}
             onSavingsUnlock={handleSavingsUnlock}
             onGoalContribution={handleGoalContribution}
+            onExploreVaults={() => setOpenModal('grow')}
           />
         )}
 
