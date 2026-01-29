@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
-import { 
-  Home, 
-  TrendingUp, 
-  ArrowLeftRight, 
+import {
+  Home,
+  TrendingUp,
+  ArrowLeftRight,
   Wallet as WalletIcon,
   Send,
   Download,
@@ -19,7 +19,8 @@ import {
   Sparkles,
   User,
   Activity,
-  MessageCircle
+  MessageCircle,
+  MoreHorizontal
 } from 'lucide-react';
 import SendModal from './SendModal';
 import ReceiveModal from './ReceiveModal';
@@ -133,6 +134,7 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'analytics' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 13170.50));
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
@@ -593,12 +595,18 @@ export default function Dashboard() {
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
       modal: 'grow' as ModalType,
     },
+  ];
+
+  const moreActions = [
     {
       id: 'analytics',
       label: 'Analytics',
       icon: Activity,
-      gradient: 'from-purple-400 via-indigo-500 to-indigo-700',
-      modal: null,
+      description: 'View portfolio insights',
+      action: () => {
+        setShowMoreMenu(false);
+        setActiveTab('analytics');
+      },
     },
   ];
 
@@ -704,7 +712,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-3 sm:grid-cols-5 gap-3"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
             >
               {quickActions.map((action, index) => (
                 <motion.button
@@ -714,7 +722,7 @@ export default function Dashboard() {
                   transition={{ delay: 0.3 + index * 0.05 }}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => action.id === 'analytics' ? setActiveTab('analytics') : setOpenModal(action.modal)}
+                  onClick={() => setOpenModal(action.modal)}
                   className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
                 >
                   <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center shadow-md`}>
@@ -723,6 +731,61 @@ export default function Dashboard() {
                   <span className="text-xs text-gray-700">{action.label}</span>
                 </motion.button>
               ))}
+
+              {/* More Button with Dropdown */}
+              <div className="relative">
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + quickActions.length * 0.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 w-full"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-md">
+                    <MoreHorizontal className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <span className="text-xs text-gray-700">More</span>
+                </motion.button>
+
+                {/* Dropdown Menu */}
+                {showMoreMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowMoreMenu(false)}
+                    />
+
+                    {/* Menu */}
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full mt-2 right-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                    >
+                      {moreActions.map((action, index) => (
+                        <motion.button
+                          key={action.id}
+                          whileHover={{ backgroundColor: 'rgba(249, 250, 251, 1)' }}
+                          onClick={action.action}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-0"
+                        >
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 via-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center">
+                            <action.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{action.label}</p>
+                            <p className="text-xs text-gray-500">{action.description}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </div>
             </motion.div>
 
             {/* Assets List */}
