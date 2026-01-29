@@ -134,6 +134,7 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'analytics' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 13170.50));
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
@@ -608,6 +609,19 @@ export default function Dashboard() {
     },
   ];
 
+  const moreActions = [
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: Activity,
+      description: 'View portfolio insights',
+      action: () => {
+        setShowMoreMenu(false);
+        setActiveTab('analytics');
+      },
+    },
+  ];
+
   const handleModalClose = () => {
     setOpenModal(null);
   };
@@ -735,6 +749,61 @@ export default function Dashboard() {
                   <span className="text-xs text-gray-700">{action.label}</span>
                 </motion.button>
               ))}
+
+              {/* More Button with Dropdown */}
+              <div className="relative">
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + quickActions.length * 0.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="flex flex-col items-center gap-2.5 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 w-full"
+                >
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-md">
+                    <MoreHorizontal className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
+                  <span className="text-xs text-gray-700">More</span>
+                </motion.button>
+
+                {/* Dropdown Menu */}
+                {showMoreMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowMoreMenu(false)}
+                    />
+
+                    {/* Menu */}
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full mt-2 right-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                    >
+                      {moreActions.map((action, index) => (
+                        <motion.button
+                          key={action.id}
+                          whileHover={{ backgroundColor: 'rgba(249, 250, 251, 1)' }}
+                          onClick={action.action}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 last:border-0"
+                        >
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 via-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center">
+                            <action.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{action.label}</p>
+                            <p className="text-xs text-gray-500">{action.description}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </div>
             </motion.div>
 
             {/* Assets List */}
@@ -865,10 +934,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-around">
             {[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'analytics', label: 'Analytics', icon: Activity },
               { id: 'savings', label: 'Savings', icon: PiggyBank },
               { id: 'lucy', label: 'Lucy', icon: Sparkles },
               { id: 'spend', label: 'Spend', icon: CreditCard },
+              { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (

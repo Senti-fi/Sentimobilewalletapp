@@ -207,26 +207,26 @@ export default function PortfolioAnalyticsPage({
       </motion.div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-24 space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto px-6 pb-24 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
         {/* Portfolio Performance Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-600" />
-              <h2 className="text-gray-900">Performance</h2>
+              <Activity className="w-4 h-4 text-blue-600" />
+              <h2 className="text-sm font-medium text-gray-900">Performance</h2>
             </div>
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
               {(['7D', '1M', '3M', '1Y'] as const).map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1 text-xs rounded-md transition-all ${
+                  className={`px-2 py-0.5 text-xs rounded-md transition-all ${
                     timeframe === tf
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
@@ -238,31 +238,34 @@ export default function PortfolioAnalyticsPage({
             </div>
           </div>
 
-          <ChartContainer config={chartConfig} className="h-64">
-            <AreaChart data={historicalData}>
+          <ChartContainer config={chartConfig} className="h-48">
+            <AreaChart data={historicalData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: '#6b7280', fontSize: 11 }}
+                tick={{ fill: '#6b7280', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
+                interval="preserveStartEnd"
+                minTickGap={30}
               />
               <YAxis
-                tick={{ fill: '#6b7280', fontSize: 11 }}
+                tick={{ fill: '#6b7280', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
+                width={45}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    className="w-40"
+                    className="w-36"
                     formatter={(value) => `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                   />
                 }
@@ -283,23 +286,23 @@ export default function PortfolioAnalyticsPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <PieChartIcon className="w-5 h-5 text-blue-600" />
-            <h2 className="text-gray-900">Asset Allocation</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <PieChartIcon className="w-4 h-4 text-blue-600" />
+            <h2 className="text-sm font-medium text-gray-900">Asset Allocation</h2>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="w-full md:w-1/2 h-48">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="w-full md:w-1/2 h-40">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={portfolioData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={40}
+                    outerRadius={65}
                     paddingAngle={2}
                     dataKey="value"
                   >
@@ -312,9 +315,9 @@ export default function PortfolioAnalyticsPage({
                       if (!active || !payload || !payload.length) return null;
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="text-sm font-medium text-gray-900">{data.name}</p>
-                          <p className="text-sm text-gray-600">
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                          <p className="text-xs font-medium text-gray-900">{data.name}</p>
+                          <p className="text-xs text-gray-600">
                             ${Number(data.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </p>
                           <p className="text-xs text-gray-500">{data.percentage}%</p>
@@ -326,18 +329,18 @@ export default function PortfolioAnalyticsPage({
               </ResponsiveContainer>
             </div>
 
-            <div className="flex-1 w-full space-y-2">
+            <div className="flex-1 w-full space-y-1">
               {portfolioData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div key={index} className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: COLORS[item.color as keyof typeof COLORS] || '#3b82f6' }}
                     />
-                    <span className="text-sm text-gray-700">{item.name}</span>
+                    <span className="text-xs text-gray-700">{item.name}</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-900">${item.value.toLocaleString()}</p>
+                    <p className="text-xs text-gray-900">${item.value.toLocaleString()}</p>
                     <p className="text-xs text-gray-500">{item.percentage}%</p>
                   </div>
                 </div>
@@ -351,26 +354,27 @@ export default function PortfolioAnalyticsPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-gray-900">Asset Performance</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-blue-600" />
+            <h2 className="text-sm font-medium text-gray-900">Asset Performance</h2>
           </div>
 
-          <ChartContainer config={chartConfig} className="h-48">
-            <BarChart data={assetPerformanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <ChartContainer config={chartConfig} className="h-40">
+            <BarChart data={assetPerformanceData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#6b7280', fontSize: 11 }}
+                tick={{ fill: '#6b7280', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fill: '#6b7280', fontSize: 11 }}
+                tick={{ fill: '#6b7280', fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
+                width={35}
                 tickFormatter={(value) => `${value}%`}
               />
               <ChartTooltip
@@ -378,9 +382,9 @@ export default function PortfolioAnalyticsPage({
                   if (!active || !payload || !payload.length) return null;
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                      <p className="text-sm font-medium text-gray-900">{data.name}</p>
-                      <p className="text-sm text-green-600">
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                      <p className="text-xs font-medium text-gray-900">{data.name}</p>
+                      <p className="text-xs text-green-600">
                         {data.performance > 0 ? '+' : ''}{data.performance.toFixed(2)}%
                       </p>
                       <p className="text-xs text-gray-500">
@@ -393,7 +397,7 @@ export default function PortfolioAnalyticsPage({
               <Bar
                 dataKey="performance"
                 fill="#3b82f6"
-                radius={[8, 8, 0, 0]}
+                radius={[6, 6, 0, 0]}
               />
             </BarChart>
           </ChartContainer>
@@ -404,33 +408,33 @@ export default function PortfolioAnalyticsPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-blue-600" />
-            <h2 className="text-gray-900">Key Metrics</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-blue-600" />
+            <h2 className="text-sm font-medium text-gray-900">Key Metrics</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-0.5">
               <p className="text-xs text-gray-500">Asset Count</p>
-              <p className="text-lg text-gray-900">{assets.length}</p>
+              <p className="text-base font-medium text-gray-900">{assets.length}</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-xs text-gray-500">Best Performer</p>
-              <p className="text-lg text-gray-900">
+              <p className="text-base font-medium text-gray-900">
                 {assets.reduce((best, asset) =>
                   asset.changePercent > best.changePercent ? asset : best
                 ).symbol}
               </p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-xs text-gray-500">Total in Vault</p>
-              <p className="text-lg text-gray-900">${vaultBalance.toFixed(2)}</p>
+              <p className="text-base font-medium text-gray-900">${vaultBalance.toFixed(2)}</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-xs text-gray-500">Vault Allocation</p>
-              <p className="text-lg text-gray-900">
+              <p className="text-base font-medium text-gray-900">
                 {((vaultBalance / (totalBalance + vaultBalance)) * 100).toFixed(1)}%
               </p>
             </div>
@@ -442,28 +446,28 @@ export default function PortfolioAnalyticsPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-sm"
+          className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 shadow-sm"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <Percent className="w-5 h-5 text-white" />
-            <h2 className="text-white">Diversification Score</h2>
+          <div className="flex items-center gap-2 mb-2">
+            <Percent className="w-4 h-4 text-white" />
+            <h2 className="text-sm font-medium text-white">Diversification Score</h2>
           </div>
 
-          <div className="flex items-end gap-3">
-            <p className="text-4xl text-white">
+          <div className="flex items-end gap-2">
+            <p className="text-3xl font-bold text-white">
               {Math.min(95, 40 + assets.length * 15)}
             </p>
-            <p className="text-white/80 mb-1">/ 100</p>
+            <p className="text-white/80 mb-1 text-sm">/ 100</p>
           </div>
 
-          <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
+          <div className="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
             <div
               className="h-full bg-white rounded-full transition-all"
               style={{ width: `${Math.min(95, 40 + assets.length * 15)}%` }}
             />
           </div>
 
-          <p className="text-sm text-white/80 mt-3">
+          <p className="text-xs text-white/80 mt-2">
             {assets.length >= 4
               ? 'Excellent diversification across multiple assets'
               : 'Consider diversifying across more assets to reduce risk'
