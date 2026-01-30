@@ -124,6 +124,28 @@ export default function App() {
     localStorage.setItem('senti_username', formattedUsername);
     localStorage.setItem('senti_user_handle', `@${username.toLowerCase()}.senti`);
     localStorage.setItem('senti_username_set', 'true');
+
+    // Register user in the global users database so other users can find them
+    const userHandle = `@${username.toLowerCase()}.senti`;
+    const displayName = `${formattedUsername}Senti`;
+    const newUser = {
+      id: userHandle,
+      name: displayName,
+      online: true,
+      registeredAt: Date.now(),
+    };
+
+    // Get existing registered users or initialize empty array
+    const existingUsersJson = localStorage.getItem('senti_registered_users');
+    const existingUsers = existingUsersJson ? JSON.parse(existingUsersJson) : [];
+
+    // Check if user already exists (by id)
+    const userExists = existingUsers.some((u: any) => u.id === userHandle);
+    if (!userExists) {
+      existingUsers.push(newUser);
+      localStorage.setItem('senti_registered_users', JSON.stringify(existingUsers));
+    }
+
     setAppState('dashboard');
   };
 

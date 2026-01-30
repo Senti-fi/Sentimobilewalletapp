@@ -221,10 +221,26 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       // Simulate search delay
       const timer = setTimeout(() => {
         const query = searchQuery.toLowerCase();
-        // Search in registeredUsers that are not already contacts
+        // Get current user's handle to exclude from search
+        const currentUserHandle = localStorage.getItem('senti_user_handle') || '';
+
+        // Get real registered users from localStorage
+        const realRegisteredUsersJson = localStorage.getItem('senti_registered_users');
+        const realRegisteredUsers = realRegisteredUsersJson ? JSON.parse(realRegisteredUsersJson) : [];
+
+        // Combine with simulated users for demo purposes
+        const allUsers = [...realRegisteredUsers, ...registeredUsers];
+
+        // Remove duplicates by id
+        const uniqueUsers = allUsers.filter((user, index, self) =>
+          index === self.findIndex(u => u.id === user.id)
+        );
+
+        // Search in all users that are not already contacts and not current user
         const contactIds = contacts.map(c => c.id);
-        const results = registeredUsers.filter(user =>
-          !contactIds.includes(user.id) && (
+        const results = uniqueUsers.filter(user =>
+          !contactIds.includes(user.id) &&
+          user.id !== currentUserHandle && (
             user.id.toLowerCase().includes(query) ||
             user.name.toLowerCase().includes(query)
           )
