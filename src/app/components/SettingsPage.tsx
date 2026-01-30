@@ -44,7 +44,9 @@ export default function SettingsPage({
   const walletId = fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4);
   const userEmail = localStorage.getItem('senti_user_email') || 'user@mail.com';
   const userPhone = '+1 (415) 555-0189'; // Phone remains as placeholder
-  const username = localStorage.getItem('senti_username') || 'User';
+  // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
+  const rawUsername = localStorage.getItem('senti_username') || 'User';
+  const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
   const userId = localStorage.getItem('senti_user_id') || '';
   const userImage = localStorage.getItem('senti_user_image') || '';

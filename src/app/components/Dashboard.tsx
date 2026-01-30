@@ -15,7 +15,7 @@ import {
   Settings,
   PiggyBank,
   CreditCard,
-  Sparkles,
+  Bot,
   User,
   Activity,
   MessageCircle
@@ -139,7 +139,9 @@ export default function Dashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // User profile data from localStorage
-  const username = localStorage.getItem('senti_username') || 'User';
+  // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
+  const rawUsername = localStorage.getItem('senti_username') || 'User';
+  const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   const userHandle = localStorage.getItem('senti_user_handle') || '@user.senti';
   const userId = localStorage.getItem('senti_user_id') || '';
 
@@ -870,7 +872,7 @@ export default function Dashboard() {
             {[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'savings', label: 'Savings', icon: PiggyBank },
-              { id: 'lucy', label: 'Lucy', icon: Sparkles },
+              { id: 'lucy', label: 'Lucy', icon: Bot },
               { id: 'spend', label: 'Spend', icon: CreditCard },
               { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {

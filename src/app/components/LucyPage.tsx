@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sparkles,
+  Bot,
   Send,
   TrendingUp,
   Wallet,
@@ -487,7 +487,7 @@ export default function LucyPage({
             <div className="relative w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
               <div className="relative">
-                <Sparkles className="w-7 h-7 text-white" strokeWidth={2} />
+                <Bot className="w-7 h-7 text-white" strokeWidth={2} />
               </div>
             </div>
             <div>
@@ -585,7 +585,7 @@ export default function LucyPage({
               {message.type === 'lucy' && (
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-6 h-6 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                    <Bot className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
                   </div>
                   <span className="text-xs text-gray-500">Lucy</span>
                 </div>
