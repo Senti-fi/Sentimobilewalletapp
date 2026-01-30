@@ -16,6 +16,11 @@ const generateSentiUserId = (): string => {
   return `SENTI-${timestamp}-${randomPart}`;
 };
 
+// Format username with capital first letter (e.g., "oxsenti" -> "OxSenti")
+const formatUsername = (username: string): string => {
+  return username.charAt(0).toUpperCase() + username.slice(1);
+};
+
 export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
@@ -114,9 +119,10 @@ export default function App() {
   };
 
   const handleUsernameComplete = (username: string) => {
-    // Save the custom username
-    localStorage.setItem('senti_username', username);
-    localStorage.setItem('senti_user_handle', `@${username}.senti`);
+    // Format and save the custom username with capital first letter
+    const formattedUsername = formatUsername(username);
+    localStorage.setItem('senti_username', formattedUsername);
+    localStorage.setItem('senti_user_handle', `@${username.toLowerCase()}.senti`);
     localStorage.setItem('senti_username_set', 'true');
     setAppState('dashboard');
   };
