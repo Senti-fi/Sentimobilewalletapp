@@ -15,7 +15,7 @@ import {
   Settings,
   PiggyBank,
   CreditCard,
-  Bot,
+  Smile,
   User,
   Activity,
   MessageCircle
@@ -872,7 +872,7 @@ export default function Dashboard() {
             {[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'savings', label: 'Savings', icon: PiggyBank },
-              { id: 'lucy', label: 'Lucy', icon: Bot },
+              { id: 'lucy', label: 'Lucy', icon: Smile },
               { id: 'spend', label: 'Spend', icon: CreditCard },
               { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
