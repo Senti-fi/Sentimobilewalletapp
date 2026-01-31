@@ -36,3 +36,7 @@ pnpm-debug.log*
 *.tmp
 .cache/
 .temp/
+
+# local stash patch backups
+stash-backups/
+
