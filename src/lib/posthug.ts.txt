@@ -1,0 +1,10 @@
+import posthog from 'posthog-js'
+
+posthog.init('phc_cJjM8BxTariFwFAFzENKlHBvATWY9a888f0s3x4Gz1V', {
+  api_host: 'https://us.i.posthog.com',
+  defaults: '2025-11-30',
+  capture_pageview: true,
+  capture_pageleave: true,
+})
+
+export default posthog
