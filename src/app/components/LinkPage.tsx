@@ -14,11 +14,45 @@ import {
 } from 'lucide-react';
 import LinkSendModal from './LinkSendModal';
 
-// Mock contacts data
-export const mockContacts = [
+// All registered users in the system (simulated database)
+const registeredUsers = [
+  { id: '@alex.senti', name: 'AlexSenti', online: true },
+  { id: '@sarah.senti', name: 'SarahSenti', online: true },
+  { id: '@mike.senti', name: 'MikeSenti', online: false },
+  { id: '@emma.senti', name: 'EmmaSenti', online: false },
+  { id: '@james.senti', name: 'JamesSenti', online: true },
+  { id: '@olivia.senti', name: 'OliviaSenti', online: false },
+  { id: '@noah.senti', name: 'NoahSenti', online: true },
+  { id: '@sophia.senti', name: 'SophiaSenti', online: false },
+  { id: '@liam.senti', name: 'LiamSenti', online: true },
+  { id: '@ava.senti', name: 'AvaSenti', online: false },
+  { id: '@ethan.senti', name: 'EthanSenti', online: true },
+  { id: '@mia.senti', name: 'MiaSenti', online: false },
+  { id: '@mason.senti', name: 'MasonSenti', online: true },
+  { id: '@isabella.senti', name: 'IsabellaSenti', online: false },
+  { id: '@lucas.senti', name: 'LucasSenti', online: true },
+];
+
+// Generate random gradient color
+const getRandomGradient = () => {
+  const gradients = [
+    'from-blue-400 to-blue-600',
+    'from-purple-400 to-purple-600',
+    'from-green-400 to-green-600',
+    'from-pink-400 to-pink-600',
+    'from-orange-400 to-orange-600',
+    'from-cyan-400 to-cyan-600',
+    'from-indigo-400 to-indigo-600',
+    'from-rose-400 to-rose-600',
+  ];
+  return gradients[Math.floor(Math.random() * gradients.length)];
+};
+
+// Mock contacts data (user's saved contacts)
+const defaultContacts = [
   {
     id: '@alex.senti',
-    name: 'Alex Rivera',
+    name: 'AlexSenti',
     avatar: '👤',
     color: 'from-blue-400 to-blue-600',
     lastMessage: 'Thanks for the payment!',
@@ -27,7 +61,7 @@ export const mockContacts = [
   },
   {
     id: '@sarah.senti',
-    name: 'Sarah Chen',
+    name: 'SarahSenti',
     avatar: '👤',
     color: 'from-purple-400 to-purple-600',
     lastMessage: 'Received $50',
@@ -36,7 +70,7 @@ export const mockContacts = [
   },
   {
     id: '@mike.senti',
-    name: 'Mike Johnson',
+    name: 'MikeSenti',
     avatar: '👤',
     color: 'from-green-400 to-green-600',
     lastMessage: 'Can you send me $100?',
@@ -45,7 +79,7 @@ export const mockContacts = [
   },
   {
     id: '@emma.senti',
-    name: 'Emma Davis',
+    name: 'EmmaSenti',
     avatar: '👤',
     color: 'from-pink-400 to-pink-600',
     lastMessage: 'Perfect, got it!',
@@ -53,6 +87,9 @@ export const mockContacts = [
     online: false,
   },
 ];
+
+// Export for use elsewhere
+export const mockContacts = defaultContacts;
 
 interface Message {
   id: string;
@@ -89,6 +126,27 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [showSendModal, setShowSendModal] = useState(false);
+  // Load contacts from localStorage or use defaults
+  const loadContacts = () => {
+    try {
+      const stored = localStorage.getItem('senti_contacts');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+    }
+    return defaultContacts;
+  };
+
+  const [contacts, setContacts] = useState(loadContacts);
+  const [searchResults, setSearchResults] = useState<typeof registeredUsers>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Save contacts to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('senti_contacts', JSON.stringify(contacts));
+  }, [contacts]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -151,10 +209,77 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   // Get messages for the selected contact
   const messages = selectedContact ? (messagesByContact[selectedContact.id] || []) : [];
 
-  const filteredContacts = mockContacts.filter(contact =>
+  const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     contact.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Search for new users when query looks like a username
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      setIsSearching(true);
+      // Simulate search delay
+      const timer = setTimeout(() => {
+        const query = searchQuery.toLowerCase();
+        // Get current user's handle to exclude from search
+        const currentUserHandle = localStorage.getItem('senti_user_handle') || '';
+
+        // Get real registered users from localStorage
+        const realRegisteredUsersJson = localStorage.getItem('senti_registered_users');
+        const realRegisteredUsers = realRegisteredUsersJson ? JSON.parse(realRegisteredUsersJson) : [];
+
+        // Combine with simulated users for demo purposes
+        const allUsers = [...realRegisteredUsers, ...registeredUsers];
+
+        // Remove duplicates by id
+        const uniqueUsers = allUsers.filter((user, index, self) =>
+          index === self.findIndex(u => u.id === user.id)
+        );
+
+        // Search in all users that are not already contacts and not current user
+        const contactIds = contacts.map(c => c.id);
+        const results = uniqueUsers.filter(user =>
+          !contactIds.includes(user.id) &&
+          user.id !== currentUserHandle && (
+            user.id.toLowerCase().includes(query) ||
+            user.name.toLowerCase().includes(query)
+          )
+        );
+        setSearchResults(results);
+        setIsSearching(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  }, [searchQuery, contacts]);
+
+  // Add a new contact and start conversation
+  const handleAddContact = (user: typeof registeredUsers[0]) => {
+    const newContact = {
+      id: user.id,
+      name: user.name,
+      avatar: '👤',
+      color: getRandomGradient(),
+      lastMessage: 'Start a conversation',
+      lastMessageTime: 'New',
+      online: user.online,
+    };
+
+    setContacts(prev => [newContact, ...prev]);
+
+    // Initialize empty messages for this contact
+    setMessagesByContact(prev => ({
+      ...prev,
+      [user.id]: [],
+    }));
+
+    // Clear search and open chat
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedContact(newContact);
+  };
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -564,6 +689,81 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
 
         {/* Contacts List */}
         <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 space-y-2">
+          {/* Search Results Section */}
+          <AnimatePresence>
+            {(searchResults.length > 0 || (searchQuery.length >= 2 && isSearching)) && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-gray-900 flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-500" />
+                    Find Users
+                  </h3>
+                  {isSearching && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full"
+                    />
+                  )}
+                </div>
+
+                {searchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {searchResults.map((user, index) => (
+                      <motion.div
+                        key={user.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 flex items-center gap-4 border-2 border-blue-100"
+                      >
+                        <div className="relative">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center text-white font-semibold">
+                            {user.name.slice(0, 2)}
+                          </div>
+                          {user.online && (
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-gray-900 font-medium">{user.name}</p>
+                            <CheckCircle className="w-4 h-4 text-blue-500" />
+                          </div>
+                          <p className="text-xs text-gray-500">{user.id}</p>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleAddContact(user)}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl text-sm font-medium flex items-center gap-1.5 shadow-md hover:shadow-lg transition-shadow"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add
+                        </motion.button>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : searchQuery.length >= 2 && !isSearching ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-200"
+                  >
+                    <User className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No users found for "{searchQuery}"</p>
+                    <p className="text-xs text-gray-400 mt-1">Try searching for @username.senti</p>
+                  </motion.div>
+                ) : null}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-gray-900">Contacts</h3>
             <span className="text-xs text-gray-500">{filteredContacts.length} contacts</span>

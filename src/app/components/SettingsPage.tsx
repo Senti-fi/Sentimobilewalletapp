@@ -44,7 +44,9 @@ export default function SettingsPage({
   const walletId = fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4);
   const userEmail = localStorage.getItem('senti_user_email') || 'user@mail.com';
   const userPhone = '+1 (415) 555-0189'; // Phone remains as placeholder
-  const username = localStorage.getItem('senti_username') || 'User';
+  // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
+  const rawUsername = localStorage.getItem('senti_username') || 'User';
+  const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
   const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
   const userId = localStorage.getItem('senti_user_id') || '';
   const userImage = localStorage.getItem('senti_user_image') || '';
@@ -120,7 +122,7 @@ export default function SettingsPage({
             )}
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-gray-900 text-lg font-medium">{username}</h2>
+                <h2 className="text-gray-900 text-lg font-medium">{username}Senti</h2>
                 <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 rounded-md">
                   <CheckCircle className="w-3 h-3 text-green-600" />
                   <span className="text-xs text-green-700">Verified</span>
