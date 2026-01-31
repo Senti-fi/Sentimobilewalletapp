@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Bot,
   Send,
   TrendingUp,
   Wallet,
@@ -483,19 +482,17 @@ export default function LucyPage({
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            {/* Lucy Avatar */}
-            <div className="relative w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
-              <div className="relative">
-                <Bot className="w-7 h-7 text-white" strokeWidth={2} />
-              </div>
+            {/* Lucy Avatar - Warm, friendly design with "L" initial */}
+            <div className="relative w-14 h-14 bg-gradient-to-br from-orange-400 via-rose-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent"></div>
+              <span className="relative text-2xl font-bold text-white tracking-tight">L</span>
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 Lucy
               </h1>
               <p className="text-sm text-gray-500">
-                AI Assistant
+                Your Financial Assistant
               </p>
             </div>
           </div>
@@ -584,8 +581,8 @@ export default function LucyPage({
             <div className="max-w-[90%] sm:max-w-[85%] md:max-w-[80%]">
               {message.type === 'lucy' && (
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
-                    <Bot className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                  <div className="w-6 h-6 bg-gradient-to-br from-orange-400 via-rose-500 to-pink-500 rounded-md flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">L</span>
                   </div>
                   <span className="text-xs text-gray-500">Lucy</span>
                 </div>
