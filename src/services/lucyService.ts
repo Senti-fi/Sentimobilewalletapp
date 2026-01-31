@@ -1,6 +1,9 @@
 // Lucy AI Service - Handles communication with backend API
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_LUCY_API_URL;
+if (!API_URL) {
+  throw new Error("Missing VITE_LUCY_API_URL. Set it in Vercel env vars.");
+}
 
 export interface Message {
   id: string;
