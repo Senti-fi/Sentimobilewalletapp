@@ -1,3 +1,4 @@
+import "./lib/posthog";
 import { createRoot } from "react-dom/client";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./app/App.tsx";
