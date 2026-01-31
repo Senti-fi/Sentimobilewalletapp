@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import Onboarding from './components/Onboarding';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
 
-type AppState = 'loading' | 'onboarding' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
+type AppState = 'loading' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
 
 // Generate a unique user ID for Senti
 const generateSentiUserId = (): string => {
@@ -88,23 +87,14 @@ export default function App() {
       return;
     }
 
-    // User is not signed in - check onboarding status
-    const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed');
-
+    // User is not signed in - go directly to signup (onboarding removed)
     // Small delay to show loading screen
     setTimeout(() => {
-      if (hasCompletedOnboarding) {
-        setAppState('signup');
-      } else {
-        setAppState('onboarding');
-      }
+      // Mark onboarding as complete and go to signup
+      localStorage.setItem('senti_onboarding_completed', 'true');
+      setAppState('signup');
     }, 1000);
   }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute]);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('senti_onboarding_completed', 'true');
-    setAppState('signup');
-  };
 
   const handleSignUpComplete = () => {
     // This is called after successful passkey authentication
@@ -159,9 +149,6 @@ export default function App() {
       )}
       {appState === 'sso-callback' && (
         <SSOCallback onComplete={handleSSOComplete} />
-      )}
-      {appState === 'onboarding' && (
-        <Onboarding onComplete={handleOnboardingComplete} />
       )}
       {appState === 'signup' && (
         <SignUp onComplete={handleSignUpComplete} />
