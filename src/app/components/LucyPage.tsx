@@ -19,6 +19,15 @@ import lucyService, { Message, WalletContext } from '../../services/lucyService'
 import chatStorage from '../../services/chatStorage';
 
 // Quick action button interface
+// Format large numbers compactly to prevent overflow
+function formatCompactBalance(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return `${(value / 1e12).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}T`;
+  if (abs >= 1e9) return `${(value / 1e9).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}B`;
+  if (abs >= 1e6) return `${(value / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M`;
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 interface QuickActionButton {
   id: string;
   label: string;
@@ -612,9 +621,9 @@ export default function LucyPage({
                     className="mt-4 space-y-3"
                   >
                     {/* Total Balance Card */}
-                    <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-xl p-4 text-white shadow-lg">
+                    <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-xl p-4 text-white shadow-lg overflow-hidden">
                       <p className="text-xs opacity-90 mb-1">Total Balance</p>
-                      <p className="text-3xl font-bold">${walletContext.totalBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-3xl font-bold truncate">${formatCompactBalance(walletContext.totalBalance ?? 0)}</p>
                     </div>
 
                     {/* Asset Breakdown */}
@@ -632,11 +641,11 @@ export default function LucyPage({
                           return (
                             <div
                               key={asset}
-                              className={`bg-gradient-to-r ${assetColors[asset.toLowerCase()] || 'from-gray-500 to-gray-600'} rounded-lg p-3 flex items-center justify-between text-white shadow-md`}
+                              className={`bg-gradient-to-r ${assetColors[asset.toLowerCase()] || 'from-gray-500 to-gray-600'} rounded-lg p-3 flex items-center justify-between text-white shadow-md overflow-hidden`}
                             >
-                              <div>
+                              <div className="min-w-0 flex-1">
                                 <p className="text-xs opacity-90">{asset.toUpperCase()}</p>
-                                <p className="text-lg font-semibold">{balance.toLocaleString()}</p>
+                                <p className="text-lg font-semibold truncate">{formatCompactBalance(balance)}</p>
                               </div>
                               <Wallet className="w-5 h-5 opacity-75" />
                             </div>
