@@ -36,6 +36,15 @@ import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
 
+// Format large numbers compactly to prevent overflow
+function formatCompactBalance(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return `${(value / 1e12).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}T`;
+  if (abs >= 1e9) return `${(value / 1e9).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}B`;
+  if (abs >= 1e6) return `${(value / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M`;
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 interface Asset {
   id: string;
   name: string;
@@ -695,8 +704,8 @@ export default function Dashboard() {
                 </motion.button>
               </div>
               {balanceVisible ? (
-                <h1 className="text-5xl text-gray-900 tracking-tight mb-2">
-                  ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <h1 className="text-5xl text-gray-900 tracking-tight mb-2 truncate">
+                  ${formatCompactBalance(totalBalance)}
                 </h1>
               ) : (
                 <h1 className="text-5xl text-gray-900 tracking-tight mb-2">••••••</h1>
@@ -775,10 +784,10 @@ export default function Dashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-900 mb-0.5">{asset.symbol}</p>
-                      <p className="text-xs text-gray-500">{asset.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })} {asset.symbol}</p>
+                      <p className="text-xs text-gray-500 truncate">{formatCompactBalance(asset.balance)} {asset.symbol}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-gray-900 mb-0.5">${asset.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-gray-900 mb-0.5">${formatCompactBalance(asset.value)}</p>
                       {asset.change !== 0 && (
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="w-3 h-3 text-green-600" />
@@ -883,7 +892,7 @@ export default function Dashboard() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className="flex flex-col items-center gap-1 py-2.5 px-2 transition-all relative"
+                  className="flex items-center justify-center p-3 transition-all relative"
                 >
                   {isActive && (
                     <motion.div
@@ -898,13 +907,6 @@ export default function Dashboard() {
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.5}
                   />
-                  <span
-                    className={`text-xs relative z-10 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-gray-500'
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
                 </motion.button>
               );
             })}
