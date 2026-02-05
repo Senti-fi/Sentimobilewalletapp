@@ -92,11 +92,12 @@ export default function PortfolioAnalyticsPage({
   const [timeframe, setTimeframe] = useState<'7D' | '1M' | '3M' | '1Y'>('1M');
 
   // Calculate portfolio composition data
+  const totalPortfolioValue = totalBalance + vaultBalance;
   const portfolioData = assets.map(asset => ({
     name: asset.symbol,
     value: asset.value,
-    percentage: (asset.value / totalBalance * 100).toFixed(1),
-    color: asset.color.replace('bg-', ''),
+    percentage: totalBalance > 0 ? (asset.value / totalBalance * 100).toFixed(1) : '0.0',
+    color: asset.symbol === 'USDC' ? 'blue-500' : asset.symbol === 'USDT' ? 'teal-500' : asset.symbol === 'SOL' ? 'purple-600' : 'blue-500',
   }));
 
   // Add vault to portfolio if it exists
@@ -104,16 +105,16 @@ export default function PortfolioAnalyticsPage({
     portfolioData.push({
       name: 'Vault',
       value: vaultBalance,
-      percentage: (vaultBalance / (totalBalance + vaultBalance) * 100).toFixed(1),
+      percentage: totalPortfolioValue > 0 ? (vaultBalance / totalPortfolioValue * 100).toFixed(1) : '0.0',
       color: 'emerald-500',
     });
   }
 
   // Chart colors
-  const COLORS = {
+  const COLORS: Record<string, string> = {
     'blue-500': '#3b82f6',
-    'white': '#10b981', // Using green for USDT instead of white
-    'black': '#9333ea', // Using purple for SOL
+    'teal-500': '#14b8a6',
+    'purple-600': '#9333ea',
     'emerald-500': '#10b981',
   };
 
@@ -177,8 +178,8 @@ export default function PortfolioAnalyticsPage({
               <DollarSign className="w-4 h-4 text-blue-600" />
               <p className="text-xs text-gray-500">Total Value</p>
             </div>
-            <p className="text-xl text-gray-900">
-              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-xl text-gray-900 truncate">
+              ${totalBalance >= 1e12 ? `${(totalBalance / 1e12).toFixed(2)}T` : totalBalance >= 1e9 ? `${(totalBalance / 1e9).toFixed(2)}B` : totalBalance >= 1e6 ? `${(totalBalance / 1e6).toFixed(2)}M` : totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </motion.div>
 
@@ -435,7 +436,7 @@ export default function PortfolioAnalyticsPage({
             <div className="space-y-0.5">
               <p className="text-xs text-gray-500">Vault Allocation</p>
               <p className="text-base font-medium text-gray-900">
-                {((vaultBalance / (totalBalance + vaultBalance)) * 100).toFixed(1)}%
+                {totalPortfolioValue > 0 ? ((vaultBalance / totalPortfolioValue) * 100).toFixed(1) : '0.0'}%
               </p>
             </div>
           </div>

@@ -12,10 +12,29 @@ export default function EditEmailModal({ currentEmail, onClose }: EditEmailModal
   const [newEmail, setNewEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
 
+  const [emailError, setEmailError] = useState('');
+
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleEmailSubmit = () => {
-    if (newEmail && newEmail !== currentEmail) {
-      setStep('verify');
+    setEmailError('');
+    if (!newEmail) {
+      setEmailError('Please enter an email address');
+      return;
     }
+    if (!isValidEmail(newEmail)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    if (newEmail === currentEmail) {
+      setEmailError('New email must be different from current email');
+      return;
+    }
+    setStep('verify');
+  };
+
+  const handleResendCode = () => {
+    setVerificationCode(['', '', '', '', '', '']);
   };
 
   const handleCodeChange = (index: number, value: string) => {
@@ -103,10 +122,14 @@ export default function EditEmailModal({ currentEmail, onClose }: EditEmailModal
                 />
               </div>
 
+              {emailError && (
+                <p className="text-sm text-red-600">{emailError}</p>
+              )}
+
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleEmailSubmit}
-                disabled={!newEmail || newEmail === currentEmail}
+                disabled={!newEmail}
                 className="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
@@ -144,7 +167,10 @@ export default function EditEmailModal({ currentEmail, onClose }: EditEmailModal
                 ))}
               </div>
 
-              <button className="text-sm text-blue-600 hover:text-blue-700 text-center w-full">
+              <button
+                onClick={handleResendCode}
+                className="text-sm text-blue-600 hover:text-blue-700 text-center w-full"
+              >
                 Resend code
               </button>
             </div>

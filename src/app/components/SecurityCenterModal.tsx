@@ -7,8 +7,23 @@ interface SecurityCenterModalProps {
 }
 
 export default function SecurityCenterModal({ onClose }: SecurityCenterModalProps) {
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [biometricEnabled, setBiometricEnabled] = useState(true);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => {
+    return localStorage.getItem('senti_2fa_enabled') === 'true';
+  });
+  const [biometricEnabled, setBiometricEnabled] = useState(() => {
+    const stored = localStorage.getItem('senti_biometric_enabled');
+    return stored !== null ? stored === 'true' : true;
+  });
+
+  const handleToggle2FA = (enabled: boolean) => {
+    setTwoFactorEnabled(enabled);
+    localStorage.setItem('senti_2fa_enabled', String(enabled));
+  };
+
+  const handleToggleBiometric = (enabled: boolean) => {
+    setBiometricEnabled(enabled);
+    localStorage.setItem('senti_biometric_enabled', String(enabled));
+  };
 
   return (
     <AnimatePresence>
@@ -57,7 +72,7 @@ export default function SecurityCenterModal({ onClose }: SecurityCenterModalProp
                   <input
                     type="checkbox"
                     checked={twoFactorEnabled}
-                    onChange={(e) => setTwoFactorEnabled(e.target.checked)}
+                    onChange={(e) => handleToggle2FA(e.target.checked)}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -79,7 +94,7 @@ export default function SecurityCenterModal({ onClose }: SecurityCenterModalProp
                   <input
                     type="checkbox"
                     checked={biometricEnabled}
-                    onChange={(e) => setBiometricEnabled(e.target.checked)}
+                    onChange={(e) => handleToggleBiometric(e.target.checked)}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

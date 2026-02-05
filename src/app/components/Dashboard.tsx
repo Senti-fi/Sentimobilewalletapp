@@ -323,6 +323,10 @@ export default function Dashboard() {
 
   // Handle deposit to vault balance (topping up)
   const handleVaultDeposit = (amount: number, asset: string) => {
+    // Validate sufficient balance
+    const assetData = assets.find(a => a.symbol === asset);
+    if (!assetData || assetData.balance < amount) return;
+
     // Update vault balance
     setVaultBalance(prev => prev + amount);
 
@@ -333,10 +337,12 @@ export default function Dashboard() {
     setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
+          const pricePerUnit = a.balance > 0 ? a.value / a.balance : 0;
+          const newBalance = a.balance - amount;
           return {
             ...a,
-            balance: a.balance - amount,
-            value: a.symbol === 'SOL' ? (a.balance - amount) * (a.value / a.balance) : a.balance - amount
+            balance: newBalance,
+            value: a.symbol === 'SOL' ? newBalance * pricePerUnit : newBalance
           };
         }
         return a;
@@ -367,10 +373,12 @@ export default function Dashboard() {
     setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
+          const pricePerUnit = a.balance > 0 ? a.value / a.balance : 0;
+          const newBalance = a.balance + amount;
           return {
             ...a,
-            balance: a.balance + amount,
-            value: a.symbol === 'SOL' ? (a.balance + amount) * (a.value / a.balance) : a.balance + amount
+            balance: newBalance,
+            value: a.symbol === 'SOL' ? newBalance * pricePerUnit : newBalance
           };
         }
         return a;
@@ -429,10 +437,12 @@ export default function Dashboard() {
     setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
+          const pricePerUnit = a.balance > 0 ? a.value / a.balance : 0;
+          const newBalance = a.balance - totalAmount;
           return {
             ...a,
-            balance: a.balance - totalAmount,
-            value: a.symbol === 'SOL' ? (a.balance - totalAmount) * (a.value / a.balance) : a.balance - totalAmount
+            balance: newBalance,
+            value: a.symbol === 'SOL' ? newBalance * pricePerUnit : newBalance
           };
         }
         return a;
@@ -460,10 +470,12 @@ export default function Dashboard() {
     setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
+          const pricePerUnit = a.balance > 0 ? a.value / a.balance : 0;
+          const newBalance = a.balance + amount;
           return {
             ...a,
-            balance: a.balance + amount,
-            value: a.symbol === 'SOL' ? (a.balance + amount) * (a.value / a.balance) : a.balance + amount
+            balance: newBalance,
+            value: a.symbol === 'SOL' ? newBalance * pricePerUnit : newBalance
           };
         }
         return a;
@@ -491,10 +503,12 @@ export default function Dashboard() {
     setAssets(prevAssets =>
       prevAssets.map(a => {
         if (a.symbol === asset) {
+          const pricePerUnit = a.balance > 0 ? a.value / a.balance : 0;
+          const newBalance = a.balance + amount;
           return {
             ...a,
-            balance: a.balance + amount,
-            value: a.symbol === 'SOL' ? (a.balance + amount) * (a.value / a.balance) : a.balance + amount
+            balance: newBalance,
+            value: a.symbol === 'SOL' ? newBalance * pricePerUnit : newBalance
           };
         }
         return a;
@@ -650,7 +664,7 @@ export default function Dashboard() {
           </motion.div>
           <div>
             <p className="text-xs text-gray-500">Welcome back</p>
-            <p className="text-gray-900">{username}<span className="text-gray-900">Senti</span></p>
+            <p className="text-gray-900">{username}<span className="text-blue-600">Senti</span></p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -814,7 +828,7 @@ export default function Dashboard() {
         {activeTab === 'savings' && (
           <SavingsPage
             onOpenLucy={handleOpenLucy}
-            onSavingsDeposit={handleSavingsDeposit}
+            walletBalance={totalBalance}
             onSavingsWithdraw={handleSavingsWithdraw}
             onSavingsLock={handleSavingsLock}
             onSavingsUnlock={handleSavingsUnlock}

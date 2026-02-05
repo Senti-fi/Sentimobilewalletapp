@@ -62,8 +62,13 @@ export default function App() {
 
       // Generate wallet address if not exists
       if (!localStorage.getItem('senti_wallet_address')) {
-        const mockWalletAddress = '0x' + Math.random().toString(16).substring(2, 42);
-        localStorage.setItem('senti_wallet_address', mockWalletAddress);
+        // Generate a valid-length hex address (40 hex chars)
+        const hexChars = '0123456789abcdef';
+        let addr = '0x';
+        for (let i = 0; i < 40; i++) {
+          addr += hexChars[Math.floor(Math.random() * 16)];
+        }
+        localStorage.setItem('senti_wallet_address', addr);
       }
 
       // Mark onboarding as complete for signed-in users
@@ -117,7 +122,7 @@ export default function App() {
 
     // Register user in the global users database so other users can find them
     const userHandle = `@${username.toLowerCase()}.senti`;
-    const displayName = `${formattedUsername}Senti`;
+    const displayName = `${formattedUsername} Senti`;
     const newUser = {
       id: userHandle,
       name: displayName,

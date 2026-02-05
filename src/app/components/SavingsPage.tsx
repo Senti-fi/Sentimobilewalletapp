@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   Target,
@@ -120,10 +120,22 @@ export default function SavingsPage({
   const totalLocked = lockedSavings.reduce((sum, ls) => sum + ls.amount, 0);
 
   // Available balance (funds from unlocked savings and completed goals, ready to withdraw)
-  // Note: Goal contributions and Lock & Earn now pull from main wallet, not from this balance
-  const [availableSavings, setAvailableSavings] = useState(1250.50); // Mock initial balance for demo
+  // Persisted to localStorage to survive page refreshes
+  const [availableSavings, setAvailableSavings] = useState(() => {
+    try {
+      const stored = localStorage.getItem('senti_availableSavings');
+      return stored ? JSON.parse(stored) : 1250.50;
+    } catch {
+      return 1250.50;
+    }
+  });
   
   const totalSavings = availableSavings + totalInGoals + totalLocked;
+
+  // Persist availableSavings to localStorage
+  useEffect(() => {
+    localStorage.setItem('senti_availableSavings', JSON.stringify(availableSavings));
+  }, [availableSavings]);
 
   // Mock rewards data
   const saveStreak = 12; // days
@@ -364,7 +376,7 @@ export default function SavingsPage({
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              ${totalSavings.toFixed(2)}
+              ${totalSavings >= 1e9 ? `${(totalSavings / 1e9).toFixed(2)}B` : totalSavings >= 1e6 ? `${(totalSavings / 1e6).toFixed(2)}M` : totalSavings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </motion.h2>
             <div className="flex items-center justify-center gap-2 text-xs">
               <span className="text-white/80">

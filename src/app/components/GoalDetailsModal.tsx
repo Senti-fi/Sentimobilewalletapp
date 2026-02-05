@@ -37,6 +37,13 @@ export default function GoalDetailsModal({ onClose, goal, onWithdraw, onAddFunds
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  const formatDaysLeft = (deadline: string) => {
+    const days = getDaysRemaining(deadline);
+    if (days < 0) return 'Expired';
+    if (days === 0) return 'Due today';
+    return `${days} days remaining`;
+  };
+
   const handleWithdrawClick = () => {
     setShowWithdrawConfirm(true);
   };
@@ -217,7 +224,7 @@ export default function GoalDetailsModal({ onClose, goal, onWithdraw, onAddFunds
                             <span className="text-sm text-green-300">Goal Completed!</span>
                           </div>
                         ) : (
-                          <p className="text-sm text-white/80">{getDaysRemaining(goal.deadline)} days remaining</p>
+                          <p className="text-sm text-white/80">{formatDaysLeft(goal.deadline)}</p>
                         )}
                       </div>
                     </div>

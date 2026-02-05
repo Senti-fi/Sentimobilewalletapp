@@ -9,7 +9,7 @@ interface ReceiveModalProps {
 
 export default function ReceiveModal({ onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const walletAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+  const walletAddress = localStorage.getItem('senti_wallet_address') || '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
 
   const handleCopy = async () => {
     // Use the fallback method directly for better compatibility
