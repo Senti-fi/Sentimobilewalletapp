@@ -31,28 +31,42 @@ export default function CardDrawer({ isOpen, onClose }: CardDrawerProps) {
   const cardholderName = 'Alex Johnson';
 
   const handleCopy = (text: string, field: string) => {
-    try {
-      // Try using Clipboard API
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-          .then(() => {
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-          })
-          .catch(() => {
-            // Fallback: just show copied state without actually copying
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-          });
-      } else {
-        // Clipboard API not available, just show the feedback
-        setCopiedField(field);
-        setTimeout(() => setCopiedField(null), 2000);
-      }
-    } catch (error) {
-      // Handle any errors gracefully
+    const showSuccess = () => {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showSuccess).catch(() => {
+        // Fallback to execCommand
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          showSuccess();
+        } catch {
+          // Don't show false success if copy truly failed
+        }
+      });
+    } else {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSuccess();
+      } catch {
+        // Silently fail
+      }
     }
   };
 

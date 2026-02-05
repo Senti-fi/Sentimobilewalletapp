@@ -114,7 +114,7 @@ export default function SettingsPage({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-white text-lg font-semibold">{username}Senti</h2>
+                <h2 className="text-white text-lg font-semibold">{username}<span className="text-blue-300">Senti</span></h2>
                 <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 rounded-md">
                   <CheckCircle className="w-3 h-3 text-green-400" />
                   <span className="text-xs text-green-400 font-medium">Verified</span>
@@ -129,7 +129,7 @@ export default function SettingsPage({
             <div className="text-center">
               <p className="text-xs text-blue-300/60 mb-1">Net Worth</p>
               <p className="text-white font-semibold">
-                ${(totalBalance / 1000).toFixed(1)}k
+                ${totalBalance >= 1e9 ? `${(totalBalance / 1e9).toFixed(1)}B` : totalBalance >= 1e6 ? `${(totalBalance / 1e6).toFixed(1)}M` : totalBalance >= 1e3 ? `${(totalBalance / 1e3).toFixed(1)}k` : totalBalance.toFixed(0)}
               </p>
             </div>
             <div className="text-center">

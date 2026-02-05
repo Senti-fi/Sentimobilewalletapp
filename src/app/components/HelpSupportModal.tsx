@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, MessageCircle, Mail, FileText, ExternalLink, BookOpen, AlertCircle } from 'lucide-react';
 
@@ -6,13 +7,15 @@ interface HelpSupportModalProps {
 }
 
 export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+
   const handleContactSupport = () => {
     window.open('mailto:support@senti.com', '_blank');
   };
 
   const handleOpenChat = () => {
-    // In a real app, this would open a live chat widget
-    alert('Live chat feature coming soon!');
+    setShowComingSoon(true);
+    setTimeout(() => setShowComingSoon(false), 3000);
   };
 
   const handleOpenDocs = () => {
@@ -110,6 +113,20 @@ export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
               );
             })}
           </div>
+
+          {/* Coming Soon Toast */}
+          <AnimatePresence>
+            {showComingSoon && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="bg-blue-600 text-white rounded-xl px-4 py-3 text-sm text-center mb-4"
+              >
+                Live chat is coming soon!
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Close Button */}
           <button

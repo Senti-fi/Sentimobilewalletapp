@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Copy, ExternalLink, CheckCircle, Clock } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface TransactionDetailsModalProps {
   transaction: {
@@ -23,10 +23,16 @@ export default function TransactionDetailsModal({ transaction, onClose }: Transa
 
   const Icon = transaction.icon;
   const isOutgoing = transaction.amount < 0;
-  const txId = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`;
-  const address = isOutgoing
-    ? `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`
-    : `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`;
+
+  // Generate stable IDs that don't change on re-render
+  const txId = useMemo(
+    () => `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+    [transaction.id]
+  );
+  const address = useMemo(
+    () => `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+    [transaction.id]
+  );
 
   const handleCopyTxId = () => {
     navigator.clipboard.writeText(txId);
