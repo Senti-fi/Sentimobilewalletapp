@@ -5,8 +5,9 @@ import Dashboard from './components/Dashboard';
 import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
+import Onboarding from './components/Onboarding';
 
-type AppState = 'loading' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
+type AppState = 'loading' | 'onboarding' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
 
 // Generate a unique user ID for Senti
 const generateSentiUserId = (): string => {
@@ -92,14 +93,23 @@ export default function App() {
       return;
     }
 
-    // User is not signed in - go directly to signup (onboarding removed)
+    // User is not signed in - check if they've seen onboarding
+    const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
+
     // Small delay to show loading screen
     setTimeout(() => {
-      // Mark onboarding as complete and go to signup
-      localStorage.setItem('senti_onboarding_completed', 'true');
-      setAppState('signup');
+      if (hasCompletedOnboarding) {
+        setAppState('signup');
+      } else {
+        setAppState('onboarding');
+      }
     }, 1000);
   }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute]);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('senti_onboarding_completed', 'true');
+    setAppState('signup');
+  };
 
   const handleSignUpComplete = () => {
     // This is called after successful passkey authentication
@@ -151,6 +161,9 @@ export default function App() {
     <div className="size-full bg-gray-50 overflow-hidden relative">
       {appState === 'loading' && (
         <LoadingScreen />
+      )}
+      {appState === 'onboarding' && (
+        <Onboarding onComplete={handleOnboardingComplete} />
       )}
       {appState === 'sso-callback' && (
         <SSOCallback onComplete={handleSSOComplete} />
