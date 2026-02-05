@@ -1,15 +1,77 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
-import LucyChip from './LucyChip';
 
 interface ReceiveModalProps {
   onClose: () => void;
 }
 
+// Generate a deterministic QR-like pattern from address string
+function generateQRPattern(address: string): boolean[][] {
+  const size = 25;
+  const grid: boolean[][] = Array(size).fill(null).map(() => Array(size).fill(false));
+
+  // Create finder patterns (the three large squares in corners)
+  const drawFinderPattern = (startX: number, startY: number) => {
+    for (let y = 0; y < 7; y++) {
+      for (let x = 0; x < 7; x++) {
+        // Outer border
+        if (y === 0 || y === 6 || x === 0 || x === 6) {
+          grid[startY + y][startX + x] = true;
+        }
+        // Inner square
+        else if (y >= 2 && y <= 4 && x >= 2 && x <= 4) {
+          grid[startY + y][startX + x] = true;
+        }
+      }
+    }
+  };
+
+  // Draw three finder patterns
+  drawFinderPattern(0, 0);       // Top-left
+  drawFinderPattern(size - 7, 0); // Top-right
+  drawFinderPattern(0, size - 7); // Bottom-left
+
+  // Add timing patterns (alternating dots between finders)
+  for (let i = 8; i < size - 8; i++) {
+    grid[6][i] = i % 2 === 0;
+    grid[i][6] = i % 2 === 0;
+  }
+
+  // Generate deterministic data modules from address
+  let hash = 0;
+  for (let i = 0; i < address.length; i++) {
+    hash = ((hash << 5) - hash) + address.charCodeAt(i);
+    hash = hash & hash;
+  }
+
+  // Fill data area with deterministic pattern
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      // Skip finder pattern areas and timing patterns
+      const inTopLeftFinder = x < 8 && y < 8;
+      const inTopRightFinder = x >= size - 8 && y < 8;
+      const inBottomLeftFinder = x < 8 && y >= size - 8;
+      const isTimingH = y === 6 && x >= 8 && x < size - 8;
+      const isTimingV = x === 6 && y >= 8 && y < size - 8;
+
+      if (!inTopLeftFinder && !inTopRightFinder && !inBottomLeftFinder && !isTimingH && !isTimingV) {
+        // Use deterministic pattern based on position and address hash
+        const seed = (x * 31 + y * 17 + hash) & 0xFFFF;
+        grid[y][x] = (seed % 3) !== 0;
+      }
+    }
+  }
+
+  return grid;
+}
+
 export default function ReceiveModal({ onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
   const walletAddress = localStorage.getItem('senti_wallet_address') || '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+
+  // Generate QR pattern once based on address
+  const qrPattern = useMemo(() => generateQRPattern(walletAddress), [walletAddress]);
 
   const handleCopy = async () => {
     // Use the fallback method directly for better compatibility
@@ -64,23 +126,30 @@ export default function ReceiveModal({ onClose }: ReceiveModalProps) {
           </div>
 
           <div className="space-y-6">
-            {/* QR Code placeholder */}
+            {/* QR Code */}
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-white border-2 border-gray-200 rounded-2xl p-8 flex items-center justify-center"
+              className="bg-white border-2 border-gray-200 rounded-2xl p-6 flex items-center justify-center"
             >
-              <div className="w-48 h-48 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center">
-                <div className="grid grid-cols-8 gap-1 p-4">
-                  {Array.from({ length: 64 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-2 h-2 rounded-sm ${
-                        Math.random() > 0.5 ? 'bg-blue-600' : 'bg-white'
-                      }`}
-                    />
-                  ))}
+              <div className="bg-white p-3 rounded-lg">
+                <div
+                  className="grid gap-0"
+                  style={{
+                    gridTemplateColumns: `repeat(${qrPattern.length}, 1fr)`,
+                    width: '180px',
+                    height: '180px'
+                  }}
+                >
+                  {qrPattern.map((row, y) =>
+                    row.map((cell, x) => (
+                      <div
+                        key={`${x}-${y}`}
+                        className={cell ? 'bg-gray-900' : 'bg-white'}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </motion.div>

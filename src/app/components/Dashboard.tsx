@@ -63,10 +63,10 @@ const mockAssets: Asset[] = [
     id: '1',
     name: 'USD Coin',
     symbol: 'USDC',
-    balance: 5420.50,
-    value: 5420.50,
-    change: 12.30,
-    changePercent: 0.23,
+    balance: 2847.65,
+    value: 2847.65,
+    change: 0,
+    changePercent: 0,
     color: 'bg-blue-500',
     gradient: 'from-blue-500 via-blue-600 to-indigo-600',
     icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
@@ -75,8 +75,8 @@ const mockAssets: Asset[] = [
     id: '2',
     name: 'Tether',
     symbol: 'USDT',
-    balance: 3500.00,
-    value: 3500.00,
+    balance: 1523.40,
+    value: 1523.40,
     change: 0,
     changePercent: 0,
     color: 'bg-white',
@@ -87,10 +87,10 @@ const mockAssets: Asset[] = [
     id: '3',
     name: 'Solana',
     symbol: 'SOL',
-    balance: 45.32,
-    value: 4250.00,
-    change: 185.20,
-    changePercent: 4.56,
+    balance: 12.85,
+    value: 1927.50,
+    change: 45.20,
+    changePercent: 2.40,
     color: 'bg-black',
     gradient: 'from-purple-600 via-purple-700 to-indigo-900',
     icon: 'https://cryptologos.cc/logos/solana-sol-logo.png',
@@ -141,7 +141,7 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'analytics' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
-  const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 13170.50));
+  const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 6298.55));
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
   const [selectedAsset, setSelectedAsset] = useState(0);
@@ -170,13 +170,13 @@ export default function Dashboard() {
     earned: number;
   }>>(() => loadFromStorage('senti_investments', []));
 
-  // Default transactions with external wallet examples
+  // Default transactions with realistic examples
   const defaultTransactions = [
     {
-      id: 'external-1',
-      merchant: 'From 0x742d...0bEb',
+      id: 'tx-1',
+      merchant: 'Received from @david.senti',
       category: 'Received',
-      amount: 250.00,
+      amount: 150.00,
       date: '2 hours ago',
       icon: Download,
       color: 'text-green-600',
@@ -184,23 +184,45 @@ export default function Dashboard() {
       type: 'internal' as const,
     },
     {
-      id: 'external-2',
-      merchant: 'From 0x8f3a...9c2D',
-      category: 'Received',
-      amount: 125.50,
+      id: 'tx-2',
+      merchant: 'Sent to @emma.senti',
+      category: 'Send',
+      amount: -75.00,
       date: '5 hours ago',
+      icon: Send,
+      color: 'text-red-600',
+      bg: 'bg-red-100',
+      type: 'send' as const,
+    },
+    {
+      id: 'tx-3',
+      merchant: 'Vault Deposit',
+      category: 'Vault',
+      amount: -500.00,
+      date: 'Yesterday',
+      icon: LockKeyhole,
+      color: 'text-purple-600',
+      bg: 'bg-purple-100',
+      type: 'vault' as const,
+    },
+    {
+      id: 'tx-4',
+      merchant: 'Received from 0x8f3a...9c2D',
+      category: 'Received',
+      amount: 320.00,
+      date: '2 days ago',
       icon: Download,
       color: 'text-green-600',
       bg: 'bg-green-100',
       type: 'internal' as const,
     },
     {
-      id: 'external-3',
-      merchant: 'From 0x1bc7...4eF8',
-      category: 'Received',
-      amount: 500.00,
-      date: 'Yesterday',
-      icon: Download,
+      id: 'tx-5',
+      merchant: 'Buy USDC',
+      category: 'Purchase',
+      amount: 200.00,
+      date: '3 days ago',
+      icon: ShoppingBag,
       color: 'text-green-600',
       bg: 'bg-green-100',
       type: 'internal' as const,
