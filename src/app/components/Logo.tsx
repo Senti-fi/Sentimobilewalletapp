@@ -72,19 +72,19 @@ export default function Logo({ size = 64, className = '', animate = 'entrance', 
       style={{ width: size, height: size }}
     >
       <svg viewBox="0 0 100 120" className="w-full h-full">
-        {/* Top swoosh/arrow - from left-middle to top-right to center */}
+        {/* Top triangle - sharp tip at top-right */}
         <polygon
-          points="8,52 92,2 52,38"
+          points="88,5 12,50 55,38"
           fill={color}
         />
         {/* Center hexagon */}
         <polygon
-          points="50,50 60,55 60,67 50,72 40,67 40,55"
+          points="50,52 61,58 61,70 50,76 39,70 39,58"
           fill={color}
         />
-        {/* Bottom swoosh/arrow - from right-middle to bottom-left to center */}
+        {/* Bottom triangle - sharp tip at bottom-left */}
         <polygon
-          points="92,68 8,118 48,82"
+          points="12,115 88,70 45,82"
           fill={color}
         />
       </svg>
