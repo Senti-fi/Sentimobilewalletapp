@@ -12,7 +12,7 @@ import {
   Utensils,
   Zap,
   ChevronRight,
-  Sparkles,
+  Star,
   AlertCircle,
   ArrowUpRight,
   ArrowDownRight
@@ -196,7 +196,7 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
         {(isOverBudget || isNearBudget) && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-5 h-5 text-gray-900" />
+              <Star className="w-5 h-5 text-gray-900" />
               <h3 className="text-gray-900">Lucy's Insight</h3>
             </div>
 
