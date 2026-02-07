@@ -76,40 +76,15 @@ export default function SavingsPage({
   const [goalToEdit, setGoalToEdit] = useState<Goal | null>(null);
   const [cameFromAllGoals, setCameFromAllGoals] = useState(false);
   
-  // Mock data for goals
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: '1',
-      name: 'Emergency Fund',
-      targetAmount: 3000,
-      currentAmount: 1250,
-      deadline: '2026-06-30',
-      monthlyTarget: 250,
-      emoji: '🏥',
-      color: 'from-red-400 to-pink-500',
-    },
-    {
-      id: '2',
-      name: 'New Phone',
-      targetAmount: 1200,
-      currentAmount: 340,
-      deadline: '2026-05-15',
-      monthlyTarget: 200,
-      emoji: '📱',
-      color: 'from-blue-400 to-cyan-500',
-      isBehind: true,
-    },
-    {
-      id: '3',
-      name: 'Summer Vacation',
-      targetAmount: 2500,
-      currentAmount: 1650,
-      deadline: '2026-07-01',
-      monthlyTarget: 175,
-      emoji: '🏖️',
-      color: 'from-cyan-400 to-blue-500',
-    },
-  ]);
+  // Start with empty goals - users create their own
+  const [goals, setGoals] = useState<Goal[]>(() => {
+    try {
+      const stored = localStorage.getItem('senti_savings_goals');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Locked savings (start empty for MVP testing)
   const [lockedSavings, setLockedSavings] = useState<LockedSaving[]>([]);
@@ -123,9 +98,9 @@ export default function SavingsPage({
   const [availableSavings, setAvailableSavings] = useState(() => {
     try {
       const stored = localStorage.getItem('senti_availableSavings');
-      return stored ? JSON.parse(stored) : 1250.50;
+      return stored ? JSON.parse(stored) : 0;
     } catch {
-      return 1250.50;
+      return 0;
     }
   });
   
@@ -136,18 +111,22 @@ export default function SavingsPage({
     localStorage.setItem('senti_availableSavings', JSON.stringify(availableSavings));
   }, [availableSavings]);
 
-  // Mock rewards data
-  const saveStreak = 12; // days
-  const completedGoals = 3;
-  const totalRewards = 145.50;
+  // Persist goals to localStorage
+  useEffect(() => {
+    localStorage.setItem('senti_savings_goals', JSON.stringify(goals));
+  }, [goals]);
 
-  // Mock this month data for time-based framing
-  const thisMonthSaved = 245;
-  const lastMonthSaved = 207;
-  const monthlyGrowth = ((thisMonthSaved - lastMonthSaved) / lastMonthSaved) * 100;
-
-  // Mock overall growth percentage for endowment effect
-  const totalGrowthPercent = 12.3; // Growth since account creation
+  // Track save streak from localStorage
+  const [saveStreak, setSaveStreak] = useState(() => {
+    try {
+      const stored = localStorage.getItem('senti_save_streak');
+      return stored ? parseInt(stored) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const completedGoals = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+  const totalRewards = 0; // Start with 0, users earn through activity
 
   const handleCreateGoal = (goalData: any) => {
     const newGoal: Goal = {
@@ -379,16 +358,8 @@ export default function SavingsPage({
             </motion.h2>
             <div className="flex items-center justify-center gap-2 text-xs">
               <span className="text-white/80">
-                {goals.length} goals • {lockedSavings.length} locked
+                {goals.length} {goals.length === 1 ? 'goal' : 'goals'} • {lockedSavings.length} locked
               </span>
-              {totalGrowthPercent > 0 && (
-                <>
-                  <span className="text-white/40">•</span>
-                  <span className="text-green-300 font-medium">
-                    ↑ {totalGrowthPercent.toFixed(1)}%
-                  </span>
-                </>
-              )}
             </div>
           </div>
 
@@ -439,41 +410,7 @@ export default function SavingsPage({
           </div>
         </motion.div>
 
-        {/* This Month Progress Card */}
-        {thisMonthSaved > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">This Month</p>
-                <h3 className="text-2xl font-bold text-gray-900">
-                  ${thisMonthSaved.toFixed(0)}
-                </h3>
-              </div>
-              {monthlyGrowth !== 0 && (
-                <div className={`px-3 py-1 rounded-full ${
-                  monthlyGrowth > 0
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-                }`}>
-                  <span className="text-sm font-semibold">
-                    {monthlyGrowth > 0 ? '↑' : '↓'} {Math.abs(monthlyGrowth).toFixed(0)}%
-                  </span>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-600">
-              {monthlyGrowth > 0
-                ? `Great momentum! You're saving ${Math.abs(monthlyGrowth).toFixed(0)}% more than last month.`
-                : `You saved ${Math.abs(monthlyGrowth).toFixed(0)}% less than last month. You've got this!`
-              }
-            </p>
-          </motion.div>
-        )}
-
+        
         {/* Smart Priority Card */}
         {goals.length > 0 && (
           <motion.div
@@ -573,24 +510,7 @@ export default function SavingsPage({
               </div>
             ) : (
               <>
-                {/* Strategic Social Proof - Only show if user is on track and has multiple goals */}
-                {!sortedGoals.some(g => g.isBehind) && goals.length >= 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 mb-3 border border-green-100"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Users className="w-4 h-4 text-green-600" />
-                      </div>
-                      <p className="text-xs text-gray-700">
-                        <span className="font-semibold text-green-700">You're ahead!</span> You save more than 68% of users
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-
+                
                 {sortedGoals.slice(0, 1).map((goal, index) => (
                   <motion.div
                     key={goal.id}
@@ -794,117 +714,38 @@ export default function SavingsPage({
           </div>
         </div>
 
-        {/* Rewards Section - Full */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-gray-900" />
-            <h3 className="text-gray-900 text-lg font-semibold">Rewards</h3>
-          </div>
-
-          {/* Total Rewards Earned Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-orange-400 via-pink-500 to-pink-600 rounded-2xl p-5 text-white mb-4 shadow-lg"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5 text-white" />
-              <p className="text-sm text-white/90">Total Rewards Earned</p>
+        {/* Rewards Section - Simplified */}
+        {(saveStreak > 0 || completedGoals > 0) && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="w-5 h-5 text-gray-900" />
+              <h3 className="text-gray-900 text-lg font-semibold">Your Progress</h3>
             </div>
-            <h3 className="text-4xl font-bold mb-4">${totalRewards.toFixed(2)}</h3>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Flame className="w-4 h-4 text-white" />
-                  <p className="text-xs text-white/80">Save Streak</p>
-                </div>
-                <p className="text-xl font-bold">{saveStreak} days</p>
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Target className="w-4 h-4 text-white" />
-                  <p className="text-xs text-white/80">Completed</p>
-                </div>
-                <p className="text-xl font-bold">{completedGoals} goals</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Reward Opportunities */}
-          <div className="space-y-3">
-            {/* 30-Day Streak Bonus */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
             >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Gift className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-gray-900 text-sm font-semibold">30-Day Streak Bonus</h4>
-                    <span className="text-sm font-bold text-green-600">+$25</span>
+              <div className="grid grid-cols-2 gap-4">
+                {saveStreak > 0 && (
+                  <div className="text-center p-3 bg-orange-50 rounded-xl">
+                    <Flame className="w-6 h-6 text-orange-500 mx-auto mb-1" />
+                    <p className="text-2xl font-bold text-gray-900">{saveStreak}</p>
+                    <p className="text-xs text-gray-600">day streak</p>
                   </div>
-                  <p className="text-xs text-gray-600 mb-3">Save for 30 consecutive days</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all"
-                        style={{ width: `${(saveStreak / 30) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-600 font-medium">{saveStreak}/30</span>
+                )}
+                {completedGoals > 0 && (
+                  <div className="text-center p-3 bg-green-50 rounded-xl">
+                    <Trophy className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                    <p className="text-2xl font-bold text-gray-900">{completedGoals}</p>
+                    <p className="text-xs text-gray-600">goals completed</p>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Save More, Earn More */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-gray-900 text-sm font-semibold">Save More, Earn More</h4>
-                    <p className="text-xs text-gray-600">Unlock higher reward tiers</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </div>
-            </motion.div>
-
-            {/* Referral Bonus */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-cyan-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-gray-900 text-sm font-semibold">Referral Bonus</h4>
-                    <p className="text-xs text-gray-600">Invite friends and earn $10 each</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                )}
               </div>
             </motion.div>
           </div>
-        </div>
+        )}
 
       </div>
 
