@@ -1,194 +1,234 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Logo from './Logo';
-import { ChevronRight, Wallet, Send, TrendingUp, MessageCircle, Sparkles, Users, PiggyBank, ArrowRight } from 'lucide-react';
+import { ChevronRight, Wallet, Send, TrendingUp, Users, PiggyBank, ArrowRight, DollarSign, Shield, Zap } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: () => void;
 }
 
-// Slide 1: Creative word layout (like Petra's gateway slide)
+// Slide 1: Unique animated hero with floating elements
 function WelcomeSlide() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col items-center gap-4"
-      >
-        {/* Row 1 */}
-        <div className="flex items-center gap-3">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="px-5 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold"
-          >
-            Senti
-          </motion.span>
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
-            className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center"
-          >
-            <Wallet className="w-6 h-6 text-white" />
-          </motion.div>
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="px-5 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold"
-          >
-            is the
-          </motion.span>
-        </div>
-
-        {/* Row 2 */}
-        <div className="flex items-center gap-3">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-white/80 text-2xl font-medium"
-          >
-            smart
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="px-6 py-2.5 bg-white/20 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold border border-white/20"
-          >
-            way to
-          </motion.span>
-        </div>
-
-        {/* Row 3 */}
-        <div className="flex items-center gap-3">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="px-5 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold"
-          >
-            save
-          </motion.span>
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.7, type: 'spring' }}
-            className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center"
-          >
-            <PiggyBank className="w-6 h-6 text-white" />
-          </motion.div>
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="px-5 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold"
-          >
-            send
-          </motion.span>
-        </div>
-
-        {/* Row 4 */}
-        <div className="flex items-center gap-3">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            className="text-white/80 text-2xl font-medium"
-          >
-            &
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
-            className="px-5 py-2.5 bg-white/15 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold"
-          >
-            grow
-          </motion.span>
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.1, type: 'spring' }}
-            className="w-12 h-12 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center"
-          >
-            <TrendingUp className="w-6 h-6 text-white" />
-          </motion.div>
-        </div>
-
-        {/* Row 5 */}
-        <motion.span
+    <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
+      {/* Floating animated elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating coin */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2 }}
-          className="px-6 py-2.5 bg-white/20 backdrop-blur-sm rounded-2xl text-white text-2xl font-semibold border border-white/20"
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="absolute top-[15%] left-[15%]"
         >
-          your money
-        </motion.span>
+          <motion.div
+            animate={{ y: [-5, 5, -5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg"
+          >
+            <DollarSign className="w-6 h-6 text-white" />
+          </motion.div>
+        </motion.div>
+
+        {/* Floating growth chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="absolute top-[20%] right-[12%]"
+        >
+          <motion.div
+            animate={{ y: [5, -5, 5] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg"
+          >
+            <TrendingUp className="w-7 h-7 text-white" />
+          </motion.div>
+        </motion.div>
+
+        {/* Floating shield */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          className="absolute bottom-[28%] left-[10%]"
+        >
+          <motion.div
+            animate={{ y: [-3, 7, -3] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <Shield className="w-5 h-5 text-white" />
+          </motion.div>
+        </motion.div>
+
+        {/* Floating send icon */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.6 }}
+          className="absolute bottom-[32%] right-[15%]"
+        >
+          <motion.div
+            animate={{ y: [4, -6, 4] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+            className="w-11 h-11 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <Send className="w-5 h-5 text-white" />
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Central content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="text-center z-10"
+      >
+        {/* Large Logo */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          className="mb-6 flex justify-center"
+        >
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-2xl">
+            <Logo size={56} color="#2563eb" />
+          </div>
+        </motion.div>
+
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-4xl font-bold text-white mb-3"
+        >
+          Your money.
+          <br />
+          <span className="text-cyan-300">Smarter.</span>
+        </motion.h1>
+
+        {/* Subtext */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-white/80 text-base max-w-[260px] mx-auto"
+        >
+          Save, send, and grow with AI-powered insights that work for you.
+        </motion.p>
       </motion.div>
     </div>
   );
 }
 
-// Slide 2: Meet Lucy AI
+// Lucy Avatar Component
+function LucyAvatar({ size = 32 }: { size?: number }) {
+  return (
+    <div
+      className="rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center overflow-hidden"
+      style={{ width: size, height: size }}
+    >
+      {/* Simple female avatar illustration */}
+      <svg viewBox="0 0 36 36" className="w-full h-full">
+        {/* Hair */}
+        <path d="M6 20c0-8 4-14 12-14s12 6 12 14c0 2-1 4-2 5-1-3-4-5-10-5s-9 2-10 5c-1-1-2-3-2-5z" fill="#4C1D95"/>
+        {/* Face */}
+        <circle cx="18" cy="19" r="9" fill="#FCD5B8"/>
+        {/* Eyes */}
+        <circle cx="15" cy="18" r="1.2" fill="#374151"/>
+        <circle cx="21" cy="18" r="1.2" fill="#374151"/>
+        {/* Smile */}
+        <path d="M15 22c1.5 1.5 4.5 1.5 6 0" stroke="#374151" strokeWidth="1" fill="none" strokeLinecap="round"/>
+        {/* Hair bangs */}
+        <path d="M10 14c2-4 6-5 8-5s6 1 8 5c-2-2-5-3-8-3s-6 1-8 3z" fill="#4C1D95"/>
+      </svg>
+    </div>
+  );
+}
+
+// Slide 2: Meet Lucy AI - Fixed layout, high-value messaging
 function LucySlide() {
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8">
+    <div className="flex-1 flex flex-col px-5 pt-4">
       {/* Badge */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex justify-center mb-4"
+        className="flex justify-center mb-3"
       >
-        <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
-          Meet Lucy AI
+        <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
+          Meet Lucy
         </span>
       </motion.div>
 
       {/* Headline */}
       <motion.h2
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="text-white text-xl font-semibold text-center mb-4 leading-snug"
+      >
+        Your AI financial advisor.
+        <br />
+        <span className="text-cyan-300">Always on. Always smart.</span>
+      </motion.h2>
+
+      {/* Compact Chat Mockup */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-white text-2xl font-semibold text-center mb-8 leading-snug"
+        className="flex-1 flex flex-col max-h-[340px]"
       >
-        Your personal finance assistant.{'\n'}Ask anything, anytime.
-      </motion.h2>
-
-      {/* Mockup */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
-        className="flex-1 mx-auto w-full max-w-[280px]"
-      >
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white/20">
-          {/* Chat mockup */}
-          <div className="bg-gradient-to-br from-blue-600 to-cyan-500 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-white font-medium text-sm">Lucy</span>
-            </div>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex-1 flex flex-col">
+          {/* Chat header */}
+          <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3 flex items-center gap-2">
+            <LucyAvatar size={28} />
+            <span className="text-white font-medium text-sm">Lucy</span>
+            <span className="ml-auto w-2 h-2 bg-green-400 rounded-full"></span>
           </div>
-          <div className="p-4 space-y-3 bg-gray-50">
-            <div className="bg-blue-100 rounded-2xl rounded-tl-sm p-3 max-w-[85%]">
-              <p className="text-gray-800 text-sm">How can I save more this month?</p>
-            </div>
-            <div className="bg-white rounded-2xl rounded-tr-sm p-3 max-w-[85%] ml-auto shadow-sm border border-gray-100">
-              <p className="text-gray-700 text-sm">Based on your spending, you could save $127 by reducing dining out. Want me to set up a goal?</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-full">Yes, set it up</span>
-              <span className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded-full">Tell me more</span>
-            </div>
+
+          {/* Chat messages */}
+          <div className="flex-1 p-3 space-y-2.5 bg-gray-50 overflow-hidden">
+            {/* User message - RIGHT side, comes FIRST */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex justify-end"
+            >
+              <div className="bg-blue-600 text-white rounded-2xl rounded-br-sm px-3 py-2 max-w-[85%]">
+                <p className="text-sm">I want to save $5,000 for my trip to Japan in 6 months</p>
+              </div>
+            </motion.div>
+
+            {/* Lucy message - LEFT side, RESPONDS */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex gap-2"
+            >
+              <LucyAvatar size={24} />
+              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[85%] shadow-sm">
+                <p className="text-gray-800 text-sm leading-relaxed">
+                  Done! I've created your "Japan Trip" goal. Based on your income patterns, I'll auto-save $208/week. At 12% APY in locked savings, you'll actually have <span className="font-semibold text-green-600">$5,340</span> by then.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Quick action buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex gap-2 pl-8"
+            >
+              <span className="px-3 py-1.5 bg-violet-600 text-white text-xs rounded-full font-medium">Show breakdown</span>
+              <span className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded-full">Adjust amount</span>
+            </motion.div>
           </div>
         </div>
       </motion.div>
@@ -196,162 +236,157 @@ function LucySlide() {
   );
 }
 
-// Slide 3: Social Payments
+// Slide 3: Social Payments - Compact
 function SocialSlide() {
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8">
+    <div className="flex-1 flex flex-col px-5 pt-4">
       {/* Badge */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex justify-center mb-4"
+        className="flex justify-center mb-3"
       >
-        <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
+        <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
           Pay Anyone
         </span>
       </motion.div>
 
       {/* Headline */}
       <motion.h2
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="text-white text-xl font-semibold text-center mb-4 leading-snug"
+      >
+        Send money instantly.
+        <br />
+        <span className="text-cyan-300">Just type @username.</span>
+      </motion.h2>
+
+      {/* Compact Mockup */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-white text-2xl font-semibold text-center mb-8 leading-snug"
+        className="flex-1 flex flex-col max-h-[340px]"
       >
-        Send money instantly.{'\n'}Just search by @username.
-      </motion.h2>
-
-      {/* Mockup */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
-        className="flex-1 mx-auto w-full max-w-[280px]"
-      >
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white/20">
-          <div className="p-5">
-            <p className="text-gray-500 text-sm mb-3">Send to</p>
-            <div className="bg-gray-100 rounded-xl p-3 mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-600">@emma.senti</span>
-            </div>
-
-            {/* Contact cards */}
-            <div className="space-y-2 mb-4">
-              {[
-                { name: 'Emma Wilson', handle: '@emma.senti', color: 'from-pink-400 to-rose-500' },
-                { name: 'David Chen', handle: '@david.senti', color: 'from-blue-400 to-cyan-500' },
-              ].map((contact, i) => (
-                <motion.div
-                  key={contact.handle}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50"
-                >
-                  <div className={`w-10 h-10 bg-gradient-to-br ${contact.color} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
-                    {contact.name[0]}
-                  </div>
-                  <div>
-                    <p className="text-gray-900 text-sm font-medium">{contact.name}</p>
-                    <p className="text-gray-500 text-xs">{contact.handle}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Amount */}
-            <div className="text-center py-4 border-t border-gray-100">
-              <p className="text-4xl font-bold text-gray-900">$50.00</p>
-              <p className="text-gray-500 text-sm mt-1">USDC</p>
-            </div>
-
-            <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-              <Send className="w-4 h-4" />
-              Send Now
-            </button>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-4 flex-1">
+          <p className="text-gray-500 text-xs mb-2">Send to</p>
+          <div className="bg-gray-100 rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            <span className="text-gray-700 text-sm">@emma.senti</span>
           </div>
+
+          {/* Contact cards */}
+          <div className="space-y-2 mb-3">
+            {[
+              { name: 'Emma Wilson', handle: '@emma.senti', color: 'from-pink-400 to-rose-500', initials: 'E' },
+              { name: 'David Chen', handle: '@david.senti', color: 'from-blue-400 to-cyan-500', initials: 'D' },
+            ].map((contact, i) => (
+              <motion.div
+                key={contact.handle}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.1 }}
+                className="flex items-center gap-3 p-2 rounded-xl bg-gray-50"
+              >
+                <div className={`w-9 h-9 bg-gradient-to-br ${contact.color} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
+                  {contact.initials}
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-900 text-sm font-medium">{contact.name}</p>
+                  <p className="text-gray-500 text-xs">{contact.handle}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Amount */}
+          <div className="text-center py-3 border-t border-gray-100">
+            <p className="text-3xl font-bold text-gray-900">$50.00</p>
+          </div>
+
+          <button className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
+            <Send className="w-4 h-4" />
+            Send Now
+          </button>
         </div>
       </motion.div>
     </div>
   );
 }
 
-// Slide 4: Grow Money
+// Slide 4: Grow Money - Compact
 function GrowSlide() {
   return (
-    <div className="flex-1 flex flex-col px-6 pt-8">
+    <div className="flex-1 flex flex-col px-5 pt-4">
       {/* Badge */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex justify-center mb-4"
+        className="flex justify-center mb-3"
       >
-        <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
+        <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium">
           Grow Your Money
         </span>
       </motion.div>
 
       {/* Headline */}
       <motion.h2
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="text-white text-xl font-semibold text-center mb-4 leading-snug"
+      >
+        Earn up to 15% APY.
+        <br />
+        <span className="text-cyan-300">Zero complexity.</span>
+      </motion.h2>
+
+      {/* Compact Mockup */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-white text-2xl font-semibold text-center mb-8 leading-snug"
+        className="flex-1 flex flex-col max-h-[340px]"
       >
-        Earn up to 15% APY.{'\n'}No crypto knowledge needed.
-      </motion.h2>
-
-      {/* Mockup */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
-        className="flex-1 mx-auto w-full max-w-[280px]"
-      >
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white/20">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex-1">
           {/* Balance header */}
-          <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 p-5 text-white">
-            <p className="text-white/80 text-sm mb-1">Total Savings</p>
-            <p className="text-3xl font-bold">$4,827.50</p>
-            <div className="flex items-center gap-1 mt-1">
-              <TrendingUp className="w-4 h-4 text-green-300" />
-              <span className="text-green-300 text-sm">+12.4% APY</span>
+          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-4 text-white">
+            <p className="text-white/80 text-xs mb-0.5">Total Savings</p>
+            <p className="text-2xl font-bold">$4,827.50</p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <TrendingUp className="w-3.5 h-3.5 text-green-300" />
+              <span className="text-green-300 text-xs font-medium">+12.4% this month</span>
             </div>
           </div>
 
           {/* Vault cards */}
-          <div className="p-4 space-y-3">
+          <div className="p-3 space-y-2">
             {[
               { name: 'USDC Vault', apy: '8.5%', amount: '$2,500', color: 'bg-blue-500' },
-              { name: 'Savings Goal', apy: '15%', amount: '$1,200', color: 'bg-purple-500' },
+              { name: 'Locked Savings', apy: '15%', amount: '$1,200', color: 'bg-purple-500' },
+              { name: 'Emergency Fund', apy: '6%', amount: '$1,127', color: 'bg-green-500' },
             ].map((vault, i) => (
               <motion.div
                 key={vault.name}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + i * 0.1 }}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                transition={{ delay: 0.4 + i * 0.08 }}
+                className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${vault.color} rounded-xl flex items-center justify-center`}>
-                    <TrendingUp className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 ${vault.color} rounded-lg flex items-center justify-center`}>
+                    <TrendingUp className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <p className="text-gray-900 text-sm font-medium">{vault.name}</p>
                     <p className="text-green-600 text-xs font-medium">{vault.apy} APY</p>
                   </div>
                 </div>
-                <p className="text-gray-900 font-semibold">{vault.amount}</p>
+                <p className="text-gray-900 font-semibold text-sm">{vault.amount}</p>
               </motion.div>
             ))}
-
-            <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 mt-2">
-              Start Earning
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </motion.div>
@@ -395,42 +430,44 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden">
       {/* Skip button */}
-      <div className="flex justify-end p-6 z-10">
+      <div className="flex justify-end px-5 pt-4 pb-2 z-10 flex-shrink-0">
         <button
           onClick={handleSkip}
-          className="text-white/70 text-sm hover:text-white transition-colors"
+          className="text-white/70 text-sm hover:text-white transition-colors px-2 py-1"
         >
           Skip
         </button>
       </div>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3 }}
-          className="flex-1 flex flex-col"
-        >
-          {renderSlide()}
-        </motion.div>
-      </AnimatePresence>
+      {/* Content - flex-1 but with constraints */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.25 }}
+            className="h-full flex flex-col"
+          >
+            {renderSlide()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-      {/* Bottom section */}
-      <div className="px-6 pb-8 z-10">
+      {/* Bottom section - fixed at bottom */}
+      <div className="px-5 pt-4 pb-4 z-10 flex-shrink-0 bg-gradient-to-t from-blue-700/50 to-transparent">
         {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
           {[...Array(totalSlides)].map((_, index) => (
-            <motion.div
+            <div
               key={index}
-              className={`h-2 rounded-full transition-all duration-300 ${
+              className={`h-1.5 rounded-full transition-all duration-300 ${
                 index === currentSlide
-                  ? 'w-8 bg-white'
+                  ? 'w-6 bg-white'
                   : index < currentSlide
-                  ? 'w-2 bg-white/60'
-                  : 'w-2 bg-white/30'
+                  ? 'w-1.5 bg-white/60'
+                  : 'w-1.5 bg-white/30'
               }`}
             />
           ))}
@@ -440,19 +477,19 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
-          className="w-full py-4 bg-white text-blue-600 rounded-2xl font-semibold text-lg shadow-lg flex items-center justify-center gap-2 hover:bg-white/95 transition-colors"
+          className="w-full py-3.5 bg-white text-blue-600 rounded-2xl font-semibold text-base shadow-lg flex items-center justify-center gap-2"
         >
           {isLastSlide ? 'Get Started' : 'Continue'}
           <ChevronRight className="w-5 h-5" />
         </motion.button>
-      </div>
 
-      {/* Logo at bottom */}
-      <div className="flex items-center justify-center pb-6">
-        <Logo size={28} color="#ffffff" />
-        <span className="ml-2 text-xl font-bold text-white">
-          Senti
-        </span>
+        {/* Logo at bottom */}
+        <div className="flex items-center justify-center mt-4">
+          <Logo size={22} color="#ffffff" />
+          <span className="ml-1.5 text-base font-bold text-white">
+            Senti
+          </span>
+        </div>
       </div>
     </div>
   );
