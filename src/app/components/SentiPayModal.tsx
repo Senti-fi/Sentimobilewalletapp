@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Building2, User, Hash, DollarSign, Zap, CheckCircle, Loader, Sparkles, ArrowRight, ChevronDown, MessageSquare, Wallet } from 'lucide-react';
+import { X, Building2, User, Hash, DollarSign, Zap, CheckCircle, Loader, Star, ArrowRight, ChevronDown, MessageSquare, Wallet } from 'lucide-react';
 
 interface SentiPayModalProps {
   onClose: () => void;
@@ -492,7 +492,7 @@ export default function SentiPayModal({ onClose, onAddTransaction }: SentiPayMod
                     {/* Confirmation Note */}
                     <div className="bg-purple-50 rounded-2xl p-4 border border-purple-200">
                       <div className="flex items-start gap-3">
-                        <Sparkles className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-xs text-gray-700">
                             Your USDT will be converted to Naira and sent directly to the recipient's bank account. The transaction is instant and has no fees.

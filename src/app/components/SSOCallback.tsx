@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { Loader } from 'lucide-react';
 
 interface SSOCallbackProps {
   onComplete: () => void;
@@ -26,7 +26,7 @@ export default function SSOCallback({ onComplete }: SSOCallbackProps) {
         className="mb-8"
       >
         <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center shadow-2xl">
-          <Sparkles className="w-12 h-12 text-white" />
+          <Loader className="w-12 h-12 text-white animate-spin" />
         </div>
       </motion.div>
 

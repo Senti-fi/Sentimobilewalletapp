@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Logo from './Logo';
-import { ChevronRight, Wallet, Shield, Sparkles, Users } from 'lucide-react';
+import { ChevronRight, Wallet, Shield, TrendingUp, Users } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -13,36 +13,24 @@ const slides = [
     icon: Wallet,
     title: 'Your Money, Simplified',
     subtitle: 'One wallet for all your crypto. Send, receive, and grow your assets effortlessly.',
-    gradient: 'from-blue-500 to-cyan-500',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
   },
   {
     id: 2,
     icon: Shield,
     title: 'Secure by Design',
     subtitle: 'Bank-grade security with biometric protection. Your funds are always safe.',
-    gradient: 'from-purple-500 to-pink-500',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
   },
   {
     id: 3,
-    icon: Sparkles,
+    icon: TrendingUp,
     title: 'Grow Your Wealth',
     subtitle: 'Set savings goals, earn interest in vaults, and watch your money work for you.',
-    gradient: 'from-emerald-500 to-teal-500',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
   },
   {
     id: 4,
     icon: Users,
     title: 'Pay Friends Instantly',
     subtitle: 'Send money to anyone with just their @username. No more complicated wallet addresses.',
-    gradient: 'from-orange-500 to-red-500',
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
   },
 ];
 
@@ -92,9 +80,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-              className={`w-24 h-24 ${slide.iconBg} rounded-3xl flex items-center justify-center mb-8 shadow-lg`}
+              className="w-24 h-24 bg-blue-100 rounded-3xl flex items-center justify-center mb-8 shadow-lg"
             >
-              <slide.icon className={`w-12 h-12 ${slide.iconColor}`} strokeWidth={1.5} />
+              <slide.icon className="w-12 h-12 text-blue-600" strokeWidth={1.5} />
             </motion.div>
 
             {/* Title */}
@@ -143,7 +131,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleNext}
-          className={`w-full py-4 bg-gradient-to-r ${slide.gradient} text-white rounded-2xl font-semibold text-lg shadow-lg flex items-center justify-center gap-2`}
+          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-semibold text-lg shadow-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
         >
           {isLastSlide ? 'Get Started' : 'Continue'}
           <ChevronRight className="w-5 h-5" />
@@ -153,7 +141,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       {/* Logo at bottom */}
       <div className="flex items-center justify-center pb-8">
         <Logo size={32} />
-        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+        <span className="ml-2 text-xl font-bold text-blue-600">
           Senti
         </span>
       </div>

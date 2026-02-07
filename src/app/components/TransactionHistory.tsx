@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import { formatCompactBalance } from '../utils/formatBalance';
 
 interface Transaction {
   id: string;
@@ -161,7 +162,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                 <p className={`mb-0.5 ${
                   transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
                 }`}>
-                  {transaction.amount < 0 ? '' : '+'}{transaction.amount.toFixed(2)}
+                  {transaction.amount < 0 ? '-' : '+'}${formatCompactBalance(Math.abs(transaction.amount))}
                 </p>
                 <p className="text-xs text-gray-500">{transaction.date}</p>
               </div>
@@ -262,7 +263,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                         </div>
                         <div className="text-right">
                           <p className={`mb-0.5 ${transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {transaction.amount < 0 ? '' : '+'}{transaction.amount.toFixed(2)}
+                            {transaction.amount < 0 ? '-' : '+'}${formatCompactBalance(Math.abs(transaction.amount))}
                           </p>
                           <p className="text-xs text-gray-500">{transaction.date}</p>
                         </div>

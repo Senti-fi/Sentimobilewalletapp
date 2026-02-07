@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, AlertCircle, Fingerprint } from 'lucide-react';
+import { User, AlertCircle, Fingerprint } from 'lucide-react';
 import { useSignUp, useSignIn } from '@clerk/clerk-react';
 
 interface SignUpProps {
@@ -74,7 +74,7 @@ export default function SignUp({ onComplete }: SignUpProps) {
           className="mb-8"
         >
           <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center shadow-2xl">
-            <Sparkles className="w-12 h-12 text-white" />
+            <User className="w-12 h-12 text-white" />
           </div>
         </motion.div>
 

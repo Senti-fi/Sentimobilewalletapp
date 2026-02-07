@@ -673,7 +673,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
           <p className="text-sm text-gray-500">Send money instantly using IDs</p>
         </motion.div>
 
-        {/* Search Bar */}
+        {/* Search Bar with helper text */}
         <div className="flex-shrink-0 px-6 mb-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -681,10 +681,15 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search contacts or @ID"
+              placeholder="Search @username.senti to find friends"
               className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {!searchQuery && (
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Type a username to find and add friends
+            </p>
+          )}
         </div>
 
         {/* Contacts List */}

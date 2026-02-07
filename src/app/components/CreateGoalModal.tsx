@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Target, Calendar, DollarSign, Sparkles, TrendingUp } from 'lucide-react';
+import { X, Target, Calendar, DollarSign, Star, TrendingUp } from 'lucide-react';
 import LucyChip from './LucyChip';
 
 interface CreateGoalModalProps {
@@ -212,7 +212,7 @@ export default function CreateGoalModal({ onClose, onCreate, onOpenLucy }: Creat
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-5 h-5 text-white" />
+                        <Star className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">

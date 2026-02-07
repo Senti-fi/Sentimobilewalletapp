@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AtSign, AlertCircle, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { AtSign, AlertCircle, CheckCircle, User, ArrowRight } from 'lucide-react';
 
 interface UsernameSetupProps {
   onComplete: (username: string) => void;
@@ -105,7 +105,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                 />
               ) : (
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center shadow-2xl">
-                  <Sparkles className="w-12 h-12 text-white" />
+                  <User className="w-12 h-12 text-white" />
                 </div>
               )}
               <motion.div

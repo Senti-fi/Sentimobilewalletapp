@@ -48,12 +48,24 @@ export default function App() {
     if (isSignedIn && user) {
       // Sync Clerk user data to localStorage for app-wide use
       const clerkUserId = user.id;
-      const existingSentiId = localStorage.getItem('senti_user_id');
 
-      // Generate Senti ID if this is a new user
+      // Check if this is the same user as before (to handle account switching)
+      const previousClerkUserId = localStorage.getItem('senti_clerk_user_id');
+      const isNewUser = previousClerkUserId !== clerkUserId;
+
+      // If switching to a different user, we need to check their setup status
+      // User-specific key for username setup status
+      const userSetupKey = `senti_username_set_${clerkUserId}`;
+
+      // Generate Senti ID for this specific user if they don't have one
+      const userSentiIdKey = `senti_user_id_${clerkUserId}`;
+      let existingSentiId = localStorage.getItem(userSentiIdKey);
       if (!existingSentiId || !existingSentiId.startsWith('SENTI-')) {
-        localStorage.setItem('senti_user_id', generateSentiUserId());
+        existingSentiId = generateSentiUserId();
+        localStorage.setItem(userSentiIdKey, existingSentiId);
       }
+      // Also store in the global key for backwards compatibility
+      localStorage.setItem('senti_user_id', existingSentiId);
 
       // Store Clerk data
       const email = user.primaryEmailAddress?.emailAddress || '';
@@ -61,16 +73,19 @@ export default function App() {
       localStorage.setItem('senti_user_email', email);
       localStorage.setItem('senti_user_image', user.imageUrl || '');
 
-      // Generate wallet address if not exists
-      if (!localStorage.getItem('senti_wallet_address')) {
+      // Generate wallet address for this user if not exists
+      const userWalletKey = `senti_wallet_address_${clerkUserId}`;
+      let walletAddress = localStorage.getItem(userWalletKey);
+      if (!walletAddress) {
         // Generate a valid-length hex address (40 hex chars)
         const hexChars = '0123456789abcdef';
-        let addr = '0x';
+        walletAddress = '0x';
         for (let i = 0; i < 40; i++) {
-          addr += hexChars[Math.floor(Math.random() * 16)];
+          walletAddress += hexChars[Math.floor(Math.random() * 16)];
         }
-        localStorage.setItem('senti_wallet_address', addr);
+        localStorage.setItem(userWalletKey, walletAddress);
       }
+      localStorage.setItem('senti_wallet_address', walletAddress);
 
       // Mark onboarding as complete for signed-in users
       localStorage.setItem('senti_onboarding_completed', 'true');
@@ -80,8 +95,19 @@ export default function App() {
         window.history.replaceState({}, '', '/');
       }
 
-      // Check if user has set up their custom username
-      const hasSetUsername = localStorage.getItem('senti_username_set') === 'true';
+      // Check if THIS USER has set up their custom username (user-specific check)
+      const hasSetUsername = localStorage.getItem(userSetupKey) === 'true';
+
+      // Also restore user-specific data if they've set up before
+      if (hasSetUsername) {
+        const userUsernameKey = `senti_username_${clerkUserId}`;
+        const userHandleKey = `senti_user_handle_${clerkUserId}`;
+        const storedUsername = localStorage.getItem(userUsernameKey);
+        const storedHandle = localStorage.getItem(userHandleKey);
+
+        if (storedUsername) localStorage.setItem('senti_username', storedUsername);
+        if (storedHandle) localStorage.setItem('senti_user_handle', storedHandle);
+      }
 
       if (!hasSetUsername) {
         // New user needs to set up username
@@ -124,14 +150,27 @@ export default function App() {
   };
 
   const handleUsernameComplete = (username: string) => {
+    // Get the current Clerk user ID
+    const clerkUserId = user?.id || localStorage.getItem('senti_clerk_user_id') || '';
+
     // Format and save the custom username with capital first letter
     const formattedUsername = formatUsername(username);
+    const userHandle = `@${username.toLowerCase()}.senti`;
+
+    // Store globally for current session
     localStorage.setItem('senti_username', formattedUsername);
-    localStorage.setItem('senti_user_handle', `@${username.toLowerCase()}.senti`);
+    localStorage.setItem('senti_user_handle', userHandle);
+
+    // Store with user-specific keys for persistence across sessions
+    if (clerkUserId) {
+      localStorage.setItem(`senti_username_${clerkUserId}`, formattedUsername);
+      localStorage.setItem(`senti_user_handle_${clerkUserId}`, userHandle);
+      localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
+    }
+    // Also set the old key for backwards compatibility
     localStorage.setItem('senti_username_set', 'true');
 
     // Register user in the global users database so other users can find them
-    const userHandle = `@${username.toLowerCase()}.senti`;
     const displayName = `${formattedUsername} Senti`;
     const newUser = {
       id: userHandle,

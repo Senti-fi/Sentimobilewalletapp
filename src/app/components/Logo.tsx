@@ -71,22 +71,29 @@ export default function Logo({ size = 64, className = '', animate = 'entrance', 
       className={className}
       style={{ width: size, height: size }}
     >
-      <svg viewBox="0 0 100 120" className="w-full h-full">
-        {/* Top swoosh/arrow - from left-middle to top-right to center */}
-        <polygon
-          points="8,52 92,2 52,38"
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        {/* Rounded square background */}
+        <rect
+          x="5"
+          y="5"
+          width="90"
+          height="90"
+          rx="20"
+          ry="20"
           fill={color}
         />
-        {/* Center hexagon */}
-        <polygon
-          points="50,50 60,55 60,67 50,72 40,67 40,55"
-          fill={color}
-        />
-        {/* Bottom swoosh/arrow - from right-middle to bottom-left to center */}
-        <polygon
-          points="92,68 8,118 48,82"
-          fill={color}
-        />
+        {/* S letter */}
+        <text
+          x="50"
+          y="68"
+          fontSize="52"
+          fill="white"
+          fontWeight="bold"
+          textAnchor="middle"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          S
+        </text>
       </svg>
     </motion.div>
   );

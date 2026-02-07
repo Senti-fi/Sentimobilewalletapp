@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   CreditCard,
   Eye,
   EyeOff,
@@ -9,7 +9,7 @@ import {
   Lock,
   Unlock,
   X,
-  Sparkles
+  Gift
 } from 'lucide-react';
 
 interface CardDrawerProps {
@@ -248,7 +248,7 @@ export default function CardDrawer({ isOpen, onClose }: CardDrawerProps) {
                 className="bg-blue-50 rounded-2xl p-4 border border-blue-200"
               >
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Gift className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-gray-900 text-sm mb-1">Spend Anywhere</h4>
                     <p className="text-xs text-gray-700">
