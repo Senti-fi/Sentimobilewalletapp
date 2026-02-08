@@ -3,6 +3,7 @@
 import { Message } from './lucyService';
 
 const STORAGE_KEY = 'lucy_chat_history';
+const STORAGE_VERSION = 1; // Increment when schema changes
 const MAX_CONVERSATIONS = 10; // Keep last 10 conversations
 const MAX_MESSAGES_PER_CONVERSATION = 50; // Keep last 50 messages per conversation
 
@@ -12,6 +13,40 @@ export interface Conversation {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Type guard to validate message shape
+function isValidMessage(msg: unknown): msg is Message {
+  if (!msg || typeof msg !== 'object') return false;
+  const m = msg as Record<string, unknown>;
+  return (
+    typeof m.id === 'string' &&
+    (m.type === 'user' || m.type === 'lucy') &&
+    typeof m.text === 'string'
+  );
+}
+
+// Type guard to validate conversation shape
+function isValidConversation(conv: unknown): conv is Conversation {
+  if (!conv || typeof conv !== 'object') return false;
+  const c = conv as Record<string, unknown>;
+  return (
+    typeof c.id === 'string' &&
+    typeof c.title === 'string' &&
+    Array.isArray(c.messages) &&
+    c.messages.every(isValidMessage)
+  );
+}
+
+// Safe JSON parse that never throws
+function safeJsonParse<T>(json: string | null, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json);
+  } catch {
+    console.warn('Failed to parse stored JSON, using fallback');
+    return fallback;
+  }
 }
 
 export class ChatStorage {
@@ -89,29 +124,49 @@ export class ChatStorage {
   }
 
   /**
-   * Get all conversations
+   * Get all conversations with validation
    */
   getAllConversations(): Conversation[] {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (!data) return [];
+    const data = localStorage.getItem(STORAGE_KEY);
+    const parsed = safeJsonParse<unknown[]>(data, []);
 
-      const conversations = JSON.parse(data);
-
-      // Convert date strings back to Date objects
-      return conversations.map((conv: any) => ({
-        ...conv,
-        createdAt: new Date(conv.createdAt),
-        updatedAt: new Date(conv.updatedAt),
-        messages: conv.messages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp),
-        })),
-      }));
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
+    if (!Array.isArray(parsed)) {
+      console.warn('Stored conversations is not an array, clearing storage');
+      this.clearAll();
       return [];
     }
+
+    // Filter out invalid conversations and convert dates
+    const validConversations: Conversation[] = [];
+
+    for (const conv of parsed) {
+      if (!isValidConversation(conv)) {
+        console.warn('Skipping invalid conversation:', conv);
+        continue;
+      }
+
+      try {
+        validConversations.push({
+          ...conv,
+          createdAt: new Date(conv.createdAt),
+          updatedAt: new Date(conv.updatedAt),
+          messages: conv.messages.map((msg) => ({
+            ...msg,
+            timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+          })),
+        });
+      } catch (error) {
+        console.warn('Failed to process conversation, skipping:', error);
+      }
+    }
+
+    // If we filtered out corrupted entries, save the cleaned data
+    if (validConversations.length !== parsed.length) {
+      console.info(`Cleaned ${parsed.length - validConversations.length} corrupted conversations`);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(validConversations));
+    }
+
+    return validConversations;
   }
 
   /**
