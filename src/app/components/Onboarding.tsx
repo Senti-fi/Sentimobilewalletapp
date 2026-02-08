@@ -7,75 +7,86 @@ interface OnboardingProps {
   onComplete: () => void;
 }
 
-// Slide 1: Unique animated hero with floating elements
+// Slide 1: Unique orbital/geometric hero
 function WelcomeSlide() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
-      {/* Floating animated elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Floating coin */}
+      {/* Animated orbital rings */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Outer orbit */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="absolute top-[15%] left-[15%]"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="absolute w-72 h-72"
         >
           <motion.div
-            animate={{ y: [-5, 5, -5] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="w-full h-full rounded-full border border-white/10"
           >
-            <DollarSign className="w-6 h-6 text-white" />
+            {/* Orbiting dot 1 */}
+            <motion.div
+              className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50"
+            />
           </motion.div>
         </motion.div>
 
-        {/* Floating growth chart */}
+        {/* Middle orbit */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="absolute top-[20%] right-[12%]"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="absolute w-52 h-52"
         >
           <motion.div
-            animate={{ y: [5, -5, 5] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="w-full h-full rounded-full border border-white/15"
           >
-            <TrendingUp className="w-7 h-7 text-white" />
+            {/* Orbiting dot 2 */}
+            <motion.div
+              className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-300 rounded-full shadow-lg shadow-blue-300/50"
+            />
           </motion.div>
         </motion.div>
 
-        {/* Floating shield */}
+        {/* Inner orbit */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.6 }}
-          className="absolute bottom-[28%] left-[10%]"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="absolute w-36 h-36"
         >
           <motion.div
-            animate={{ y: [-3, 7, -3] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="w-full h-full rounded-full border border-white/20"
           >
-            <Shield className="w-5 h-5 text-white" />
+            {/* Orbiting dot 3 */}
+            <motion.div
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-lg shadow-white/50"
+            />
           </motion.div>
         </motion.div>
 
-        {/* Floating send icon */}
+        {/* Floating gradient blobs */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-          className="absolute bottom-[32%] right-[15%]"
-        >
-          <motion.div
-            animate={{ y: [4, -6, 4] }}
-            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-            className="w-11 h-11 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg"
-          >
-            <Send className="w-5 h-5 text-white" />
-          </motion.div>
-        </motion.div>
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[15%] right-[10%] w-24 h-24 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full blur-2xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.1, 1, 1.1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[20%] left-[5%] w-32 h-32 bg-gradient-to-br from-cyan-500/30 to-blue-500/30 rounded-full blur-2xl"
+        />
       </div>
 
       {/* Central content */}
@@ -85,39 +96,78 @@ function WelcomeSlide() {
         transition={{ duration: 0.5 }}
         className="text-center z-10"
       >
-        {/* Large Logo */}
+        {/* Central glowing logo */}
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="mb-6 flex justify-center"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 150, damping: 15 }}
+          className="mb-8 flex justify-center relative"
         >
-          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-2xl">
-            <Logo size={56} color="#2563eb" />
+          {/* Glow effect */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-28 h-28 bg-white/20 rounded-full blur-xl" />
+          </div>
+          {/* Logo container */}
+          <div className="relative w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-2xl shadow-white/20">
+            <Logo size={48} color="#2563eb" />
           </div>
         </motion.div>
 
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+        {/* Stacked typography */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="text-4xl font-bold text-white mb-3"
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="space-y-1 mb-5"
         >
-          Your money.
-          <br />
-          <span className="text-cyan-300">Smarter.</span>
-        </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+            className="text-white/60 text-sm tracking-widest uppercase"
+          >
+            Introducing
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="text-5xl font-bold text-white tracking-tight"
+          >
+            Senti
+          </motion.h1>
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ delay: 0.9, duration: 0.4 }}
+            className="h-0.5 w-16 bg-gradient-to-r from-cyan-400 to-blue-400 mx-auto rounded-full"
+          />
+        </motion.div>
 
-        {/* Subtext */}
-        <motion.p
+        {/* Feature pills */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-white/80 text-base max-w-[260px] mx-auto"
+          transition={{ delay: 1.0 }}
+          className="flex flex-wrap justify-center gap-2 max-w-[280px] mx-auto"
         >
-          Save, send, and grow with AI-powered insights that work for you.
-        </motion.p>
+          {[
+            { text: 'AI-Powered', icon: Zap },
+            { text: 'Instant Payments', icon: Send },
+            { text: 'Grow Wealth', icon: TrendingUp },
+          ].map((item, i) => (
+            <motion.span
+              key={item.text}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.1 + i * 0.1 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium border border-white/10"
+            >
+              <item.icon className="w-3 h-3" />
+              {item.text}
+            </motion.span>
+          ))}
+        </motion.div>
       </motion.div>
     </div>
   );

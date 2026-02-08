@@ -110,8 +110,8 @@ export default function SignUp({ onComplete }: SignUpProps) {
   }
 
   return (
-    <div className="size-full flex flex-col bg-white">
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 max-w-md mx-auto w-full">
+    <div className="size-full flex flex-col bg-white overflow-hidden">
+      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-md mx-auto w-full overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -45,15 +45,10 @@ export default function App() {
     }
 
     // User is signed in with Clerk
-    if (isSignedIn && user) {
+    if (isSignedIn && user && user.id) {
       // Sync Clerk user data to localStorage for app-wide use
       const clerkUserId = user.id;
 
-      // Check if this is the same user as before (to handle account switching)
-      const previousClerkUserId = localStorage.getItem('senti_clerk_user_id');
-      const isNewUser = previousClerkUserId !== clerkUserId;
-
-      // If switching to a different user, we need to check their setup status
       // User-specific key for username setup status
       const userSetupKey = `senti_username_set_${clerkUserId}`;
 
@@ -98,23 +93,20 @@ export default function App() {
       // Check if THIS USER has set up their custom username (user-specific check)
       const hasSetUsername = localStorage.getItem(userSetupKey) === 'true';
 
-      // Also restore user-specific data if they've set up before
-      if (hasSetUsername) {
-        const userUsernameKey = `senti_username_${clerkUserId}`;
-        const userHandleKey = `senti_user_handle_${clerkUserId}`;
-        const storedUsername = localStorage.getItem(userUsernameKey);
-        const storedHandle = localStorage.getItem(userHandleKey);
+      // Also check if we have the actual username stored (double verification)
+      const userUsernameKey = `senti_username_${clerkUserId}`;
+      const userHandleKey = `senti_user_handle_${clerkUserId}`;
+      const storedUsername = localStorage.getItem(userUsernameKey);
+      const storedHandle = localStorage.getItem(userHandleKey);
 
-        if (storedUsername) localStorage.setItem('senti_username', storedUsername);
-        if (storedHandle) localStorage.setItem('senti_user_handle', storedHandle);
-      }
-
-      if (!hasSetUsername) {
-        // New user needs to set up username
-        setAppState('username-setup');
-      } else {
-        // Existing user with username set
+      // Restore user-specific data if they've set up before
+      if (hasSetUsername && storedUsername && storedHandle) {
+        localStorage.setItem('senti_username', storedUsername);
+        localStorage.setItem('senti_user_handle', storedHandle);
         setAppState('dashboard');
+      } else {
+        // User needs to set up username (either new user or data was lost)
+        setAppState('username-setup');
       }
       return;
     }
@@ -150,8 +142,13 @@ export default function App() {
   };
 
   const handleUsernameComplete = (username: string) => {
-    // Get the current Clerk user ID
-    const clerkUserId = user?.id || localStorage.getItem('senti_clerk_user_id') || '';
+    // Get the current Clerk user ID - must be available at this point
+    const clerkUserId = user?.id || localStorage.getItem('senti_clerk_user_id');
+
+    if (!clerkUserId) {
+      console.error('No user ID available for username setup');
+      return;
+    }
 
     // Format and save the custom username with capital first letter
     const formattedUsername = formatUsername(username);
@@ -161,12 +158,11 @@ export default function App() {
     localStorage.setItem('senti_username', formattedUsername);
     localStorage.setItem('senti_user_handle', userHandle);
 
-    // Store with user-specific keys for persistence across sessions
-    if (clerkUserId) {
-      localStorage.setItem(`senti_username_${clerkUserId}`, formattedUsername);
-      localStorage.setItem(`senti_user_handle_${clerkUserId}`, userHandle);
-      localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
-    }
+    // Store with user-specific keys for persistence across sessions (CRITICAL)
+    localStorage.setItem(`senti_username_${clerkUserId}`, formattedUsername);
+    localStorage.setItem(`senti_user_handle_${clerkUserId}`, userHandle);
+    localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
+
     // Also set the old key for backwards compatibility
     localStorage.setItem('senti_username_set', 'true');
 
