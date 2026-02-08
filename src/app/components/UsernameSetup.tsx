@@ -13,6 +13,20 @@ const isValidUsername = (username: string): boolean => {
   return usernameRegex.test(username);
 };
 
+// Check if username is already taken
+const isUsernameTaken = (username: string): boolean => {
+  const handle = `@${username.toLowerCase()}.senti`;
+  const existingUsersJson = localStorage.getItem('senti_registered_users');
+  if (!existingUsersJson) return false;
+
+  try {
+    const existingUsers = JSON.parse(existingUsersJson);
+    return existingUsers.some((user: { id: string }) => user.id.toLowerCase() === handle.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+
 // Format username for display (capitalize first letter)
 const formatDisplayName = (username: string): string => {
   if (!username) return '';
@@ -32,6 +46,8 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
 
     if (cleanedUsername && !isValidUsername(cleanedUsername)) {
       setError('Username must be 3-20 characters (letters, numbers, underscores only)');
+    } else if (cleanedUsername && isUsernameTaken(cleanedUsername)) {
+      setError('This username is already taken. Please choose another.');
     } else {
       setError('');
     }
@@ -50,6 +66,12 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
       return;
     }
 
+    // Double-check uniqueness before submitting
+    if (isUsernameTaken(username)) {
+      setError('This username is already taken. Please choose another.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Small delay for UX
@@ -58,7 +80,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
     onComplete(username);
   };
 
-  const isValid = username.length >= 3 && isValidUsername(username);
+  const isValid = username.length >= 3 && isValidUsername(username) && !isUsernameTaken(username);
   const displayName = formatDisplayName(username);
 
   return (
