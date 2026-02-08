@@ -121,27 +121,61 @@ export default function LucyPage({
   const [error, setError] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [retryCount, setRetryCount] = useState(0);
+  const [recentConversations, setRecentConversations] = useState<Array<{id: string; preview: string; time: string}>>([]);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const recentConversations = chatStorage.getRecentConversations(3);
+  const isMountedRef = useRef(true);
 
-  // Load conversation history on mount
+  // Load conversation history and recent conversations on mount
   useEffect(() => {
-    const savedMessages = chatStorage.loadCurrentConversation();
-    if (savedMessages && savedMessages.length > 0) {
-      setMessages(savedMessages);
-    } else {
-      // Start with welcome message
-      setMessages([
-        {
-          id: '1',
-          type: 'lucy',
-          text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
-          timestamp: new Date(),
-        },
-      ]);
+    isMountedRef.current = true;
+
+    try {
+      // Load recent conversations safely
+      const recent = chatStorage.getRecentConversations(3);
+      if (isMountedRef.current) {
+        setRecentConversations(recent);
+      }
+    } catch (err) {
+      console.error('Failed to load recent conversations:', err);
     }
+
+    try {
+      const savedMessages = chatStorage.loadCurrentConversation();
+      if (isMountedRef.current) {
+        if (savedMessages && savedMessages.length > 0) {
+          setMessages(savedMessages);
+        } else {
+          // Start with welcome message
+          setMessages([
+            {
+              id: '1',
+              type: 'lucy',
+              text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load conversation history:', err);
+      // Show welcome message on error
+      if (isMountedRef.current) {
+        setMessages([
+          {
+            id: '1',
+            type: 'lucy',
+            text: 'Hi! I\'m Lucy, your AI assistant for Senti. I can help you send money, find the best vaults, explain DeFi concepts, or answer any questions about your wallet. What would you like to do?',
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    }
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   // Check backend health on mount and set up periodic checks
@@ -206,8 +240,10 @@ export default function LucyPage({
   }, [messages]);
 
   const checkBackendHealth = async () => {
+    if (!isMountedRef.current) return;
     setBackendStatus('checking');
     const isHealthy = await lucyService.healthCheck();
+    if (!isMountedRef.current) return;
     setBackendStatus(isHealthy ? 'online' : 'offline');
     if (isHealthy) {
       setRetryCount(0);
@@ -215,11 +251,14 @@ export default function LucyPage({
   };
 
   const checkBackendHealthWithRetry = async (maxRetries = 4) => {
+    if (!isMountedRef.current) return;
     setBackendStatus('checking');
 
     for (let i = 0; i < maxRetries; i++) {
+      if (!isMountedRef.current) return;
       const isHealthy = await lucyService.healthCheck();
 
+      if (!isMountedRef.current) return;
       if (isHealthy) {
         setBackendStatus('online');
         setRetryCount(0);
@@ -234,6 +273,7 @@ export default function LucyPage({
       }
     }
 
+    if (!isMountedRef.current) return;
     setBackendStatus('offline');
     setRetryCount(0);
   };
@@ -280,6 +320,7 @@ export default function LucyPage({
       walletContext,
       // On token received
       (token: string) => {
+        if (!isMountedRef.current) return;
         setMessages(prev =>
           prev.map(msg =>
             msg.id === lucyMessageId
@@ -290,6 +331,7 @@ export default function LucyPage({
       },
       // On complete
       async () => {
+        if (!isMountedRef.current) return;
         setIsStreaming(false);
 
         // Mark message as no longer streaming and add action buttons
@@ -316,6 +358,7 @@ export default function LucyPage({
         });
 
         // Generate suggestions
+        if (!isMountedRef.current) return;
         setIsLoadingSuggestions(true);
         try {
           const suggestions = await lucyService.generateSuggestions(
@@ -323,6 +366,7 @@ export default function LucyPage({
             walletContext
           );
 
+          if (!isMountedRef.current) return;
           if (suggestions.length > 0) {
             setMessages(prev =>
               prev.map(msg =>
@@ -335,11 +379,14 @@ export default function LucyPage({
         } catch (err) {
           console.error('Failed to generate suggestions:', err);
         } finally {
-          setIsLoadingSuggestions(false);
+          if (isMountedRef.current) {
+            setIsLoadingSuggestions(false);
+          }
         }
       },
       // On error
       (error: Error) => {
+        if (!isMountedRef.current) return;
         setIsStreaming(false);
         setError(error.message);
 
@@ -479,6 +526,13 @@ export default function LucyPage({
       },
     ]);
     setError(null);
+    // Refresh recent conversations
+    try {
+      const recent = chatStorage.getRecentConversations(3);
+      setRecentConversations(recent);
+    } catch (err) {
+      console.error('Failed to refresh recent conversations:', err);
+    }
   };
 
   return (
