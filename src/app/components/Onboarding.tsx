@@ -498,164 +498,264 @@ function GrowSlide() {
   );
 }
 
-// Slide 4: Pay Anyone with Contact Tap Sequence
-function PaySlide() {
-  const [selectedContact, setSelectedContact] = useState<number | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentComplete, setPaymentComplete] = useState(false);
+// Animated particle that travels between two points
+function TravelingParticle({ delay, duration, color }: { delay: number; duration: number; color: string }) {
+  return (
+    <motion.div
+      className={`absolute w-2 h-2 ${color} rounded-full`}
+      style={{ left: '15%', top: '50%' }}
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{
+        opacity: [0, 1, 1, 0],
+        scale: [0.5, 1.2, 1, 0.5],
+        left: ['15%', '35%', '65%', '85%'],
+        top: ['50%', '30%', '70%', '50%'],
+      }}
+      transition={{
+        duration,
+        delay,
+        repeat: Infinity,
+        repeatDelay: 1,
+        ease: 'easeInOut',
+      }}
+    />
+  );
+}
 
-  const contacts = [
-    { name: 'Emma', initial: 'E', color: 'from-pink-400 to-rose-500' },
-    { name: 'James', initial: 'J', color: 'from-blue-400 to-indigo-500' },
-    { name: 'Sofia', initial: 'S', color: 'from-emerald-400 to-teal-500' },
-    { name: 'Alex', initial: 'A', color: 'from-orange-400 to-amber-500' },
-    { name: 'Maya', initial: 'M', color: 'from-violet-400 to-purple-500' },
-  ];
+// Slide 4: Pay Anyone - Cinematic Global Transfer Visualization
+function PaySlide() {
+  const [phase, setPhase] = useState(0);
 
   useEffect(() => {
-    // Auto-play the tap sequence
     const timers = [
-      setTimeout(() => setSelectedContact(0), 800),
-      setTimeout(() => setShowPayment(true), 1400),
-      setTimeout(() => setPaymentComplete(true), 2400),
+      setTimeout(() => setPhase(1), 600),   // Show connection line
+      setTimeout(() => setPhase(2), 1200),  // Show amount
+      setTimeout(() => setPhase(3), 2000),  // Show success
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col items-center px-5 pt-2">
+    <div className="flex-1 flex flex-col items-center px-5 pt-2 relative overflow-hidden">
+      {/* Ambient background effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Radial gradient glow */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 1 }}
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-radial from-cyan-500/30 via-transparent to-transparent rounded-full blur-3xl"
+        />
+
+        {/* Floating ambient particles */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white/30 rounded-full"
+            style={{
+              left: `${10 + Math.random() * 80}%`,
+              top: `${10 + Math.random() * 80}%`,
+            }}
+            animate={{
+              y: [0, -20, 0],
+              opacity: [0.2, 0.6, 0.2],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Headline */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-4"
+        className="text-center mb-6 z-10"
       >
-        <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium">
-          Pay Anyone
-        </span>
-        <h2 className="text-white text-xl font-semibold mt-3 leading-snug">
-          Send money in seconds
-        </h2>
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-sm rounded-full text-white/90 text-xs font-medium border border-white/10"
+        >
+          Borderless Payments
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-white text-2xl font-bold mt-4 leading-snug"
+        >
+          Money moves at the
+          <br />
+          <span className="bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
+            speed of thought
+          </span>
+        </motion.h2>
       </motion.div>
 
-      {/* Contact Tap Sequence */}
+      {/* Central visualization */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="relative w-full max-w-[320px] aspect-[4/3] z-10"
+      >
+        {/* Connection visualization */}
+        <div className="absolute inset-0 flex items-center justify-between px-4">
+          {/* Sender avatar */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-col items-center z-10"
+          >
+            <div className="relative">
+              <motion.div
+                animate={phase >= 1 ? {
+                  boxShadow: ['0 0 0 0 rgba(6, 182, 212, 0)', '0 0 30px 10px rgba(6, 182, 212, 0.4)', '0 0 0 0 rgba(6, 182, 212, 0)']
+                } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center shadow-xl shadow-cyan-500/30"
+              >
+                <span className="text-white text-xl font-bold">You</span>
+              </motion.div>
+              {/* Pulse ring */}
+              <motion.div
+                initial={{ scale: 1, opacity: 0.5 }}
+                animate={{ scale: 1.5, opacity: 0 }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute inset-0 border-2 border-cyan-400 rounded-full"
+              />
+            </div>
+            <p className="text-white/70 text-xs mt-2 font-medium">Sender</p>
+          </motion.div>
+
+          {/* Energy stream between avatars */}
+          <div className="absolute inset-x-16 top-1/2 -translate-y-1/2 h-20 flex items-center">
+            {/* Connection line */}
+            <motion.div
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={phase >= 1 ? { scaleX: 1, opacity: 1 } : {}}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-x-0 top-1/2 h-[2px] bg-gradient-to-r from-cyan-400 via-white/50 to-emerald-400 origin-left"
+              style={{ filter: 'blur(0.5px)' }}
+            />
+
+            {/* Traveling particles */}
+            {phase >= 1 && (
+              <>
+                <TravelingParticle delay={0} duration={1.2} color="bg-cyan-400 shadow-lg shadow-cyan-400/50" />
+                <TravelingParticle delay={0.3} duration={1.2} color="bg-white shadow-lg shadow-white/50" />
+                <TravelingParticle delay={0.6} duration={1.2} color="bg-emerald-400 shadow-lg shadow-emerald-400/50" />
+              </>
+            )}
+          </div>
+
+          {/* Receiver avatar */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex flex-col items-center z-10"
+          >
+            <div className="relative">
+              <motion.div
+                animate={phase >= 3 ? {
+                  boxShadow: ['0 0 0 0 rgba(16, 185, 129, 0)', '0 0 30px 10px rgba(16, 185, 129, 0.4)', '0 0 0 0 rgba(16, 185, 129, 0)']
+                } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 overflow-hidden"
+              >
+                {/* Avatar with image placeholder */}
+                <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">M</span>
+                </div>
+              </motion.div>
+              {/* Success checkmark overlay */}
+              <AnimatePresence>
+                {phase >= 3 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg"
+                  >
+                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <p className="text-white/70 text-xs mt-2 font-medium">Mom</p>
+          </motion.div>
+        </div>
+
+        {/* Amount display */}
+        <AnimatePresence>
+          {phase >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center"
+            >
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
+              >
+                <motion.p
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200 }}
+                  className="text-3xl font-bold text-white"
+                >
+                  $250
+                </motion.p>
+                <p className="text-cyan-300 text-xs font-medium mt-1">
+                  {phase >= 3 ? 'Delivered instantly' : 'Sending...'}
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Feature highlights */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-[300px] flex-1"
+        transition={{ delay: 0.8 }}
+        className="mt-6 flex flex-wrap justify-center gap-3 z-10"
       >
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-3">
-            <p className="text-white font-semibold text-sm">Send Money</p>
-            <p className="text-white/70 text-xs">Tap a contact to pay</p>
-          </div>
-
-          {/* Contacts Grid */}
-          <div className="p-4">
-            <div className="flex justify-center gap-3 mb-4">
-              {contacts.map((contact, i) => (
-                <motion.div
-                  key={contact.name}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + i * 0.08 }}
-                  className="flex flex-col items-center"
-                >
-                  <motion.div
-                    animate={{
-                      scale: selectedContact === i ? [1, 1.15, 1] : 1,
-                      boxShadow: selectedContact === i
-                        ? '0 0 0 3px rgba(59, 130, 246, 0.5)'
-                        : '0 0 0 0px rgba(59, 130, 246, 0)',
-                    }}
-                    transition={{ duration: 0.3 }}
-                    className={`w-12 h-12 bg-gradient-to-br ${contact.color} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg cursor-pointer`}
-                  >
-                    {contact.initial}
-                  </motion.div>
-                  <p className="text-gray-600 text-[10px] mt-1.5 font-medium">{contact.name}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Payment Flow */}
-            <AnimatePresence mode="wait">
-              {!showPayment && selectedContact === null && (
-                <motion.div
-                  key="hint"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-center py-6"
-                >
-                  <p className="text-gray-400 text-sm">Select a contact above</p>
-                </motion.div>
-              )}
-
-              {showPayment && !paymentComplete && (
-                <motion.div
-                  key="payment"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="text-center py-4 space-y-3"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <div className={`w-8 h-8 bg-gradient-to-br ${contacts[0].color} rounded-full flex items-center justify-center text-white font-bold text-xs`}>
-                      {contacts[0].initial}
-                    </div>
-                    <span className="text-gray-600 text-sm font-medium">to {contacts[0].name}</span>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900">$50.00</p>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 0.8, ease: 'easeInOut' }}
-                    className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mx-auto max-w-[200px]"
-                  />
-                  <p className="text-blue-600 text-xs font-medium">Sending...</p>
-                </motion.div>
-              )}
-
-              {paymentComplete && (
-                <motion.div
-                  key="complete"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-4 space-y-3"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-                    className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/30"
-                  >
-                    <Check className="w-7 h-7 text-white" strokeWidth={3} />
-                  </motion.div>
-                  <div>
-                    <p className="text-green-600 font-semibold">Sent to {contacts[0].name}!</p>
-                    <p className="text-gray-500 text-xs">$50.00 delivered instantly</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Bottom text */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: paymentComplete ? 1 : 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-4 text-center"
-        >
-          <p className="text-white/60 text-xs">
-            Instant Transfers. Always.
-          </p>
-        </motion.div>
+        {[
+          { icon: Zap, text: 'Instant' },
+          { icon: Send, text: 'No fees' },
+          { icon: CreditCard, text: 'Any bank' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.text}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 + i * 0.1 }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full border border-white/10"
+          >
+            <item.icon className="w-3.5 h-3.5 text-cyan-300" />
+            <span className="text-white/90 text-xs font-medium">{item.text}</span>
+          </motion.div>
+        ))}
       </motion.div>
+
+      {/* Bottom tagline */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase >= 3 ? 1 : 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-auto mb-2 text-white/50 text-xs text-center z-10"
+      >
+        Anyone. Anywhere. Anytime.
+      </motion.p>
     </div>
   );
 }
