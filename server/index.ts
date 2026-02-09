@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
 
 // Get the directory name in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,17 @@ console.log('✅ Anthropic API key loaded successfully');
 const anthropic = new Anthropic({
   apiKey: apiKey,
 });
+
+// Initialize Supabase client (server-side, uses same env vars as frontend)
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+if (supabase) {
+  console.log('✅ Supabase client initialized');
+} else {
+  console.warn('⚠️  Supabase not configured — migration endpoint will be unavailable');
+}
 
 app.use(cors());
 app.use(express.json());
@@ -167,6 +179,165 @@ app.post('/api/check-action', async (req, res) => {
   } catch (error: any) {
     console.error('Error checking action:', error);
     res.status(500).json({ error: error.message, action: 'none', confidence: 0 });
+  }
+});
+
+// ============================================================================
+// Clerk → Supabase user migration
+// ============================================================================
+// Fetches ALL users from Clerk's Backend API and inserts any that are missing
+// into the Supabase `users` table.  Auto-generates a username from the Clerk
+// profile (first name / email prefix) so the user appears immediately.
+//
+// Usage:  POST http://localhost:3001/api/migrate-clerk-users
+// Requires:  CLERK_SECRET_KEY in .env
+// ============================================================================
+
+/** Fetch every user from Clerk (handles pagination). */
+async function fetchAllClerkUsers(secretKey: string) {
+  const allUsers: any[] = [];
+  let offset = 0;
+  const limit = 100; // Clerk max per page
+
+  while (true) {
+    const res = await fetch(
+      `https://api.clerk.com/v1/users?limit=${limit}&offset=${offset}&order_by=-created_at`,
+      { headers: { Authorization: `Bearer ${secretKey}` } }
+    );
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Clerk API ${res.status}: ${body}`);
+    }
+
+    const users = await res.json();
+    if (!Array.isArray(users) || users.length === 0) break;
+
+    allUsers.push(...users);
+    if (users.length < limit) break; // last page
+    offset += limit;
+  }
+
+  return allUsers;
+}
+
+/** Turn a Clerk profile into a safe, unique-ish username candidate. */
+function deriveUsername(clerkUser: any): string {
+  // Try first_name, then email prefix, then a fallback
+  const firstName: string = clerkUser.first_name || '';
+  const emailObj = (clerkUser.email_addresses || [])[0];
+  const emailPrefix: string = emailObj?.email_address?.split('@')[0] || '';
+
+  let base = (firstName || emailPrefix || 'user')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+
+  // Ensure minimum 3 chars
+  if (base.length < 3) base = base + 'senti';
+  // Truncate to leave room for suffix
+  if (base.length > 16) base = base.slice(0, 16);
+
+  return base;
+}
+
+/** Generate a hex wallet address (40 hex chars). */
+function generateWalletAddress(): string {
+  const hex = '0123456789abcdef';
+  let addr = '0x';
+  for (let i = 0; i < 40; i++) addr += hex[Math.floor(Math.random() * 16)];
+  return addr;
+}
+
+app.post('/api/migrate-clerk-users', async (req, res) => {
+  try {
+    const clerkSecret = process.env.CLERK_SECRET_KEY;
+    if (!clerkSecret) {
+      return res.status(500).json({
+        error: 'CLERK_SECRET_KEY is not set in .env. Get it from https://dashboard.clerk.com → API Keys.',
+      });
+    }
+    if (!supabase) {
+      return res.status(500).json({ error: 'Supabase is not configured.' });
+    }
+
+    console.log('⏳ Fetching all users from Clerk...');
+    const clerkUsers = await fetchAllClerkUsers(clerkSecret);
+    console.log(`   Found ${clerkUsers.length} Clerk user(s).`);
+
+    // Fetch existing Supabase users so we can skip them
+    const { data: existingUsers } = await supabase.from('users').select('clerk_user_id, username');
+    const existingClerkIds = new Set((existingUsers || []).map((u: any) => u.clerk_user_id));
+    const existingUsernames = new Set((existingUsers || []).map((u: any) => u.username));
+
+    const toInsert = [];
+    let skipped = 0;
+
+    for (const cu of clerkUsers) {
+      if (existingClerkIds.has(cu.id)) {
+        skipped++;
+        continue;
+      }
+
+      // Derive a unique username
+      let username = deriveUsername(cu);
+      let attempt = 0;
+      while (existingUsernames.has(username)) {
+        attempt++;
+        const suffix = Math.floor(Math.random() * 9000 + 1000); // 4-digit random
+        username = deriveUsername(cu).slice(0, 15) + suffix;
+      }
+      existingUsernames.add(username); // reserve it for subsequent iterations
+
+      const emailObj = (cu.email_addresses || [])[0];
+      const email = emailObj?.email_address || '';
+
+      toInsert.push({
+        clerk_user_id: cu.id,
+        username,
+        handle: `@${username}.senti`,
+        wallet_address: generateWalletAddress(),
+        email,
+        image_url: cu.image_url || '',
+      });
+    }
+
+    if (toInsert.length === 0) {
+      return res.json({
+        message: 'All Clerk users are already in Supabase.',
+        total_clerk_users: clerkUsers.length,
+        already_in_supabase: skipped,
+        migrated: 0,
+      });
+    }
+
+    // Batch insert (Supabase supports bulk upsert)
+    const { data, error } = await supabase
+      .from('users')
+      .upsert(toInsert, { onConflict: 'clerk_user_id' })
+      .select();
+
+    if (error) {
+      console.error('Supabase bulk insert error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log(`✅ Migrated ${data?.length || 0} user(s) to Supabase.`);
+
+    return res.json({
+      message: 'Migration complete.',
+      total_clerk_users: clerkUsers.length,
+      already_in_supabase: skipped,
+      migrated: data?.length || 0,
+      migrated_users: (data || []).map((u: any) => ({
+        clerk_user_id: u.clerk_user_id,
+        username: u.username,
+        handle: u.handle,
+        email: u.email,
+      })),
+    });
+  } catch (err: any) {
+    console.error('Migration error:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
