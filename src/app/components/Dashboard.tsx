@@ -26,6 +26,7 @@ import SwapModal from './SwapModal';
 import GrowModal from './GrowModal';
 import TransactionHistory from './TransactionHistory';
 import SettingsPage from './SettingsPage';
+import SettingsModal from './SettingsModal';
 import LucyPage from './LucyPage';
 import Logo from './Logo';
 import SavingsPage from './SavingsPage';

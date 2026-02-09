@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
@@ -8,21 +8,94 @@ import UsernameSetup from './components/UsernameSetup';
 import Onboarding from './components/Onboarding';
 import { userService, UserProfile } from '../services/supabase';
 
+// ─── Error Boundary ──────────────────────────────────────────────────
+// Catches any render crash in child components and shows a recovery UI
+// instead of a blank white screen.
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('App crashed:', error, info.componentStack);
+  }
+
+  handleReload = () => {
+    // Clear potentially corrupted localStorage data that may have caused the crash
+    try {
+      const keysToPreserve = ['senti_onboarding_completed', 'senti_clerk_user_id'];
+      const preserved: Record<string, string> = {};
+      keysToPreserve.forEach(key => {
+        const val = localStorage.getItem(key);
+        if (val) preserved[key] = val;
+      });
+
+      // Remove all senti_ keys except the preserved ones
+      const allKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('senti_') && !keysToPreserve.includes(key)) {
+          allKeys.push(key);
+        }
+      }
+      allKeys.forEach(key => localStorage.removeItem(key));
+
+      // Restore preserved keys
+      Object.entries(preserved).forEach(([key, val]) => localStorage.setItem(key, val));
+    } catch {
+      // If even localStorage is broken, just clear everything
+      localStorage.clear();
+    }
+
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 px-6 text-center">
+          <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mb-6">
+            <span className="text-4xl">S</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Something went wrong</h2>
+          <p className="text-blue-200/70 mb-8 max-w-xs">
+            An unexpected error occurred. Tap below to restart the app.
+          </p>
+          <button
+            onClick={this.handleReload}
+            className="px-8 py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-2xl font-medium shadow-lg"
+          >
+            Restart App
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ─── App Types & Helpers ─────────────────────────────────────────────
+
 type AppState = 'loading' | 'onboarding' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
 
-// Generate a unique user ID for Senti
 const generateSentiUserId = (): string => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `SENTI-${timestamp}-${randomPart}`;
 };
 
-// Format username with capital first letter (e.g., "oxsenti" -> "OxSenti")
 const formatUsername = (username: string): string => {
   return username.charAt(0).toUpperCase() + username.slice(1);
 };
 
-// Restore Supabase profile data into localStorage for the session
 function restoreProfileToLocalStorage(profile: UserProfile, clerkUserId: string) {
   const formattedUsername = profile.username.charAt(0).toUpperCase() + profile.username.slice(1);
   localStorage.setItem('senti_username', formattedUsername);
@@ -37,21 +110,23 @@ function restoreProfileToLocalStorage(profile: UserProfile, clerkUserId: string)
   }
 }
 
-export default function App() {
+// ─── Main App Component ──────────────────────────────────────────────
+
+function AppContent() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [appState, setAppState] = useState<AppState>('loading');
 
-  // Use a ref to prevent the profile check from running more than once per sign-in
+  // Ref guard: prevents checkUserProfile from running more than once per clerkUserId
   const profileCheckRef = useRef<string | null>(null);
+  // Ref to clean up the "not signed in" timeout so it can't race with auth
+  const notSignedInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Check current route for SSO callback
   const isCallbackRoute = window.location.pathname === '/sso-callback';
   const isDashboardRoute = window.location.pathname === '/dashboard';
 
   // Check Supabase for existing user profile – runs exactly once per clerkUserId
   const checkUserProfile = useCallback(async (clerkUserId: string, email: string, imageUrl: string) => {
-    // Guard: only run once per user id
     if (profileCheckRef.current === clerkUserId) return;
     profileCheckRef.current = clerkUserId;
 
@@ -62,7 +137,6 @@ export default function App() {
       if (existingUser) {
         restoreProfileToLocalStorage(existingUser, clerkUserId);
 
-        // Keep Supabase up to date with latest email / image from the auth provider
         if (existingUser.email !== email || existingUser.image_url !== imageUrl) {
           userService.updateUser(clerkUserId, { email, image_url: imageUrl }).catch(() => {});
         }
@@ -94,19 +168,15 @@ export default function App() {
           if (migrated) {
             restoreProfileToLocalStorage(migrated, clerkUserId);
           } else {
-            // createUser returned null but didn't throw – still use localStorage data
             localStorage.setItem('senti_username', storedUsername);
             localStorage.setItem('senti_user_handle', storedHandle);
           }
         } catch (migrationErr: any) {
           if (migrationErr?.message === 'USERNAME_TAKEN') {
-            // Username was taken by someone else – user needs to pick a new one
-            // Clear the stale localStorage flag so they go through setup
             localStorage.removeItem(`senti_username_set_${clerkUserId}`);
             setAppState('username-setup');
             return;
           }
-          // Other migration error – use localStorage data for now
           localStorage.setItem('senti_username', storedUsername);
           localStorage.setItem('senti_user_handle', storedHandle);
         }
@@ -135,7 +205,6 @@ export default function App() {
 
           if (migrated) {
             restoreProfileToLocalStorage(migrated, clerkUserId);
-            // Promote legacy keys to user-specific keys
             localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
           }
         } catch (legacyErr: any) {
@@ -153,7 +222,6 @@ export default function App() {
       setAppState('username-setup');
     } catch (err) {
       console.error('Error checking user profile:', err);
-      // On total failure, fall back to localStorage for a graceful experience
       const storedUsername = localStorage.getItem(`senti_username_${clerkUserId}`) || localStorage.getItem('senti_username');
       const storedHandle = localStorage.getItem(`senti_user_handle_${clerkUserId}`) || localStorage.getItem('senti_user_handle');
 
@@ -169,6 +237,14 @@ export default function App() {
 
   // Handle authentication state and routing
   useEffect(() => {
+    // ── Always cancel the "not signed in" timeout when this effect re-runs ──
+    // This prevents the old timeout from stomping the state after Clerk
+    // transitions from isSignedIn=false to isSignedIn=true.
+    if (notSignedInTimerRef.current) {
+      clearTimeout(notSignedInTimerRef.current);
+      notSignedInTimerRef.current = null;
+    }
+
     // Handle SSO callback route
     if (isCallbackRoute) {
       setAppState('sso-callback');
@@ -226,20 +302,44 @@ export default function App() {
       return;
     }
 
-    // User is not signed in - check if they've seen onboarding
+    // User is not signed in
     const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
 
     // Reset the profile check ref so it runs again on next sign-in
     profileCheckRef.current = null;
 
-    setTimeout(() => {
+    // Use a ref-tracked timeout so it can be cancelled if Clerk auth resolves
+    notSignedInTimerRef.current = setTimeout(() => {
+      notSignedInTimerRef.current = null;
       if (hasCompletedOnboarding) {
         setAppState('signup');
       } else {
         setAppState('onboarding');
       }
     }, 1000);
+
+    // Cleanup: cancel the timeout if the effect re-runs before it fires
+    return () => {
+      if (notSignedInTimerRef.current) {
+        clearTimeout(notSignedInTimerRef.current);
+        notSignedInTimerRef.current = null;
+      }
+    };
   }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute, checkUserProfile]);
+
+  // Safety net: if we're stuck in 'loading' for more than 10 seconds, force a transition
+  useEffect(() => {
+    if (appState !== 'loading') return;
+
+    const safetyTimer = setTimeout(() => {
+      // Still loading after 10s – Clerk may have failed silently
+      if (profileCheckRef.current) return; // checkUserProfile is running, give it more time
+      const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
+      setAppState(hasCompletedOnboarding ? 'signup' : 'onboarding');
+    }, 10000);
+
+    return () => clearTimeout(safetyTimer);
+  }, [appState]);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('senti_onboarding_completed', 'true');
@@ -268,7 +368,6 @@ export default function App() {
     const email = localStorage.getItem('senti_user_email') || '';
     const imageUrl = localStorage.getItem('senti_user_image') || '';
 
-    // Save to Supabase first (primary storage)
     try {
       await userService.createUser({
         clerkUserId,
@@ -280,19 +379,14 @@ export default function App() {
       });
     } catch (err: any) {
       if (err?.message === 'USERNAME_TAKEN') {
-        // This shouldn't happen because UsernameSetup checks beforehand,
-        // but handle it gracefully just in case
         console.error('Username was taken during final creation');
         return;
       }
       console.error('Failed to save user to Supabase:', err);
     }
 
-    // Store globally for current session
     localStorage.setItem('senti_username', formattedUsername);
     localStorage.setItem('senti_user_handle', userHandle);
-
-    // Store with user-specific keys for persistence across sessions
     localStorage.setItem(`senti_username_${clerkUserId}`, formattedUsername);
     localStorage.setItem(`senti_user_handle_${clerkUserId}`, userHandle);
     localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
@@ -324,5 +418,15 @@ export default function App() {
         <Dashboard />
       )}
     </div>
+  );
+}
+
+// ─── Export wrapped in ErrorBoundary ─────────────────────────────────
+
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
   );
 }
