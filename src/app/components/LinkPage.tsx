@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  MessageCircle, 
-  Send, 
-  ArrowLeft, 
-  Search, 
-  DollarSign, 
+import {
+  MessageCircle,
+  Send,
+  ArrowLeft,
+  Search,
+  DollarSign,
   User,
   CheckCircle,
   Clock,
@@ -13,25 +13,15 @@ import {
   XCircle
 } from 'lucide-react';
 import LinkSendModal from './LinkSendModal';
+import { userService, UserProfile } from '../../services/supabase';
 
-// All registered users in the system (simulated database)
-const registeredUsers = [
-  { id: '@david.senti', name: 'David Senti', online: true },
-  { id: '@emma.senti', name: 'Emma Senti', online: true },
-  { id: '@marcus.senti', name: 'Marcus Senti', online: false },
-  { id: '@jessica.senti', name: 'Jessica Senti', online: false },
-  { id: '@chris.senti', name: 'Chris Senti', online: true },
-  { id: '@amanda.senti', name: 'Amanda Senti', online: false },
-  { id: '@ryan.senti', name: 'Ryan Senti', online: true },
-  { id: '@linda.senti', name: 'Linda Senti', online: false },
-  { id: '@kevin.senti', name: 'Kevin Senti', online: true },
-  { id: '@rachel.senti', name: 'Rachel Senti', online: false },
-  { id: '@tom.senti', name: 'Tom Senti', online: true },
-  { id: '@nicole.senti', name: 'Nicole Senti', online: false },
-  { id: '@jason.senti', name: 'Jason Senti', online: true },
-  { id: '@maria.senti', name: 'Maria Senti', online: false },
-  { id: '@brian.senti', name: 'Brian Senti', online: true },
-];
+// Shape used for search results and contacts
+interface DiscoverableUser {
+  id: string;        // handle, e.g. "@alice.senti"
+  name: string;
+  online: boolean;
+  image_url?: string;
+}
 
 // Generate random gradient color
 const getRandomGradient = () => {
@@ -140,7 +130,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   };
 
   const [contacts, setContacts] = useState(loadContacts);
-  const [searchResults, setSearchResults] = useState<typeof registeredUsers>([]);
+  const [searchResults, setSearchResults] = useState<DiscoverableUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Save contacts to localStorage whenever they change
@@ -214,49 +204,54 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     contact.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Search for new users when query looks like a username
+  // Search Supabase for real users when query is at least 2 chars
   useEffect(() => {
-    if (searchQuery.length >= 2) {
-      setIsSearching(true);
-      // Simulate search delay
-      const timer = setTimeout(() => {
-        const query = searchQuery.toLowerCase();
-        // Get current user's handle to exclude from search
-        const currentUserHandle = localStorage.getItem('senti_user_handle') || '';
-
-        // Get real registered users from localStorage
-        const realRegisteredUsersJson = localStorage.getItem('senti_registered_users');
-        const realRegisteredUsers = realRegisteredUsersJson ? JSON.parse(realRegisteredUsersJson) : [];
-
-        // Combine with simulated users for demo purposes
-        const allUsers = [...realRegisteredUsers, ...registeredUsers];
-
-        // Remove duplicates by id
-        const uniqueUsers = allUsers.filter((user, index, self) =>
-          index === self.findIndex(u => u.id === user.id)
-        );
-
-        // Search in all users that are not already contacts and not current user
-        const contactIds = contacts.map(c => c.id);
-        const results = uniqueUsers.filter(user =>
-          !contactIds.includes(user.id) &&
-          user.id !== currentUserHandle && (
-            user.id.toLowerCase().includes(query) ||
-            user.name.toLowerCase().includes(query)
-          )
-        );
-        setSearchResults(results);
-        setIsSearching(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
+    if (searchQuery.length < 2) {
       setSearchResults([]);
       setIsSearching(false);
+      return;
     }
+
+    setIsSearching(true);
+    const abortController = new AbortController();
+
+    const timer = setTimeout(async () => {
+      try {
+        const currentClerkId = localStorage.getItem('senti_clerk_user_id') || '';
+        const results = await userService.searchUsers(searchQuery, currentClerkId);
+
+        if (abortController.signal.aborted) return;
+
+        // Exclude users that are already in the contact list
+        const contactIds = new Set(contacts.map((c: any) => c.id));
+        const filtered: DiscoverableUser[] = results
+          .filter((u: UserProfile) => !contactIds.has(u.handle))
+          .map((u: UserProfile) => ({
+            id: u.handle,
+            name: `${u.username.charAt(0).toUpperCase() + u.username.slice(1)} Senti`,
+            online: true,   // all registered users shown as available
+            image_url: u.image_url,
+          }));
+
+        setSearchResults(filtered);
+      } catch (err) {
+        console.error('User search failed:', err);
+        setSearchResults([]);
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
   }, [searchQuery, contacts]);
 
   // Add a new contact and start conversation
-  const handleAddContact = (user: typeof registeredUsers[0]) => {
+  const handleAddContact = (user: DiscoverableUser) => {
     const newContact = {
       id: user.id,
       name: user.name,
@@ -265,6 +260,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
       lastMessage: 'Start a conversation',
       lastMessageTime: 'New',
       online: user.online,
+      image_url: user.image_url,
     };
 
     setContacts(prev => [newContact, ...prev]);
@@ -728,9 +724,17 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                         className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 flex items-center gap-4 border-2 border-blue-100"
                       >
                         <div className="relative">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center text-white font-semibold">
-                            {user.name.slice(0, 2)}
-                          </div>
+                          {user.image_url ? (
+                            <img
+                              src={user.image_url}
+                              alt={user.name}
+                              className="w-12 h-12 rounded-xl object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center text-white font-semibold">
+                              {user.name.slice(0, 2)}
+                            </div>
+                          )}
                           {user.online && (
                             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
                           )}
