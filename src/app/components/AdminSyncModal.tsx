@@ -95,11 +95,34 @@ export default function AdminSyncModal({ onClose }: AdminSyncModalProps) {
     }
   };
 
-  // Calculate pending sync count
+  // Calculate pending sync count (check both handle and username)
   const supabaseHandles = new Set(supabaseUsers.map(u => u.handle.toLowerCase()));
+  const supabaseUsernames = new Set(supabaseUsers.map(u => u.username.toLowerCase()));
+
+  const getSourceLabel = (source: LocalRegisteredUser['source']) => {
+    switch (source) {
+      case 'registered_users': return 'Registry';
+      case 'user_specific_keys': return 'User Keys';
+      case 'global_keys': return 'Current User';
+      case 'contacts': return 'Contacts';
+      default: return 'Unknown';
+    }
+  };
+
+  const getSourceColor = (source: LocalRegisteredUser['source']) => {
+    switch (source) {
+      case 'registered_users': return 'bg-purple-100 text-purple-700';
+      case 'user_specific_keys': return 'bg-blue-100 text-blue-700';
+      case 'global_keys': return 'bg-green-100 text-green-700';
+      case 'contacts': return 'bg-orange-100 text-orange-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const pendingCount = localUsers.filter(u => {
     const handle = u.id.startsWith('@') ? u.id.toLowerCase() : `@${u.id.toLowerCase()}`;
-    return !supabaseHandles.has(handle);
+    const username = handle.replace('@', '').replace('.senti', '');
+    return !supabaseHandles.has(handle) && !supabaseUsernames.has(username);
   }).length;
 
   return (
@@ -260,11 +283,13 @@ export default function AdminSyncModal({ onClose }: AdminSyncModalProps) {
                 <div className="text-center py-8 text-gray-500">
                   <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>No local users found</p>
+                  <p className="text-xs mt-2">Scanning: registered_users, user keys, contacts</p>
                 </div>
               ) : (
                 localUsers.map((user, index) => {
                   const handle = user.id.startsWith('@') ? user.id.toLowerCase() : `@${user.id.toLowerCase()}`;
-                  const existsInSupabase = supabaseHandles.has(handle);
+                  const username = handle.replace('@', '').replace('.senti', '');
+                  const existsInSupabase = supabaseHandles.has(handle) || supabaseUsernames.has(username);
 
                   return (
                     <div
@@ -277,8 +302,18 @@ export default function AdminSyncModal({ onClose }: AdminSyncModalProps) {
                         {user.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 truncate">{user.name}</p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${getSourceColor(user.source)}`}>
+                            {getSourceLabel(user.source)}
+                          </span>
+                        </div>
                         <p className="text-sm text-gray-500 truncate">{user.id}</p>
+                        {user.walletAddress && (
+                          <p className="text-xs text-gray-400 truncate font-mono">
+                            {user.walletAddress.slice(0, 10)}...
+                          </p>
+                        )}
                       </div>
                       {existsInSupabase ? (
                         <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
