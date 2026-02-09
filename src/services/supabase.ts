@@ -82,7 +82,9 @@ export const userService = {
   },
 
   /**
-   * Create a new user profile
+   * Create a new user profile.
+   * Uses upsert on clerk_user_id to safely handle re-creation attempts.
+   * Throws on username conflict so the caller can show a proper error.
    */
   async createUser(profile: {
     clerkUserId: string;
@@ -93,26 +95,47 @@ export const userService = {
     imageUrl?: string;
   }): Promise<UserProfile | null> {
     try {
+      // Check username uniqueness first (separate from the DB constraint)
+      const isTaken = await this.isUsernameTaken(profile.username);
+      if (isTaken) {
+        // Verify it's not the same user re-registering
+        const existing = await this.getUserByClerkId(profile.clerkUserId);
+        if (existing && existing.username === profile.username.toLowerCase()) {
+          // Same user, same username – just return existing
+          return existing;
+        }
+        throw new Error('USERNAME_TAKEN');
+      }
+
       const { data, error } = await supabase
         .from('users')
-        .insert({
-          clerk_user_id: profile.clerkUserId,
-          username: profile.username.toLowerCase(),
-          handle: profile.handle,
-          wallet_address: profile.walletAddress,
-          email: profile.email,
-          image_url: profile.imageUrl,
-        })
+        .upsert(
+          {
+            clerk_user_id: profile.clerkUserId,
+            username: profile.username.toLowerCase(),
+            handle: profile.handle,
+            wallet_address: profile.walletAddress,
+            email: profile.email,
+            image_url: profile.imageUrl,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'clerk_user_id' }
+        )
         .select()
         .single();
 
       if (error) {
+        // Handle unique constraint violation on username
+        if (error.code === '23505' && error.message?.includes('username')) {
+          throw new Error('USERNAME_TAKEN');
+        }
         console.error('Error creating user:', error);
         return null;
       }
 
       return data;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'USERNAME_TAKEN') throw err;
       console.error('Failed to create user:', err);
       return null;
     }
@@ -155,17 +178,22 @@ export const userService = {
   },
 
   /**
-   * Search users by username or handle
+   * Search users by username or handle, excluding the current user
    */
-  async searchUsers(query: string, limit: number = 10): Promise<UserProfile[]> {
+  async searchUsers(query: string, currentClerkId?: string, limit: number = 20): Promise<UserProfile[]> {
     try {
       const searchTerm = query.toLowerCase().replace('@', '').replace('.senti', '');
 
-      const { data, error } = await supabase
+      let q = supabase
         .from('users')
         .select('*')
-        .or(`username.ilike.%${searchTerm}%,handle.ilike.%${searchTerm}%`)
-        .limit(limit);
+        .or(`username.ilike.%${searchTerm}%,handle.ilike.%${searchTerm}%`);
+
+      if (currentClerkId) {
+        q = q.neq('clerk_user_id', currentClerkId);
+      }
+
+      const { data, error } = await q.limit(limit);
 
       if (error) {
         console.error('Error searching users:', error);
@@ -206,15 +234,20 @@ export const userService = {
   },
 
   /**
-   * Get all users (for directory/discovery)
+   * Get all users (for directory/discovery), excluding the current user
    */
-  async getAllUsers(limit: number = 50): Promise<UserProfile[]> {
+  async getAllUsers(currentClerkId?: string, limit: number = 50): Promise<UserProfile[]> {
     try {
-      const { data, error } = await supabase
+      let q = supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .order('created_at', { ascending: false });
+
+      if (currentClerkId) {
+        q = q.neq('clerk_user_id', currentClerkId);
+      }
+
+      const { data, error } = await q.limit(limit);
 
       if (error) {
         console.error('Error fetching users:', error);
