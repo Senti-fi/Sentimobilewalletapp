@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
@@ -6,6 +6,7 @@ import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
 import Onboarding from './components/Onboarding';
+import { userService, UserProfile } from '../services/supabase';
 
 type AppState = 'loading' | 'onboarding' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
 
@@ -25,10 +26,83 @@ export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [appState, setAppState] = useState<AppState>('loading');
+  const [isCheckingUser, setIsCheckingUser] = useState(false);
 
   // Check current route for SSO callback
   const isCallbackRoute = window.location.pathname === '/sso-callback';
   const isDashboardRoute = window.location.pathname === '/dashboard';
+
+  // Check Supabase for existing user profile
+  const checkUserProfile = useCallback(async (clerkUserId: string, email: string, imageUrl: string) => {
+    setIsCheckingUser(true);
+    try {
+      // Check Supabase for existing user profile
+      const existingUser = await userService.getUserByClerkId(clerkUserId);
+
+      if (existingUser) {
+        // User exists in Supabase! Restore their data to localStorage
+        const formattedUsername = existingUser.username.charAt(0).toUpperCase() + existingUser.username.slice(1);
+        localStorage.setItem('senti_username', formattedUsername);
+        localStorage.setItem('senti_user_handle', existingUser.handle);
+        localStorage.setItem(`senti_username_${clerkUserId}`, formattedUsername);
+        localStorage.setItem(`senti_user_handle_${clerkUserId}`, existingUser.handle);
+        localStorage.setItem(`senti_username_set_${clerkUserId}`, 'true');
+
+        if (existingUser.wallet_address) {
+          localStorage.setItem('senti_wallet_address', existingUser.wallet_address);
+          localStorage.setItem(`senti_wallet_address_${clerkUserId}`, existingUser.wallet_address);
+        }
+
+        setAppState('dashboard');
+        return;
+      }
+
+      // No user in Supabase - check localStorage as fallback
+      const userSetupKey = `senti_username_set_${clerkUserId}`;
+      const hasSetUsername = localStorage.getItem(userSetupKey) === 'true';
+      const storedUsername = localStorage.getItem(`senti_username_${clerkUserId}`);
+      const storedHandle = localStorage.getItem(`senti_user_handle_${clerkUserId}`);
+
+      if (hasSetUsername && storedUsername && storedHandle) {
+        // User exists in localStorage but not Supabase - migrate them
+        const walletAddress = localStorage.getItem(`senti_wallet_address_${clerkUserId}`) ||
+                             localStorage.getItem('senti_wallet_address') || '';
+
+        await userService.createUser({
+          clerkUserId,
+          username: storedUsername.toLowerCase(),
+          handle: storedHandle,
+          walletAddress,
+          email,
+          imageUrl,
+        });
+
+        localStorage.setItem('senti_username', storedUsername);
+        localStorage.setItem('senti_user_handle', storedHandle);
+        setAppState('dashboard');
+      } else {
+        // New user - needs to create identity
+        setAppState('username-setup');
+      }
+    } catch (err) {
+      console.error('Error checking user profile:', err);
+      // Fallback to localStorage check on error
+      const userSetupKey = `senti_username_set_${clerkUserId}`;
+      const hasSetUsername = localStorage.getItem(userSetupKey) === 'true';
+      const storedUsername = localStorage.getItem(`senti_username_${clerkUserId}`);
+      const storedHandle = localStorage.getItem(`senti_user_handle_${clerkUserId}`);
+
+      if (hasSetUsername && storedUsername && storedHandle) {
+        localStorage.setItem('senti_username', storedUsername);
+        localStorage.setItem('senti_user_handle', storedHandle);
+        setAppState('dashboard');
+      } else {
+        setAppState('username-setup');
+      }
+    } finally {
+      setIsCheckingUser(false);
+    }
+  }, []);
 
   // Handle authentication state and routing
   useEffect(() => {
@@ -48,9 +122,6 @@ export default function App() {
     if (isSignedIn && user && user.id) {
       // Sync Clerk user data to localStorage for app-wide use
       const clerkUserId = user.id;
-
-      // User-specific key for username setup status
-      const userSetupKey = `senti_username_set_${clerkUserId}`;
 
       // Generate Senti ID for this specific user if they don't have one
       const userSentiIdKey = `senti_user_id_${clerkUserId}`;
@@ -90,23 +161,9 @@ export default function App() {
         window.history.replaceState({}, '', '/');
       }
 
-      // Check if THIS USER has set up their custom username (user-specific check)
-      const hasSetUsername = localStorage.getItem(userSetupKey) === 'true';
-
-      // Also check if we have the actual username stored (double verification)
-      const userUsernameKey = `senti_username_${clerkUserId}`;
-      const userHandleKey = `senti_user_handle_${clerkUserId}`;
-      const storedUsername = localStorage.getItem(userUsernameKey);
-      const storedHandle = localStorage.getItem(userHandleKey);
-
-      // Restore user-specific data if they've set up before
-      if (hasSetUsername && storedUsername && storedHandle) {
-        localStorage.setItem('senti_username', storedUsername);
-        localStorage.setItem('senti_user_handle', storedHandle);
-        setAppState('dashboard');
-      } else {
-        // User needs to set up username (either new user or data was lost)
-        setAppState('username-setup');
+      // Check Supabase for existing user (handles browser clear scenario)
+      if (!isCheckingUser) {
+        checkUserProfile(clerkUserId, email, user.imageUrl || '');
       }
       return;
     }
@@ -122,7 +179,7 @@ export default function App() {
         setAppState('onboarding');
       }
     }, 1000);
-  }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute]);
+  }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute, isCheckingUser, checkUserProfile]);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('senti_onboarding_completed', 'true');
@@ -141,7 +198,7 @@ export default function App() {
     // The useEffect will handle checking if username is set
   };
 
-  const handleUsernameComplete = (username: string) => {
+  const handleUsernameComplete = async (username: string) => {
     // Get the current Clerk user ID - must be available at this point
     const clerkUserId = user?.id || localStorage.getItem('senti_clerk_user_id');
 
@@ -153,6 +210,24 @@ export default function App() {
     // Format and save the custom username with capital first letter
     const formattedUsername = formatUsername(username);
     const userHandle = `@${username.toLowerCase()}.senti`;
+    const walletAddress = localStorage.getItem('senti_wallet_address') || '';
+    const email = localStorage.getItem('senti_user_email') || '';
+    const imageUrl = localStorage.getItem('senti_user_image') || '';
+
+    // Save to Supabase first (primary storage)
+    try {
+      await userService.createUser({
+        clerkUserId,
+        username: username.toLowerCase(),
+        handle: userHandle,
+        walletAddress,
+        email,
+        imageUrl,
+      });
+    } catch (err) {
+      console.error('Failed to save user to Supabase:', err);
+      // Continue anyway - localStorage will be the fallback
+    }
 
     // Store globally for current session
     localStorage.setItem('senti_username', formattedUsername);
@@ -166,7 +241,7 @@ export default function App() {
     // Also set the old key for backwards compatibility
     localStorage.setItem('senti_username_set', 'true');
 
-    // Register user in the global users database so other users can find them
+    // Register user in the global users database so other users can find them (legacy support)
     const displayName = `${formattedUsername} Senti`;
     const newUser = {
       id: userHandle,
