@@ -11,13 +11,15 @@ import {
   Bell,
   LogOut,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  CloudUpload
 } from 'lucide-react';
 import { useState } from 'react';
 import { useClerk } from '@clerk/clerk-react';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
+import AdminSyncModal from './AdminSyncModal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -36,6 +38,7 @@ export default function SettingsPage({
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
+  const [showAdminSync, setShowAdminSync] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
 
@@ -340,6 +343,21 @@ export default function SettingsPage({
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
+
+          {/* Admin Sync */}
+          <button
+            onClick={() => setShowAdminSync(true)}
+            className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center flex-shrink-0">
+              <CloudUpload className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 font-medium">Admin Sync</p>
+              <p className="text-sm text-gray-500">Sync local users to Supabase</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
         </motion.div>
 
         {/* Sign Out */}
@@ -383,6 +401,9 @@ export default function SettingsPage({
       )}
       {showHelpSupport && (
         <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+      )}
+      {showAdminSync && (
+        <AdminSyncModal onClose={() => setShowAdminSync(false)} />
       )}
     </div>
   );
