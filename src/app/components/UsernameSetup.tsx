@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AtSign, AlertCircle, CheckCircle, User, ArrowRight } from 'lucide-react';
+import { AtSign, AlertCircle, CheckCircle, User, ArrowRight, Loader2 } from 'lucide-react';
+import { userService } from '../../services/supabase';
 
 interface UsernameSetupProps {
   onComplete: (username: string) => void;
@@ -13,20 +14,6 @@ const isValidUsername = (username: string): boolean => {
   return usernameRegex.test(username);
 };
 
-// Check if username is already taken
-const isUsernameTaken = (username: string): boolean => {
-  const handle = `@${username.toLowerCase()}.senti`;
-  const existingUsersJson = localStorage.getItem('senti_registered_users');
-  if (!existingUsersJson) return false;
-
-  try {
-    const existingUsers = JSON.parse(existingUsersJson);
-    return existingUsers.some((user: { id: string }) => user.id.toLowerCase() === handle.toLowerCase());
-  } catch {
-    return false;
-  }
-};
-
 // Format username for display (capitalize first letter)
 const formatDisplayName = (username: string): string => {
   if (!username) return '';
@@ -37,7 +24,54 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check username availability with debouncing
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Reset states
+    setIsUsernameAvailable(false);
+
+    if (!username || !isValidUsername(username)) {
+      setIsCheckingAvailability(false);
+      return;
+    }
+
+    setIsCheckingAvailability(true);
+
+    // Debounce the API call
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const isTaken = await userService.isUsernameTaken(username);
+        setIsUsernameAvailable(!isTaken);
+        if (isTaken) {
+          setError('This username is already taken. Please choose another.');
+        } else {
+          setError('');
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        // Assume available on error to not block user
+        setIsUsernameAvailable(true);
+        setError('');
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [username]);
 
   const handleUsernameChange = (value: string) => {
     // Remove spaces, special chars and convert to lowercase
@@ -46,9 +80,8 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
 
     if (cleanedUsername && !isValidUsername(cleanedUsername)) {
       setError('Username must be 3-20 characters (letters, numbers, underscores only)');
-    } else if (cleanedUsername && isUsernameTaken(cleanedUsername)) {
-      setError('This username is already taken. Please choose another.');
     } else {
+      // Clear error - availability check will set it if needed
       setError('');
     }
   };
@@ -67,20 +100,26 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
     }
 
     // Double-check uniqueness before submitting
-    if (isUsernameTaken(username)) {
-      setError('This username is already taken. Please choose another.');
-      return;
+    setIsSubmitting(true);
+    try {
+      const isTaken = await userService.isUsernameTaken(username);
+      if (isTaken) {
+        setError('This username is already taken. Please choose another.');
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking username on submit:', err);
+      // Continue anyway on error
     }
 
-    setIsSubmitting(true);
-
     // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     onComplete(username);
   };
 
-  const isValid = username.length >= 3 && isValidUsername(username) && !isUsernameTaken(username);
+  const isValid = username.length >= 3 && isValidUsername(username) && isUsernameAvailable && !isCheckingAvailability;
   const displayName = formatDisplayName(username);
 
   return (
@@ -211,7 +250,16 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <span className="text-blue-300/60 font-medium">.senti</span>
-                  {isValid && (
+                  {isCheckingAvailability && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="ml-1"
+                    >
+                      <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                    </motion.div>
+                  )}
+                  {!isCheckingAvailability && isValid && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
