@@ -59,3 +59,46 @@ CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- Messages Table — Real-time chat between users
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS messages (
+  id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_handle   TEXT        NOT NULL,
+  receiver_handle TEXT        NOT NULL,
+  content         TEXT        NOT NULL,
+  type            TEXT        DEFAULT 'text',
+  amount          DECIMAL,
+  asset           TEXT,
+  status          TEXT        DEFAULT 'sent',
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for fast conversation lookups
+CREATE INDEX IF NOT EXISTS idx_messages_sender   ON messages(sender_handle, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_handle, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation
+  ON messages(sender_handle, receiver_handle, created_at DESC);
+
+-- RLS
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read their own messages" ON messages;
+CREATE POLICY "Users can read their own messages"
+  ON messages FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can send messages" ON messages;
+CREATE POLICY "Users can send messages"
+  ON messages FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can update their own messages" ON messages;
+CREATE POLICY "Users can update their own messages"
+  ON messages FOR UPDATE
+  USING (true);
+
+-- Enable Realtime for messages table
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;
