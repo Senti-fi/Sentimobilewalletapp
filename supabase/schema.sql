@@ -1,46 +1,51 @@
--- Senti Users Table Schema
--- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/jojmowapzlurrnhtezcu/sql
+-- ============================================================================
+-- Senti Users Table — Complete Schema
+-- ============================================================================
+-- Safe to run multiple times (fully idempotent).
+-- Paste the ENTIRE file into Supabase SQL Editor → Run.
+-- https://supabase.com/dashboard/project/jojmowapzlurrnhtezcu/sql
+-- ============================================================================
 
--- Create users table
+-- 1. Table
 CREATE TABLE IF NOT EXISTS users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  clerk_user_id TEXT UNIQUE NOT NULL,
-  username TEXT UNIQUE NOT NULL,
-  handle TEXT UNIQUE NOT NULL,
+  id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  clerk_user_id  TEXT        UNIQUE NOT NULL,
+  username       TEXT        UNIQUE NOT NULL,
+  handle         TEXT        UNIQUE NOT NULL,
   wallet_address TEXT,
-  email TEXT,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  email          TEXT,
+  image_url      TEXT,
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create indexes for fast lookups
+-- 2. Indexes
 CREATE INDEX IF NOT EXISTS idx_users_clerk_user_id ON users(clerk_user_id);
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_handle ON users(handle);
+CREATE INDEX IF NOT EXISTS idx_users_username      ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_handle        ON users(handle);
+CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);
 
--- Enable Row Level Security
+-- 3. Row Level Security
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Policy: Anyone can read user profiles (for discovery)
+-- Drop-then-create so this script never fails on "already exists"
+DROP POLICY IF EXISTS "Users are viewable by everyone"    ON users;
+DROP POLICY IF EXISTS "Users can create their own profile" ON users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON users;
+
 CREATE POLICY "Users are viewable by everyone"
-  ON users
-  FOR SELECT
+  ON users FOR SELECT
   USING (true);
 
--- Policy: Users can insert their own profile
 CREATE POLICY "Users can create their own profile"
-  ON users
-  FOR INSERT
+  ON users FOR INSERT
   WITH CHECK (true);
 
--- Policy: Users can update their own profile (matched by clerk_user_id)
 CREATE POLICY "Users can update their own profile"
-  ON users
-  FOR UPDATE
+  ON users FOR UPDATE
   USING (true);
 
--- Create function to automatically update updated_at timestamp
+-- 4. Auto-update updated_at on every UPDATE
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -49,9 +54,51 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for updated_at
 DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- Messages Table — Real-time chat between users
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS messages (
+  id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_handle   TEXT        NOT NULL,
+  receiver_handle TEXT        NOT NULL,
+  content         TEXT        NOT NULL,
+  type            TEXT        DEFAULT 'text',
+  amount          DECIMAL,
+  asset           TEXT,
+  status          TEXT        DEFAULT 'sent',
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for fast conversation lookups
+CREATE INDEX IF NOT EXISTS idx_messages_sender   ON messages(sender_handle, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_handle, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation
+  ON messages(sender_handle, receiver_handle, created_at DESC);
+
+-- RLS
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read their own messages" ON messages;
+CREATE POLICY "Users can read their own messages"
+  ON messages FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can send messages" ON messages;
+CREATE POLICY "Users can send messages"
+  ON messages FOR INSERT
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Users can update their own messages" ON messages;
+CREATE POLICY "Users can update their own messages"
+  ON messages FOR UPDATE
+  USING (true);
+
+-- Enable Realtime for messages table
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;
