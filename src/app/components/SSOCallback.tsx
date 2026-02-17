@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
+import { useEffect, useRef } from 'react';
+import { AuthenticateWithRedirectCallback, useSignUp, useSignIn } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
 import { Loader } from 'lucide-react';
 
@@ -8,6 +8,37 @@ interface SSOCallbackProps {
 }
 
 export default function SSOCallback({ onComplete }: SSOCallbackProps) {
+  const { signUp } = useSignUp();
+  const { signIn, setActive } = useSignIn();
+  const transferAttempted = useRef(false);
+
+  // Handle "transferable" status — this happens when an existing Clerk user
+  // goes through the signUp OAuth flow. Clerk can't complete a sign-up for
+  // someone who already has an account, so it marks the external account as
+  // "transferable". We detect that here and convert it into a sign-in.
+  useEffect(() => {
+    if (transferAttempted.current) return;
+    if (!signUp || !signIn || !setActive) return;
+
+    const status = signUp.verifications?.externalAccount?.status;
+
+    if (status === 'transferable') {
+      transferAttempted.current = true;
+
+      signIn
+        .create({ transfer: true })
+        .then(async (result) => {
+          if (result.status === 'complete' && result.createdSessionId) {
+            await setActive({ session: result.createdSessionId });
+            window.location.href = '/dashboard';
+          }
+        })
+        .catch((err) => {
+          console.error('OAuth transfer to sign-in failed:', err);
+        });
+    }
+  }, [signUp?.verifications?.externalAccount?.status, signIn, setActive]);
+
   return (
     <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 px-6">
       <AuthenticateWithRedirectCallback

@@ -308,15 +308,24 @@ function AppContent() {
     // Reset the profile check ref so it runs again on next sign-in
     profileCheckRef.current = null;
 
+    // After an OAuth redirect Clerk needs time to re-establish the session
+    // from cookies. If we jump to the signup page too quickly the user sees
+    // a flash of the signup screen before Clerk finishes. Use a longer delay
+    // when we detect an in-progress OAuth flow.
+    const oauthPending = sessionStorage.getItem('senti_oauth_pending') === 'true';
+    const delay = oauthPending || isDashboardRoute ? 4000 : 1500;
+
     // Use a ref-tracked timeout so it can be cancelled if Clerk auth resolves
     notSignedInTimerRef.current = setTimeout(() => {
       notSignedInTimerRef.current = null;
+      // OAuth flow finished (or timed out) — clean up the flag
+      sessionStorage.removeItem('senti_oauth_pending');
       if (hasCompletedOnboarding) {
         setAppState('signup');
       } else {
         setAppState('onboarding');
       }
-    }, 1000);
+    }, delay);
 
     // Cleanup: cancel the timeout if the effect re-runs before it fires
     return () => {

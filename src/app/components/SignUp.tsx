@@ -14,20 +14,49 @@ export default function SignUp({ onComplete }: SignUpProps) {
   const [error, setError] = useState('');
 
   const handleOAuthSignUp = async (provider: 'oauth_google' | 'oauth_apple') => {
-    if (!isSignUpLoaded || !signUp) {
+    if (!isSignUpLoaded || !signUp || !isSignInLoaded || !signIn) {
       setError('Authentication not ready. Please try again.');
       return;
     }
 
     try {
       setError('');
+      // Mark that an OAuth flow is in progress so App.tsx doesn't
+      // race with a short timeout while Clerk re-establishes the session.
+      sessionStorage.setItem('senti_oauth_pending', 'true');
+
       await signUp.authenticateWithRedirect({
         strategy: provider,
         redirectUrl: window.location.origin + '/sso-callback',
         redirectUrlComplete: window.location.origin + '/dashboard',
       });
     } catch (err: any) {
-      console.error('OAuth error:', err);
+      console.error('OAuth sign-up error:', err);
+
+      // If the user already has a Clerk account, fall back to sign-in flow.
+      // This covers returning users who click "Continue with Google/Apple".
+      const code = err.errors?.[0]?.code;
+      if (
+        code === 'form_identifier_exists' ||
+        code === 'external_account_exists' ||
+        code === 'identifier_already_signed_in'
+      ) {
+        try {
+          await signIn.authenticateWithRedirect({
+            strategy: provider,
+            redirectUrl: window.location.origin + '/sso-callback',
+            redirectUrlComplete: window.location.origin + '/dashboard',
+          });
+          return;
+        } catch (signInErr: any) {
+          console.error('OAuth sign-in fallback error:', signInErr);
+          sessionStorage.removeItem('senti_oauth_pending');
+          setError(signInErr.errors?.[0]?.message || 'Failed to sign in. Please try again.');
+          return;
+        }
+      }
+
+      sessionStorage.removeItem('senti_oauth_pending');
       setError(err.errors?.[0]?.message || 'Failed to sign up. Please try again.');
     }
   };
