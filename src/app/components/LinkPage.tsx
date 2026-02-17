@@ -10,7 +10,9 @@ import {
   CheckCircle,
   Clock,
   Plus,
-  XCircle
+  XCircle,
+  Check,
+  CheckCheck
 } from 'lucide-react';
 import LinkSendModal from './LinkSendModal';
 import { userService, UserProfile } from '../../services/supabase';
@@ -47,6 +49,7 @@ interface Contact {
   lastMessageTime: string;
   online: boolean;
   image_url?: string;
+  unreadCount: number;
 }
 
 interface Message {
@@ -57,7 +60,7 @@ interface Message {
   timestamp: Date;
   amount?: number;
   asset?: string;
-  status?: 'pending' | 'completed' | 'failed' | 'accepted' | 'declined' | 'sent';
+  status?: 'pending' | 'completed' | 'failed' | 'accepted' | 'declined' | 'sent' | 'delivered' | 'read';
 }
 
 interface Asset {
@@ -106,6 +109,20 @@ function formatTimeAgo(date: Date): string {
   return `${days}d ago`;
 }
 
+// ── Delivery / Read receipt indicator for sent messages ──
+function MessageStatus({ status }: { status?: Message['status'] }) {
+  if (!status) return null;
+
+  if (status === 'read') {
+    return <CheckCheck className="w-3.5 h-3.5 text-blue-400 inline-block ml-1" />;
+  }
+  if (status === 'delivered') {
+    return <CheckCheck className="w-3.5 h-3.5 text-white/50 inline-block ml-1" />;
+  }
+  // 'sent' — single check
+  return <Check className="w-3.5 h-3.5 text-white/50 inline-block ml-1" />;
+}
+
 export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const myHandle = localStorage.getItem('senti_user_handle') || '';
 
@@ -117,7 +134,11 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
   const loadContacts = (): Contact[] => {
     try {
       const stored = localStorage.getItem('senti_contacts');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Ensure unreadCount exists on legacy contacts
+        return parsed.map((c: any) => ({ ...c, unreadCount: c.unreadCount || 0 }));
+      }
     } catch (error) {
       console.error('Error loading contacts:', error);
     }
@@ -159,6 +180,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
               ...updated[idx],
               lastMessage: p.last_message,
               lastMessageTime: formatTimeAgo(new Date(p.last_message_time)),
+              unreadCount: p.unread_count,
             };
           } else if (!existingIds.has(p.contact_handle)) {
             const username = p.contact_handle.replace('@', '').replace('.senti', '');
@@ -170,6 +192,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
               lastMessage: p.last_message,
               lastMessageTime: formatTimeAgo(new Date(p.last_message_time)),
               online: true,
+              unreadCount: p.unread_count,
             });
           }
         }
@@ -185,6 +208,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     messageService.subscribe(myHandle, (incoming: ChatMessage) => {
       const localMsg = toLocalMessage(incoming, myHandle);
       const currentContact = selectedContactRef.current;
+      const isFromOther = incoming.sender_handle !== myHandle;
 
       // If it belongs to the currently open conversation, add/update it
       if (
@@ -199,24 +223,38 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
           }
           return [...prev, localMsg];
         });
+
+        // If we're viewing this conversation and it's a new incoming text, mark as read + delivered
+        if (isFromOther && incoming.type === 'text' && (incoming.status === 'sent' || incoming.status === 'delivered')) {
+          messageService.markAsRead(myHandle, currentContact.id);
+        }
       }
 
-      // Update the contact list's last message
+      // Determine the other person's handle
       const otherHandle = incoming.sender_handle === myHandle
         ? incoming.receiver_handle
         : incoming.sender_handle;
 
+      // Update the contact list's last message + unread count
       setContacts(prev => {
         const idx = prev.findIndex(c => c.id === otherHandle);
         if (idx >= 0) {
           const updated = [...prev];
+          const isInOpenChat = currentContact?.id === otherHandle;
+          const isNewUnread = isFromOther && incoming.type === 'text' &&
+            (incoming.status === 'sent' || incoming.status === 'delivered') && !isInOpenChat;
+
           updated[idx] = {
             ...updated[idx],
             lastMessage: incoming.content,
             lastMessageTime: 'Just now',
+            unreadCount: isNewUnread
+              ? updated[idx].unreadCount + 1
+              : updated[idx].unreadCount,
           };
           return updated;
         }
+        // New contact from incoming message
         const username = otherHandle.replace('@', '').replace('.senti', '');
         return [{
           id: otherHandle,
@@ -226,8 +264,14 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
           lastMessage: incoming.content,
           lastMessageTime: 'Just now',
           online: true,
+          unreadCount: isFromOther && incoming.type === 'text' ? 1 : 0,
         }, ...prev];
       });
+
+      // Auto-mark incoming text messages as delivered (so sender sees double-check)
+      if (isFromOther && incoming.type === 'text' && incoming.status === 'sent') {
+        messageService.markAsDelivered([incoming.id]);
+      }
     });
 
     return () => messageService.unsubscribe();
@@ -244,6 +288,14 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     messageService.getConversation(myHandle, selectedContact.id).then(msgs => {
       setMessages(msgs.map(m => toLocalMessage(m, myHandle)));
       setIsLoadingMessages(false);
+
+      // Mark all unread messages as read when opening the conversation
+      messageService.markAsRead(myHandle, selectedContact.id);
+
+      // Clear the unread count for this contact
+      setContacts(prev => prev.map(c =>
+        c.id === selectedContact.id ? { ...c, unreadCount: 0 } : c
+      ));
     });
   }, [selectedContact, myHandle]);
 
@@ -321,7 +373,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     const newContact: Contact = {
       id: user.id, name: user.name, avatar: '👤', color: getRandomGradient(),
       lastMessage: 'Start a conversation', lastMessageTime: 'New',
-      online: user.online, image_url: user.image_url,
+      online: user.online, image_url: user.image_url, unreadCount: 0,
     };
     setContacts(prev => [newContact, ...prev]);
     setSearchQuery('');
@@ -373,14 +425,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     if (sent) {
       setMessages(prev => prev.map(m => m.id === optimisticId ? toLocalMessage(sent, myHandle) : m));
       onSend(amount, asset, selectedContact.id, selectedContact.name, gasFee);
-
-      // Auto-accept after delay (in production the receiver would accept manually)
-      setTimeout(async () => {
-        await messageService.updateMessageStatus(sent.id, 'accepted');
-        setMessages(prev => prev.map(msg =>
-          msg.id === sent.id ? { ...msg, status: 'accepted' as const, content: 'Payment accepted' } : msg
-        ));
-      }, 2500);
+      // No auto-accept — the receiver must click Accept to deposit the funds
     } else {
       setMessages(prev => prev.map(msg =>
         msg.id === optimisticId ? { ...msg, status: 'failed' as const, content: 'Payment failed' } : msg
@@ -393,6 +438,9 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     contact.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Total unread across all contacts (for potential use by parent)
+  const totalUnread = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
+
   // ═══════════════════════════════════════════════════════════════
   // Contacts List View
   // ═══════════════════════════════════════════════════════════════
@@ -400,8 +448,17 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     return (
       <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex-shrink-0 px-6 pt-6 pb-4">
-          <h1 className="text-gray-900 mb-2">Link</h1>
-          <p className="text-sm text-gray-500">Send money instantly using IDs</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-gray-900 mb-2">Link</h1>
+              <p className="text-sm text-gray-500">Send money instantly using IDs</p>
+            </div>
+            {totalUnread > 0 && (
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </div>
+            )}
+          </div>
         </motion.div>
 
         <div className="flex-shrink-0 px-6 mb-4">
@@ -500,9 +557,15 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                 <p className="text-xs text-gray-500">{contact.id}</p>
                 <p className="text-xs text-gray-400 truncate mt-1">{contact.lastMessage}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right flex flex-col items-end gap-1">
                 <p className="text-xs text-gray-400">{contact.lastMessageTime}</p>
-                <MessageCircle className="w-5 h-5 text-gray-300 ml-auto mt-1" />
+                {contact.unreadCount > 0 ? (
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center shadow-sm">
+                    {contact.unreadCount > 99 ? '99+' : contact.unreadCount}
+                  </div>
+                ) : (
+                  <MessageCircle className="w-5 h-5 text-gray-300" />
+                )}
               </div>
             </motion.div>
           ))}
@@ -568,9 +631,10 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                   : 'bg-white text-gray-900 border border-gray-100'
               }`}>
                 <p className="text-sm">{message.content}</p>
-                <p className={`text-xs mt-1 ${message.sender === 'me' ? 'text-white/70' : 'text-gray-400'}`}>
-                  {formatTimeAgo(message.timestamp)}
-                </p>
+                <div className={`flex items-center justify-end gap-0.5 mt-1 ${message.sender === 'me' ? 'text-white/70' : 'text-gray-400'}`}>
+                  <span className="text-xs">{formatTimeAgo(message.timestamp)}</span>
+                  {message.sender === 'me' && <MessageStatus status={message.status} />}
+                </div>
               </div>
             ) : message.type === 'request' ? (
               <div className="max-w-[85%] sm:max-w-[75%] md:max-w-[70%] px-4 py-3 rounded-2xl border-2 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
@@ -610,7 +674,7 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                     : message.status === 'failed' ? <XCircle className="w-4 h-4 text-red-600" />
                     : <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}><Clock className="w-4 h-4 text-orange-600" /></motion.div>}
                   <p className="text-sm text-gray-900">
-                    {message.status === 'pending' ? 'Linking...'
+                    {message.status === 'pending' ? (message.sender === 'me' ? 'Linking...' : 'Payment received')
                       : message.status === 'failed' ? 'Link failed'
                       : message.status === 'accepted' ? (message.sender === 'me' ? 'Payment accepted' : 'You received')
                       : message.status === 'declined' ? 'Payment declined'
@@ -619,6 +683,17 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
                 </div>
                 <p className="text-2xl text-gray-900 mb-1">${message.amount} <span className="text-sm text-gray-600">{message.asset}</span></p>
                 <p className="text-xs text-gray-500">{formatTimeAgo(message.timestamp)}</p>
+
+                {/* Receiver sees Accept/Decline buttons when pending */}
+                {message.status === 'pending' && message.sender === 'them' && (
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => handleAcceptPayment(message.id)}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-sm font-medium hover:shadow-md transition-shadow">Accept</button>
+                    <button onClick={() => handleDeclinePayment(message.id)}
+                      className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors">Decline</button>
+                  </div>
+                )}
+
                 {message.status === 'failed' && <p className="text-xs text-red-600 mt-2">Transaction failed. Please try again.</p>}
               </div>
             )}
