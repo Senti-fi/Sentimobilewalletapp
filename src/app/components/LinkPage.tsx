@@ -80,6 +80,7 @@ interface LinkPageProps {
   assets: Asset[];
   onSend: (amount: number, asset: string, recipient: string, recipientName: string, gasFee: number) => void;
   onReceive?: (amount: number, asset: string, sender: string, senderName: string) => void;
+  onUnreadCountChange?: (count: number) => void;
 }
 
 function toLocalMessage(msg: ChatMessage, myHandle: string): Message {
@@ -123,7 +124,7 @@ function MessageStatus({ status }: { status?: Message['status'] }) {
   return <Check className="w-3.5 h-3.5 text-white/50 inline-block ml-1" />;
 }
 
-export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
+export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChange }: LinkPageProps) {
   const myHandle = localStorage.getItem('senti_user_handle') || '';
 
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -438,8 +439,12 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     contact.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Total unread across all contacts (for potential use by parent)
+  // Total unread across all contacts — push to parent for nav badge
   const totalUnread = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
+
+  useEffect(() => {
+    onUnreadCountChange?.(totalUnread);
+  }, [totalUnread, onUnreadCountChange]);
 
   // ═══════════════════════════════════════════════════════════════
   // Contacts List View
@@ -448,16 +453,9 @@ export default function LinkPage({ assets, onSend, onReceive }: LinkPageProps) {
     return (
       <div className="h-full flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex-shrink-0 px-6 pt-6 pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-gray-900 mb-2">Link</h1>
-              <p className="text-sm text-gray-500">Send money instantly using IDs</p>
-            </div>
-            {totalUnread > 0 && (
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-md">
-                {totalUnread > 99 ? '99+' : totalUnread}
-              </div>
-            )}
+          <div>
+            <h1 className="text-gray-900 mb-2">Link</h1>
+            <p className="text-sm text-gray-500">Send money instantly using IDs</p>
           </div>
         </motion.div>
 
