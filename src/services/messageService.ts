@@ -20,7 +20,7 @@ export interface ConversationPreview {
   contact_handle: string;
   last_message: string;
   last_message_time: string;
-  unread: boolean;
+  unread_count: number;
 }
 
 class MessageService {
@@ -85,7 +85,7 @@ class MessageService {
   }
 
   /**
-   * Update a message status (e.g. pending → accepted)
+   * Update a message status (e.g. pending → accepted, sent → delivered)
    */
   async updateMessageStatus(messageId: string, status: string): Promise<boolean> {
     const { error } = await supabase
@@ -98,6 +98,39 @@ class MessageService {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Mark multiple messages as delivered (when they arrive in the receiver's app)
+   */
+  async markAsDelivered(messageIds: string[]): Promise<void> {
+    if (messageIds.length === 0) return;
+
+    const { error } = await supabase
+      .from('messages')
+      .update({ status: 'delivered' })
+      .in('id', messageIds)
+      .eq('status', 'sent');
+
+    if (error) {
+      console.error('Error marking messages as delivered:', error);
+    }
+  }
+
+  /**
+   * Mark all messages in a conversation as read (when the receiver opens the chat)
+   */
+  async markAsRead(myHandle: string, contactHandle: string): Promise<void> {
+    const { error } = await supabase
+      .from('messages')
+      .update({ status: 'read' })
+      .eq('sender_handle', contactHandle)
+      .eq('receiver_handle', myHandle)
+      .in('status', ['sent', 'delivered']);
+
+    if (error) {
+      console.error('Error marking messages as read:', error);
+    }
   }
 
   /**
@@ -127,7 +160,7 @@ class MessageService {
 
   /**
    * Get the latest message for each conversation the user is part of.
-   * Returns a list of contact handles with their last message.
+   * Returns a list of contact handles with their last message and unread count.
    */
   async getConversationPreviews(myHandle: string): Promise<ConversationPreview[]> {
     // Fetch recent messages involving this user
@@ -143,8 +176,10 @@ class MessageService {
       return [];
     }
 
-    // Group by the OTHER person's handle, keep only the latest message
+    // Group by the OTHER person's handle, keep the latest message + count unreads
     const latestByContact = new Map<string, ChatMessage>();
+    const unreadCounts = new Map<string, number>();
+
     for (const msg of data || []) {
       const otherHandle = msg.sender_handle === myHandle
         ? msg.receiver_handle
@@ -153,19 +188,31 @@ class MessageService {
       if (!latestByContact.has(otherHandle)) {
         latestByContact.set(otherHandle, msg);
       }
+
+      // Count messages from the OTHER person that haven't been read
+      if (
+        msg.sender_handle !== myHandle &&
+        msg.type === 'text' &&
+        (msg.status === 'sent' || msg.status === 'delivered')
+      ) {
+        unreadCounts.set(otherHandle, (unreadCounts.get(otherHandle) || 0) + 1);
+      }
     }
 
     return Array.from(latestByContact.entries()).map(([handle, msg]) => ({
       contact_handle: handle,
       last_message: msg.content,
       last_message_time: msg.created_at,
-      unread: msg.sender_handle !== myHandle && msg.status === 'sent',
+      unread_count: unreadCounts.get(handle) || 0,
     }));
   }
 
   /**
    * Subscribe to real-time messages for the current user.
-   * Calls `onMessage` whenever a new message arrives for `myHandle`.
+   * Listens for:
+   *   - INSERT where receiver_handle = myHandle (incoming messages)
+   *   - UPDATE where sender_handle = myHandle (status changes on messages I sent)
+   *   - UPDATE where receiver_handle = myHandle (status changes on messages I received)
    */
   subscribe(myHandle: string, onMessage: (msg: ChatMessage) => void): void {
     // Unsubscribe from previous channel if any
@@ -194,7 +241,20 @@ class MessageService {
           filter: `sender_handle=eq.${myHandle}`,
         },
         (payload) => {
-          // Notify about status updates on messages we sent
+          // Status changes on messages I sent (e.g. sent→delivered→read)
+          onMessage(payload.new as ChatMessage);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_handle=eq.${myHandle}`,
+        },
+        (payload) => {
+          // Status changes on messages I received (e.g. transaction accepted/declined)
           onMessage(payload.new as ChatMessage);
         }
       )

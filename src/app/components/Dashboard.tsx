@@ -146,6 +146,7 @@ export default function Dashboard() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
   const [selectedAsset, setSelectedAsset] = useState(0);
+  const [linkUnreadCount, setLinkUnreadCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // User profile data from localStorage
@@ -885,6 +886,7 @@ export default function Dashboard() {
             assets={assets}
             onSend={handleSend}
             onReceive={handleReceive}
+            onUnreadCountChange={setLinkUnreadCount}
           />
         )}
 
@@ -923,6 +925,7 @@ export default function Dashboard() {
               { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
+              const badge = tab.id === 'link' && linkUnreadCount > 0 ? linkUnreadCount : 0;
               return (
                 <motion.button
                   key={tab.id}
@@ -944,6 +947,11 @@ export default function Dashboard() {
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.5}
                   />
+                  {badge > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 z-20 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-sm">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
                 </motion.button>
               );
             })}
