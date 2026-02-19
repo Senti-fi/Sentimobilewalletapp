@@ -322,7 +322,7 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
 
     const timer = setTimeout(async () => {
       try {
-        const currentClerkId = localStorage.getItem('senti_clerk_user_id') || '';
+        const currentClerkId = localStorage.getItem('senti_auth_user_id') || '';
         const results = await userService.searchUsers(searchQuery, currentClerkId);
         if (abortController.signal.aborted) return;
 

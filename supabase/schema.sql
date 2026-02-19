@@ -9,7 +9,7 @@
 -- 1. Table
 CREATE TABLE IF NOT EXISTS users (
   id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-  clerk_user_id  TEXT        UNIQUE NOT NULL,
+  auth_user_id   TEXT        UNIQUE NOT NULL,
   username       TEXT        UNIQUE NOT NULL,
   handle         TEXT        UNIQUE NOT NULL,
   wallet_address TEXT,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 2. Indexes
-CREATE INDEX IF NOT EXISTS idx_users_clerk_user_id ON users(clerk_user_id);
+CREATE INDEX IF NOT EXISTS idx_users_auth_user_id ON users(auth_user_id);
 CREATE INDEX IF NOT EXISTS idx_users_username      ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_handle        ON users(handle);
 CREATE INDEX IF NOT EXISTS idx_users_email         ON users(email);

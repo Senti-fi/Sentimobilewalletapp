@@ -14,7 +14,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useState } from 'react';
-import { useClerk } from '@clerk/clerk-react';
+import { supabase } from '../../services/supabase';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
@@ -32,7 +32,7 @@ export default function SettingsPage({
   activeGoals = 4,
   totalRewards = 2300
 }: SettingsPageProps) {
-  const { signOut } = useClerk();
+  const signOut = () => supabase.auth.signOut();
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);

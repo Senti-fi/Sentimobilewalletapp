@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { useSignUp, useSignIn, useClerk } from '@clerk/clerk-react';
+import { useEffect, useRef } from 'react';
+import { supabase } from '../../services/supabase';
 import { motion } from 'motion/react';
 import { Loader } from 'lucide-react';
 
@@ -8,144 +8,49 @@ interface SSOCallbackProps {
 }
 
 /**
- * Handles the OAuth redirect callback manually instead of using Clerk's
- * AuthenticateWithRedirectCallback component.
+ * Handles the Supabase OAuth redirect callback.
  *
- * Why manual? AuthenticateWithRedirectCallback is a black-box that:
- *   1. Fires handleRedirectCallback as fire-and-forget
- *   2. Silently swallows all errors (.catch(() => {}))
- *   3. Races with our transfer-handling useEffect
- *   4. Navigates to unknown URLs for "transferable" states before React
- *      gets a chance to handle the transfer
+ * After Google/Apple OAuth, Supabase redirects here with tokens in the URL
+ * hash (#access_token=...&refresh_token=...). The Supabase client
+ * automatically picks these up and establishes a session.
  *
- * This component instead waits for Clerk to process the URL params, then
- * checks all possible OAuth outcomes and handles each one explicitly.
+ * We just wait for the session to be established, then redirect to '/'.
  */
 export default function SSOCallback({ onComplete }: SSOCallbackProps) {
-  const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
-  const { signIn, isLoaded: isSignInLoaded } = useSignIn();
-  const clerk = useClerk();
-  const processed = useRef(false);
-  const fallbackTriggered = useRef(false);
-  const [statusText, setStatusText] = useState('Setting up your account...');
+  const handled = useRef(false);
 
-  // ── Primary handler: watch for actionable OAuth states ─────────────
-  // Clerk processes the URL params during ClerkProvider init and updates
-  // the signIn / signUp objects. We watch those objects reactively and
-  // handle every possible outcome.
   useEffect(() => {
-    if (processed.current) return;
-    if (!isSignUpLoaded || !isSignInLoaded) return;
-    if (!signIn || !signUp) return;
+    if (handled.current) return;
 
-    const signInComplete = signIn.status === 'complete' && signIn.createdSessionId;
-    const signUpComplete = signUp.status === 'complete' && signUp.createdSessionId;
-    const signUpTransferable = signUp.verifications?.externalAccount?.status === 'transferable';
-    const signInTransferable = signIn.firstFactorVerification?.status === 'transferable';
-
-    // Nothing actionable yet — wait for Clerk to finish processing
-    if (!signInComplete && !signUpComplete && !signUpTransferable && !signInTransferable) {
-      return;
-    }
-
-    processed.current = true;
-
-    (async () => {
-      try {
-        // Case 1: signIn completed (returning user via signIn.authenticateWithRedirect)
-        if (signInComplete) {
-          setStatusText('Welcome back! Signing you in...');
-          await clerk.setActive({ session: signIn.createdSessionId! });
-          sessionStorage.removeItem('senti_oauth_pending');
-          window.location.replace('/');
-          return;
-        }
-
-        // Case 2: signUp completed (new user via signUp.authenticateWithRedirect)
-        if (signUpComplete) {
-          setStatusText('Account created! Setting up...');
-          await clerk.setActive({ session: signUp.createdSessionId! });
-          sessionStorage.removeItem('senti_oauth_pending');
-          window.location.replace('/');
-          return;
-        }
-
-        // Case 3: Existing user went through signUp OAuth → transfer to signIn
-        if (signUpTransferable) {
-          setStatusText('Found your account! Signing you in...');
-          const result = await signIn.create({ transfer: true });
-          if (result.status === 'complete' && result.createdSessionId) {
-            await clerk.setActive({ session: result.createdSessionId });
-          }
-          sessionStorage.removeItem('senti_oauth_pending');
-          window.location.replace('/');
-          return;
-        }
-
-        // Case 4: New user went through signIn OAuth → transfer to signUp
-        if (signInTransferable) {
-          setStatusText('Creating your account...');
-          const result = await signUp.create({ transfer: true });
-          if (result.status === 'complete' && result.createdSessionId) {
-            await clerk.setActive({ session: result.createdSessionId });
-          }
-          sessionStorage.removeItem('senti_oauth_pending');
-          window.location.replace('/');
-          return;
-        }
-      } catch (err) {
-        console.error('SSO callback processing error:', err);
-        sessionStorage.removeItem('senti_oauth_pending');
+    // Listen for auth state changes — fires when Supabase processes the URL tokens
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (handled.current) return;
+      if (event === 'SIGNED_IN' && session) {
+        handled.current = true;
         window.location.replace('/');
       }
-    })();
-  }, [
-    isSignUpLoaded,
-    isSignInLoaded,
-    signIn?.status,
-    signIn?.createdSessionId,
-    signUp?.status,
-    signUp?.createdSessionId,
-    signUp?.verifications?.externalAccount?.status,
-    signIn?.firstFactorVerification?.status,
-    signIn,
-    signUp,
-    clerk,
-  ]);
+    });
 
-  // ── Fallback: nudge Clerk with handleRedirectCallback ──────────────
-  // If no actionable state appears within 3 seconds, it's possible
-  // Clerk didn't process the URL params during init. Call
-  // handleRedirectCallback to force processing.
-  useEffect(() => {
-    const nudge = setTimeout(() => {
-      if (processed.current || fallbackTriggered.current) return;
-      fallbackTriggered.current = true;
-      setStatusText('Still working on it...');
-      try {
-        clerk.handleRedirectCallback({
-          afterSignInUrl: '/',
-          afterSignUpUrl: '/',
-        });
-      } catch {
-        // handleRedirectCallback proxy swallows errors anyway
+    // Also check if session is already established (tokens processed synchronously)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (handled.current) return;
+      if (session) {
+        handled.current = true;
+        window.location.replace('/');
       }
-    }, 3000);
-    return () => clearTimeout(nudge);
-  }, [clerk]);
+    });
 
-  // ── Ultimate fallback: redirect home ───────────────────────────────
-  // If nothing worked after 10 seconds, something is truly broken.
-  // Redirect home and let App.tsx handle the auth state.
-  useEffect(() => {
+    // Fallback: if nothing works after 10s, redirect home
     const timeout = setTimeout(() => {
-      if (processed.current) return;
-      processed.current = true;
-      console.warn('SSO callback: timed out after 10s, redirecting home');
-      sessionStorage.removeItem('senti_oauth_pending');
+      if (handled.current) return;
+      handled.current = true;
       window.location.replace('/');
     }, 10000);
-    return () => clearTimeout(timeout);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (
@@ -180,7 +85,7 @@ export default function SSOCallback({ onComplete }: SSOCallbackProps) {
         transition={{ delay: 0.3 }}
         className="text-blue-200 text-center mb-8"
       >
-        {statusText}
+        Setting up your account...
       </motion.p>
 
       <motion.div

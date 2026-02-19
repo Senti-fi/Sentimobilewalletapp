@@ -1,5 +1,6 @@
 // Supabase Client Service
 // Handles database operations for user profiles and discovery
+// Also provides auth via Supabase Auth (Google + Apple OAuth)
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -19,7 +20,7 @@ export const supabase = createClient(
 // User profile interface
 export interface UserProfile {
   id: string;
-  clerk_user_id: string;
+  auth_user_id: string;
   username: string;
   handle: string;
   wallet_address: string;
@@ -32,19 +33,18 @@ export interface UserProfile {
 // User profile service
 export const userService = {
   /**
-   * Check if a user profile exists by Clerk user ID
+   * Check if a user profile exists by auth user ID (Supabase Auth UUID)
    */
-  async getUserByClerkId(clerkUserId: string): Promise<UserProfile | null> {
+  async getUserByAuthId(authUserId: string): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('clerk_user_id', clerkUserId)
+        .eq('auth_user_id', authUserId)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No rows returned - user doesn't exist
           return null;
         }
         console.error('Error fetching user:', error);
@@ -53,7 +53,7 @@ export const userService = {
 
       return data;
     } catch (err) {
-      console.error('Failed to fetch user by Clerk ID:', err);
+      console.error('Failed to fetch user by auth ID:', err);
       return null;
     }
   },
@@ -70,24 +70,23 @@ export const userService = {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // No rows returned - username is available
         return false;
       }
 
       return !!data;
     } catch (err) {
       console.error('Failed to check username:', err);
-      return false; // Assume available on error to not block user
+      return false;
     }
   },
 
   /**
    * Create a new user profile.
-   * Uses upsert on clerk_user_id to safely handle re-creation attempts.
+   * Uses upsert on auth_user_id to safely handle re-creation attempts.
    * Throws on username conflict so the caller can show a proper error.
    */
   async createUser(profile: {
-    clerkUserId: string;
+    authUserId: string;
     username: string;
     handle: string;
     walletAddress: string;
@@ -95,13 +94,10 @@ export const userService = {
     imageUrl?: string;
   }): Promise<UserProfile | null> {
     try {
-      // Check username uniqueness first (separate from the DB constraint)
       const isTaken = await this.isUsernameTaken(profile.username);
       if (isTaken) {
-        // Verify it's not the same user re-registering
-        const existing = await this.getUserByClerkId(profile.clerkUserId);
+        const existing = await this.getUserByAuthId(profile.authUserId);
         if (existing && existing.username === profile.username.toLowerCase()) {
-          // Same user, same username – just return existing
           return existing;
         }
         throw new Error('USERNAME_TAKEN');
@@ -111,7 +107,7 @@ export const userService = {
         .from('users')
         .upsert(
           {
-            clerk_user_id: profile.clerkUserId,
+            auth_user_id: profile.authUserId,
             username: profile.username.toLowerCase(),
             handle: profile.handle,
             wallet_address: profile.walletAddress,
@@ -119,13 +115,12 @@ export const userService = {
             image_url: profile.imageUrl,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: 'clerk_user_id' }
+          { onConflict: 'auth_user_id' }
         )
         .select()
         .single();
 
       if (error) {
-        // Handle unique constraint violation on username
         if (error.code === '23505' && error.message?.includes('username')) {
           throw new Error('USERNAME_TAKEN');
         }
@@ -145,7 +140,7 @@ export const userService = {
    * Update user profile
    */
   async updateUser(
-    clerkUserId: string,
+    authUserId: string,
     updates: Partial<{
       username: string;
       handle: string;
@@ -161,7 +156,7 @@ export const userService = {
           ...updates,
           updated_at: new Date().toISOString(),
         })
-        .eq('clerk_user_id', clerkUserId)
+        .eq('auth_user_id', authUserId)
         .select()
         .single();
 
@@ -180,7 +175,7 @@ export const userService = {
   /**
    * Search users by username or handle, excluding the current user
    */
-  async searchUsers(query: string, currentClerkId?: string, limit: number = 20): Promise<UserProfile[]> {
+  async searchUsers(query: string, currentAuthId?: string, limit: number = 20): Promise<UserProfile[]> {
     try {
       const searchTerm = query.toLowerCase().replace('@', '').replace('.senti', '');
 
@@ -189,8 +184,8 @@ export const userService = {
         .select('*')
         .or(`username.ilike.%${searchTerm}%,handle.ilike.%${searchTerm}%`);
 
-      if (currentClerkId) {
-        q = q.neq('clerk_user_id', currentClerkId);
+      if (currentAuthId) {
+        q = q.neq('auth_user_id', currentAuthId);
       }
 
       const { data, error } = await q.limit(limit);
@@ -236,15 +231,15 @@ export const userService = {
   /**
    * Get all users (for directory/discovery), excluding the current user
    */
-  async getAllUsers(currentClerkId?: string, limit: number = 50): Promise<UserProfile[]> {
+  async getAllUsers(currentAuthId?: string, limit: number = 50): Promise<UserProfile[]> {
     try {
       let q = supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (currentClerkId) {
-        q = q.neq('clerk_user_id', currentClerkId);
+      if (currentAuthId) {
+        q = q.neq('auth_user_id', currentAuthId);
       }
 
       const { data, error } = await q.limit(limit);
