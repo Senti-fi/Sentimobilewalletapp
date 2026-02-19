@@ -313,7 +313,7 @@ function AppContent() {
     // a flash of the signup screen before Clerk finishes. Use a longer delay
     // when we detect an in-progress OAuth flow.
     const oauthPending = sessionStorage.getItem('senti_oauth_pending') === 'true';
-    const delay = oauthPending || isDashboardRoute ? 4000 : 1500;
+    const delay = oauthPending || isDashboardRoute ? 6000 : 1500;
 
     // Use a ref-tracked timeout so it can be cancelled if Clerk auth resolves
     notSignedInTimerRef.current = setTimeout(() => {
