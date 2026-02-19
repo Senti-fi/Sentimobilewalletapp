@@ -24,37 +24,33 @@ export default function SignUp({ onComplete }: SignUpProps) {
       setError('');
       sessionStorage.setItem('senti_oauth_pending', 'true');
 
-      await signUp.authenticateWithRedirect({
+      // Use signIn as the PRIMARY method. This way:
+      // - Returning users (majority): signIn completes directly at callback → no transfer needed
+      // - New users: signIn returns "transferable" → SSOCallback handles the transfer to signUp
+      // Previously we used signUp as primary, which meant EVERY returning user hit the
+      // fragile "transferable" transfer path, causing the sign-in loop bug.
+      await signIn.authenticateWithRedirect({
         strategy: provider,
         redirectUrl: window.location.origin + '/sso-callback',
-        redirectUrlComplete: window.location.origin + '/dashboard',
+        redirectUrlComplete: window.location.origin + '/',
       });
     } catch (err: any) {
-      console.error('OAuth sign-up error:', err);
+      console.error('OAuth signIn redirect error:', err);
 
-      const code = err.errors?.[0]?.code;
-      if (
-        code === 'form_identifier_exists' ||
-        code === 'external_account_exists' ||
-        code === 'identifier_already_signed_in'
-      ) {
-        try {
-          await signIn.authenticateWithRedirect({
-            strategy: provider,
-            redirectUrl: window.location.origin + '/sso-callback',
-            redirectUrlComplete: window.location.origin + '/dashboard',
-          });
-          return;
-        } catch (signInErr: any) {
-          console.error('OAuth sign-in fallback error:', signInErr);
-          sessionStorage.removeItem('senti_oauth_pending');
-          setError(signInErr.errors?.[0]?.message || 'Failed to sign in. Please try again.');
-          return;
-        }
+      // Fallback: if signIn redirect fails pre-redirect, try signUp
+      try {
+        await signUp.authenticateWithRedirect({
+          strategy: provider,
+          redirectUrl: window.location.origin + '/sso-callback',
+          redirectUrlComplete: window.location.origin + '/',
+        });
+        return;
+      } catch (signUpErr: any) {
+        console.error('OAuth signUp fallback error:', signUpErr);
+        sessionStorage.removeItem('senti_oauth_pending');
+        setError(signUpErr.errors?.[0]?.message || 'Failed to authenticate. Please try again.');
+        return;
       }
-
-      sessionStorage.removeItem('senti_oauth_pending');
-      setError(err.errors?.[0]?.message || 'Failed to sign up. Please try again.');
     }
   };
 
