@@ -1,19 +1,26 @@
 import "./lib/posthog";
 import { createRoot } from "react-dom/client";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ParaProvider, Environment } from "@getpara/react-sdk";
+import "@getpara/react-sdk/styles.css";
+import { PARA_API_KEY } from "./lib/para";
 import App from "./app/App.tsx";
 import "./styles/index.css";
 
-// Get Clerk publishable key from environment
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!PUBLISHABLE_KEY) {
-  console.warn("Missing VITE_CLERK_PUBLISHABLE_KEY - Auth features will be limited");
-}
+const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={PUBLISHABLE_KEY || ""}>
-    <App />
-  </ClerkProvider>
+  <QueryClientProvider client={queryClient}>
+    <ParaProvider
+      paraClientConfig={{
+        env: Environment.DEVELOPMENT,
+        apiKey: PARA_API_KEY,
+      }}
+      config={{
+        appName: "Senti",
+      }}
+    >
+      <App />
+    </ParaProvider>
+  </QueryClientProvider>
 );
-  

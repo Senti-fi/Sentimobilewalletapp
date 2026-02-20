@@ -14,7 +14,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useState } from 'react';
-import { useClerk } from '@clerk/clerk-react';
+import { useLogout } from '@getpara/react-sdk';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
@@ -32,7 +32,7 @@ export default function SettingsPage({
   activeGoals = 4,
   totalRewards = 2300
 }: SettingsPageProps) {
-  const { signOut } = useClerk();
+  const { logoutAsync } = useLogout();
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
@@ -69,8 +69,7 @@ export default function SettingsPage({
   const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out? Your wallet will remain safe.')) {
       try {
-        // Sign out from Clerk
-        await signOut();
+        await logoutAsync();
         // Clear local storage
         localStorage.clear();
         // Reload the page
