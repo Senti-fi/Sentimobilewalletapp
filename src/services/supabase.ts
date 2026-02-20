@@ -1,6 +1,6 @@
 // Supabase Client Service
 // Handles database operations for user profiles and discovery
-// Also provides auth via Supabase Auth (Google + Apple OAuth)
+// Auth is handled by Para SDK — Supabase is used for database only
 
 import { createClient } from '@supabase/supabase-js';
 

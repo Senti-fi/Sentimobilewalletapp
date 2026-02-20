@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
-import { supabase } from '../../services/supabase';
+import { useModal } from '@getpara/react-sdk';
 import Logo from './Logo';
 
 interface SignUpProps {
@@ -11,23 +11,15 @@ interface SignUpProps {
 export default function SignUp({ onComplete }: SignUpProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
+  const { openModal } = useModal();
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
+  const handleSignUp = () => {
     try {
       setError('');
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: window.location.origin + '/sso-callback',
-        },
-      });
-
-      if (oauthError) {
-        setError(oauthError.message);
-      }
+      openModal();
     } catch (err: any) {
-      console.error('OAuth error:', err);
-      setError('Failed to authenticate. Please try again.');
+      console.error('Auth error:', err);
+      setError('Failed to open authentication. Please try again.');
     }
   };
 
@@ -165,11 +157,11 @@ export default function SignUp({ onComplete }: SignUpProps) {
           )}
 
           <div className="space-y-3 mb-6">
-            {/* Google */}
+            {/* Primary Sign Up Button — opens Para Modal */}
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => handleOAuth('google')}
+              onClick={handleSignUp}
               className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -185,7 +177,7 @@ export default function SignUp({ onComplete }: SignUpProps) {
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => handleOAuth('apple')}
+              onClick={handleSignUp}
               className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

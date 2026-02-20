@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
-import { supabase, userService, UserProfile } from '../services/supabase';
-import type { Session } from '@supabase/supabase-js';
+import { useAccount, useWallet, useLogout } from '@getpara/react-sdk';
+import { userService, UserProfile } from '../services/supabase';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import LoadingScreen from './components/LoadingScreen';
@@ -107,30 +107,28 @@ function restoreProfileToLocalStorage(profile: UserProfile, authUserId: string) 
 // ─── Main App Component ──────────────────────────────────────────────
 
 function AppContent() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { isConnected, isLoading: isAccountLoading, embedded } = useAccount();
+  const wallet = useWallet();
+  const { logoutAsync } = useLogout();
+
   const [appState, setAppState] = useState<AppState>('loading');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const profileCheckRef = useRef<string | null>(null);
 
   const isCallbackRoute = window.location.pathname === '/sso-callback';
 
-  // ── Initialize Supabase Auth listener ─────────────────────────────
+  // Derive Para user ID and email from embedded account
+  const paraUserId = embedded?.userId || wallet?.userId || wallet?.id || null;
+  const walletAddress = wallet?.address || null;
+  const paraEmail = embedded?.email || null;
+
+  // ── Mark as loaded once Para SDK resolves auth state ────────────
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
+    if (!isAccountLoading) {
       setIsLoaded(true);
-    });
-
-    // Listen for auth state changes (sign in, sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setIsLoaded(true);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    }
+  }, [isAccountLoading]);
 
   // Check Supabase for existing user profile – runs once per auth user ID
   const checkUserProfile = useCallback(async (authUserId: string, email: string, imageUrl: string) => {
@@ -158,7 +156,7 @@ function AppContent() {
       const storedHandle = localStorage.getItem(`senti_user_handle_${authUserId}`);
 
       if (hasSetUsername && storedUsername && storedHandle) {
-        const walletAddress =
+        const storedWalletAddress =
           localStorage.getItem(`senti_wallet_address_${authUserId}`) ||
           localStorage.getItem('senti_wallet_address') || '';
 
@@ -167,7 +165,7 @@ function AppContent() {
             authUserId,
             username: storedUsername.toLowerCase(),
             handle: storedHandle,
-            walletAddress,
+            walletAddress: storedWalletAddress,
             email,
             imageUrl,
           });
@@ -198,14 +196,14 @@ function AppContent() {
       const legacySet = localStorage.getItem('senti_username_set') === 'true';
 
       if (legacySet && legacyUsername && legacyHandle) {
-        const walletAddress = localStorage.getItem('senti_wallet_address') || '';
+        const storedWalletAddress = localStorage.getItem('senti_wallet_address') || '';
 
         try {
           const migrated = await userService.createUser({
             authUserId,
             username: legacyUsername.toLowerCase(),
             handle: legacyHandle,
-            walletAddress,
+            walletAddress: storedWalletAddress,
             email,
             imageUrl,
           });
@@ -244,23 +242,28 @@ function AppContent() {
 
   // ── Handle auth state and routing ─────────────────────────────────
   useEffect(() => {
-    // Handle SSO callback route — let SSOCallback component take over
+    // Handle SSO callback route — let SSOCallback component redirect
     if (isCallbackRoute) {
       setAppState('sso-callback');
       return;
     }
 
-    // Wait for Supabase to load
+    // Wait for Para SDK to resolve auth state
     if (!isLoaded) {
       setAppState('loading');
       return;
     }
 
-    // User is signed in
-    if (session?.user) {
-      const authUserId = session.user.id;
-      const email = session.user.email || '';
-      const imageUrl = session.user.user_metadata?.avatar_url || '';
+    // User is authenticated via Para
+    if (isConnected && embedded?.isConnected && paraUserId) {
+      const authUserId = paraUserId;
+      const email = paraEmail || localStorage.getItem('senti_user_email') || '';
+      const imageUrl = localStorage.getItem('senti_user_image') || '';
+
+      // Persist email from Para to localStorage
+      if (paraEmail) {
+        localStorage.setItem('senti_user_email', paraEmail);
+      }
 
       // Generate Senti ID for this user if they don't have one
       const userSentiIdKey = `senti_user_id_${authUserId}`;
@@ -273,21 +276,12 @@ function AppContent() {
 
       // Store auth data
       localStorage.setItem('senti_auth_user_id', authUserId);
-      localStorage.setItem('senti_user_email', email);
-      localStorage.setItem('senti_user_image', imageUrl);
 
-      // Generate wallet address for this user if not exists
-      const userWalletKey = `senti_wallet_address_${authUserId}`;
-      let walletAddress = localStorage.getItem(userWalletKey);
-      if (!walletAddress) {
-        const hexChars = '0123456789abcdef';
-        walletAddress = '0x';
-        for (let i = 0; i < 40; i++) {
-          walletAddress += hexChars[Math.floor(Math.random() * 16)];
-        }
-        localStorage.setItem(userWalletKey, walletAddress);
+      // Use Para's real wallet address if available
+      if (walletAddress) {
+        localStorage.setItem('senti_wallet_address', walletAddress);
+        localStorage.setItem(`senti_wallet_address_${authUserId}`, walletAddress);
       }
-      localStorage.setItem('senti_wallet_address', walletAddress);
 
       // Mark onboarding as complete for signed-in users
       localStorage.setItem('senti_onboarding_completed', 'true');
@@ -306,7 +300,7 @@ function AppContent() {
     } else {
       setAppState('onboarding');
     }
-  }, [isLoaded, session, isCallbackRoute, checkUserProfile]);
+  }, [isLoaded, isConnected, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
 
   // Safety net: stuck in 'loading' for more than 10s
   useEffect(() => {
@@ -335,7 +329,7 @@ function AppContent() {
   };
 
   const handleUsernameComplete = async (username: string) => {
-    const authUserId = session?.user?.id || localStorage.getItem('senti_auth_user_id');
+    const authUserId = paraUserId || localStorage.getItem('senti_auth_user_id');
 
     if (!authUserId) {
       console.error('No user ID available for username setup');
@@ -344,7 +338,7 @@ function AppContent() {
 
     const formattedUsername = formatUsername(username);
     const userHandle = `@${username.toLowerCase()}.senti`;
-    const walletAddress = localStorage.getItem('senti_wallet_address') || '';
+    const userWalletAddress = walletAddress || localStorage.getItem('senti_wallet_address') || '';
     const email = localStorage.getItem('senti_user_email') || '';
     const imageUrl = localStorage.getItem('senti_user_image') || '';
 
@@ -353,7 +347,7 @@ function AppContent() {
         authUserId,
         username: username.toLowerCase(),
         handle: userHandle,
-        walletAddress,
+        walletAddress: userWalletAddress,
         email,
         imageUrl,
       });
@@ -375,7 +369,7 @@ function AppContent() {
     setAppState('dashboard');
   };
 
-  const userImage = session?.user?.user_metadata?.avatar_url || localStorage.getItem('senti_user_image') || '';
+  const userImage = localStorage.getItem('senti_user_image') || '';
 
   return (
     <div className="size-full bg-gray-50 overflow-hidden relative">

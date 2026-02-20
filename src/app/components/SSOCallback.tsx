@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { supabase } from '../../services/supabase';
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Loader } from 'lucide-react';
 
@@ -8,49 +7,20 @@ interface SSOCallbackProps {
 }
 
 /**
- * Handles the Supabase OAuth redirect callback.
+ * Legacy SSO callback route handler.
  *
- * After Google/Apple OAuth, Supabase redirects here with tokens in the URL
- * hash (#access_token=...&refresh_token=...). The Supabase client
- * automatically picks these up and establishes a session.
- *
- * We just wait for the session to be established, then redirect to '/'.
+ * Para uses popup-based OAuth (not redirects), so this route is no longer
+ * part of the primary auth flow. If a user lands here (e.g., from a stale
+ * bookmark or back-navigation), we simply redirect them to the app root.
  */
 export default function SSOCallback({ onComplete }: SSOCallbackProps) {
-  const handled = useRef(false);
-
   useEffect(() => {
-    if (handled.current) return;
-
-    // Listen for auth state changes — fires when Supabase processes the URL tokens
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (handled.current) return;
-      if (event === 'SIGNED_IN' && session) {
-        handled.current = true;
-        window.location.replace('/');
-      }
-    });
-
-    // Also check if session is already established (tokens processed synchronously)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (handled.current) return;
-      if (session) {
-        handled.current = true;
-        window.location.replace('/');
-      }
-    });
-
-    // Fallback: if nothing works after 10s, redirect home
+    // Redirect to root — Para handles auth via popup, not redirect callbacks
     const timeout = setTimeout(() => {
-      if (handled.current) return;
-      handled.current = true;
       window.location.replace('/');
-    }, 10000);
+    }, 1000);
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
@@ -76,27 +46,8 @@ export default function SSOCallback({ onComplete }: SSOCallbackProps) {
         transition={{ delay: 0.2 }}
         className="mb-4 text-white text-center text-xl font-semibold"
       >
-        Completing Sign In
+        Redirecting...
       </motion.h2>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="text-blue-200 text-center mb-8"
-      >
-        Setting up your account...
-      </motion.p>
-
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="w-8 h-8 border-4 border-white border-t-transparent rounded-full"
-      />
     </div>
   );
 }

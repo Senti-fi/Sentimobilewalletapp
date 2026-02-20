@@ -322,8 +322,8 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
 
     const timer = setTimeout(async () => {
       try {
-        const currentClerkId = localStorage.getItem('senti_auth_user_id') || '';
-        const results = await userService.searchUsers(searchQuery, currentClerkId);
+        const currentAuthId = localStorage.getItem('senti_auth_user_id') || '';
+        const results = await userService.searchUsers(searchQuery, currentAuthId);
         if (abortController.signal.aborted) return;
 
         const contactIds = new Set(contacts.map(c => c.id));
