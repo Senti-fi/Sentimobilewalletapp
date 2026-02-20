@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
-import { useAccount, useWallet, useLogout } from '@getpara/react-sdk';
+import { useAccount, useWallet, useLogout } from '@getpara/react-sdk-lite';
 import { userService, UserProfile } from '../services/supabase';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';

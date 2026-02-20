@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
-import { useModal } from '@getpara/react-sdk';
+import { useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
 
 interface SignUpProps {

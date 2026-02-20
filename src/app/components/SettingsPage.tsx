@@ -14,7 +14,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { useState } from 'react';
-import { useLogout } from '@getpara/react-sdk';
+import { useLogout } from '@getpara/react-sdk-lite';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';

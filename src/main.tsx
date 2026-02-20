@@ -1,8 +1,8 @@
 import "./lib/posthog";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ParaProvider, Environment } from "@getpara/react-sdk";
-import "@getpara/react-sdk/styles.css";
+import { ParaProvider, Environment } from "@getpara/react-sdk-lite";
+import "@getpara/react-sdk-lite/styles.css";
 import { PARA_API_KEY } from "./lib/para";
 import App from "./app/App.tsx";
 import "./styles/index.css";
