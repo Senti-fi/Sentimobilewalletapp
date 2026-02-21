@@ -34,6 +34,7 @@ import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
 import PortfolioAnalyticsPage from './PortfolioAnalyticsPage';
 import { useWalletContext } from '../../hooks/useWalletContext';
+import { useModal, ModalStep } from '@getpara/react-sdk-lite';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
 
@@ -99,6 +100,7 @@ const mockAssets: Asset[] = [
 ];
 
 export default function Dashboard() {
+  const { openModal: openParaModal } = useModal();
   // Load initial state from localStorage or use defaults
   const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
     try {
@@ -639,8 +641,8 @@ export default function Dashboard() {
       label: 'Buy',
       icon: ShoppingBag,
       gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-      modal: 'swap' as ModalType,
-      action: null as (() => void) | null,
+      modal: null as ModalType,
+      action: (() => openParaModal({ step: ModalStep.ADD_FUNDS_BUY })) as (() => void) | null,
     },
     {
       id: 'vault',
@@ -713,7 +715,7 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={`flex-1 min-h-0 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics'
+        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics' || activeTab === 'savings' || activeTab === 'spend'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
           : 'overflow-y-auto overflow-x-hidden pb-32 px-6 space-y-5' // Full scrolling for regular tabs with extra padding for nav
       }`}>

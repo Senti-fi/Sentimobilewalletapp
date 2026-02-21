@@ -13,11 +13,18 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ParaProvider
       paraClientConfig={{
-        env: Environment.DEVELOPMENT,
+        env: Environment.BETA,
         apiKey: PARA_API_KEY,
       }}
       config={{
         appName: "Senti",
+      }}
+      paraModalConfig={{
+        oAuthMethods: ["GOOGLE", "APPLE"],
+        disablePhoneLogin: true,
+        authLayout: ["AUTH:FULL"],
+        recoverySecretStepEnabled: true,
+        onRampTestMode: true,
       }}
     >
       <App />

@@ -102,3 +102,40 @@ CREATE POLICY "Users can update their own messages"
 
 -- Enable Realtime for messages table
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+
+-- ============================================================================
+-- Referrals Table — Track who referred whom
+-- ============================================================================
+
+-- Add referral_code column to users (if not already present)
+DO $$ BEGIN
+  ALTER TABLE users ADD COLUMN referral_code TEXT UNIQUE;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
+
+CREATE TABLE IF NOT EXISTS referrals (
+  id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  referrer_id     TEXT        NOT NULL,          -- auth_user_id of the person who shared
+  referred_id     TEXT        NOT NULL,          -- auth_user_id of the person who signed up
+  referral_code   TEXT        NOT NULL,          -- the code used
+  status          TEXT        DEFAULT 'completed', -- completed, pending, rewarded
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
+
+-- RLS
+ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Referrals are viewable by everyone" ON referrals;
+CREATE POLICY "Referrals are viewable by everyone"
+  ON referrals FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can create referrals" ON referrals;
+CREATE POLICY "Users can create referrals"
+  ON referrals FOR INSERT
+  WITH CHECK (true);

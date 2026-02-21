@@ -185,11 +185,11 @@ export default function SavingsPage({
   };
 
   const handleWithdrawGoal = (goalId: string) => {
-    // In a real app, this would transfer funds back to wallet and remove/archive the goal
+    // Transfer funds back to available savings and remove the goal
     const goal = goals.find(g => g.id === goalId);
     if (goal) {
-      console.log(`Withdrew $${goal.currentAmount} from goal: ${goal.name}`);
-      setGoals(goals.filter(g => g.id !== goalId));
+      setAvailableSavings(prev => prev + goal.currentAmount);
+      setGoals(prev => prev.filter(g => g.id !== goalId));
     }
     setSelectedGoal(null);
     // Reset navigation tracking
@@ -223,11 +223,8 @@ export default function SavingsPage({
         if (newCurrentAmount >= g.targetAmount) {
           // Auto-transfer completed goal funds to Available Savings
           setAvailableSavings(prev => prev + newCurrentAmount);
-          // Remove the completed goal
-          setTimeout(() => {
-            setGoals(goals.filter(goal => goal.id !== goalId));
-          }, 100);
-          return null; // Will be filtered out
+          // Mark as null for removal (filtered below)
+          return null;
         }
 
         // If not complete, recalculate behind status

@@ -68,7 +68,7 @@ function generateQRPattern(address: string): boolean[][] {
 
 export default function ReceiveModal({ onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const walletAddress = localStorage.getItem('senti_wallet_address') || '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+  const walletAddress = localStorage.getItem('senti_wallet_address') || '';
 
   // Generate QR pattern once based on address
   const qrPattern = useMemo(() => generateQRPattern(walletAddress), [walletAddress]);

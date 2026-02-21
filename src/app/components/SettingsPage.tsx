@@ -7,17 +7,18 @@ import {
   Key,
   Copy,
   Shield,
-  CreditCard,
   Bell,
   LogOut,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Gift
 } from 'lucide-react';
 import { useState } from 'react';
-import { useLogout } from '@getpara/react-sdk-lite';
+import { useLogout, useWallet } from '@getpara/react-sdk-lite';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
+import ReferralModal from './ReferralModal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -33,15 +34,17 @@ export default function SettingsPage({
   totalRewards = 2300
 }: SettingsPageProps) {
   const { logoutAsync } = useLogout();
+  const wallet = useWallet();
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
 
-  // Load user data from localStorage
-  const fullWalletAddress = localStorage.getItem('senti_wallet_address') || '0x0000000000000000000000000000000000000000';
-  const walletId = fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4);
+  // Load user data — prefer live Para wallet address, fall back to localStorage
+  const fullWalletAddress = wallet?.address || localStorage.getItem('senti_wallet_address') || '';
+  const walletId = fullWalletAddress ? fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4) : 'No wallet yet';
   const userEmail = localStorage.getItem('senti_user_email') || 'user@mail.com';
   const userPhone = '+1 (415) 555-0189'; // Phone remains as placeholder
   // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
@@ -70,16 +73,19 @@ export default function SettingsPage({
     if (confirm('Are you sure you want to sign out? Your wallet will remain safe.')) {
       try {
         await logoutAsync();
-        // Clear local storage
-        localStorage.clear();
-        // Reload the page
-        window.location.reload();
       } catch (error) {
         console.error('Sign out error:', error);
-        // Fallback: just clear localStorage and reload
-        localStorage.clear();
-        window.location.reload();
       }
+      // Clear senti-specific keys but preserve onboarding flag
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('senti_') && key !== 'senti_onboarding_completed') {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      window.location.reload();
     }
   };
 
@@ -153,7 +159,7 @@ export default function SettingsPage({
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
-              <span className="text-lg">✨</span>
+              <Shield className="w-4 h-4 text-blue-600" />
             </div>
             <h3 className="text-gray-900 font-medium">Account details</h3>
           </div>
@@ -313,6 +319,21 @@ export default function SettingsPage({
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
 
+          {/* Invite Friends */}
+          <button
+            onClick={() => setShowReferral(true)}
+            className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+              <Gift className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 font-medium">Invite Friends</p>
+              <p className="text-sm text-gray-500">Share your referral code & earn rewards</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
           {/* Smart Alerts */}
           <button className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center flex-shrink-0">
@@ -382,6 +403,9 @@ export default function SettingsPage({
       )}
       {showHelpSupport && (
         <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+      )}
+      {showReferral && (
+        <ReferralModal onClose={() => setShowReferral(false)} />
       )}
     </div>
   );
