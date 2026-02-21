@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
-import { useAccount, useWallet, useLogout } from '@getpara/react-sdk';
+import { useAccount, useWallet, useLogout } from '@getpara/react-sdk-lite';
 import { userService, UserProfile } from '../services/supabase';
+import { referralService } from '../services/referralService';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import LoadingScreen from './components/LoadingScreen';
@@ -328,7 +329,7 @@ function AppContent() {
     window.history.replaceState({}, '', '/');
   };
 
-  const handleUsernameComplete = async (username: string) => {
+  const handleUsernameComplete = async (username: string, referralCode?: string) => {
     const authUserId = paraUserId || localStorage.getItem('senti_auth_user_id');
 
     if (!authUserId) {
@@ -351,6 +352,11 @@ function AppContent() {
         email,
         imageUrl,
       });
+
+      // Apply referral code if provided
+      if (referralCode) {
+        referralService.applyReferralCode(referralCode, authUserId).catch(() => {});
+      }
     } catch (err: any) {
       if (err?.message === 'USERNAME_TAKEN') {
         console.error('Username was taken during final creation');

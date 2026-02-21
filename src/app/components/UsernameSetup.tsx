@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AtSign, AlertCircle, CheckCircle, User, ArrowRight, Loader2 } from 'lucide-react';
+import { AtSign, AlertCircle, CheckCircle, User, ArrowRight, Loader2, Gift } from 'lucide-react';
 import { userService } from '../../services/supabase';
 
 interface UsernameSetupProps {
-  onComplete: (username: string) => void;
+  onComplete: (username: string, referralCode?: string) => void;
   userImage?: string;
 }
 
@@ -22,6 +22,7 @@ const formatDisplayName = (username: string): string => {
 
 export default function UsernameSetup({ onComplete, userImage }: UsernameSetupProps) {
   const [username, setUsername] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
@@ -116,7 +117,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
     // Small delay for UX
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    onComplete(username);
+    onComplete(username, referralCode.trim() || undefined);
   };
 
   const isValid = username.length >= 3 && isValidUsername(username) && isUsernameAvailable && !isCheckingAvailability;
@@ -285,6 +286,23 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Referral Code (optional) */}
+            <div>
+              <label className="block text-sm font-medium text-blue-200/80 mb-2">
+                Referral Code <span className="text-blue-300/40">(optional)</span>
+              </label>
+              <div className="relative rounded-2xl">
+                <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-300/50" />
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="SENTI-XXXX-XXXX"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-xl border-2 border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all text-white placeholder-blue-300/40"
+                />
+              </div>
             </div>
 
             {/* Submit button */}

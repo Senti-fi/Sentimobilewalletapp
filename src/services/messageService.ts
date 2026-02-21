@@ -23,6 +23,14 @@ export interface ConversationPreview {
   unread_count: number;
 }
 
+/**
+ * Sanitize a handle string to prevent filter injection.
+ * Only allows alphanumeric chars, @, dots, underscores, and hyphens.
+ */
+function sanitizeHandle(handle: string): string {
+  return handle.replace(/[^a-zA-Z0-9@._\-]/g, '');
+}
+
 class MessageService {
   private channel: RealtimeChannel | null = null;
 
@@ -34,12 +42,16 @@ class MessageService {
     receiverHandle: string,
     content: string,
   ): Promise<ChatMessage | null> {
+    // Validate content length
+    const trimmed = content.trim();
+    if (!trimmed || trimmed.length > 5000) return null;
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
-        sender_handle: senderHandle,
-        receiver_handle: receiverHandle,
-        content,
+        sender_handle: sanitizeHandle(senderHandle),
+        receiver_handle: sanitizeHandle(receiverHandle),
+        content: trimmed,
         type: 'text',
         status: 'sent',
       })
@@ -63,11 +75,14 @@ class MessageService {
     asset: string,
     status: string = 'pending',
   ): Promise<ChatMessage | null> {
+    // Validate amount
+    if (!amount || amount <= 0 || amount > 1_000_000 || !isFinite(amount)) return null;
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
-        sender_handle: senderHandle,
-        receiver_handle: receiverHandle,
+        sender_handle: sanitizeHandle(senderHandle),
+        receiver_handle: sanitizeHandle(receiverHandle),
         content: `Payment of $${amount} ${asset}`,
         type: 'transaction',
         amount,
@@ -141,12 +156,15 @@ class MessageService {
     handleB: string,
     limit: number = 100,
   ): Promise<ChatMessage[]> {
+    const a = sanitizeHandle(handleA);
+    const b = sanitizeHandle(handleB);
+
     const { data, error } = await supabase
       .from('messages')
       .select('*')
       .or(
-        `and(sender_handle.eq.${handleA},receiver_handle.eq.${handleB}),` +
-        `and(sender_handle.eq.${handleB},receiver_handle.eq.${handleA})`
+        `and(sender_handle.eq.${a},receiver_handle.eq.${b}),` +
+        `and(sender_handle.eq.${b},receiver_handle.eq.${a})`
       )
       .order('created_at', { ascending: true })
       .limit(limit);
@@ -163,11 +181,13 @@ class MessageService {
    * Returns a list of contact handles with their last message and unread count.
    */
   async getConversationPreviews(myHandle: string): Promise<ConversationPreview[]> {
+    const handle = sanitizeHandle(myHandle);
+
     // Fetch recent messages involving this user
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .or(`sender_handle.eq.${myHandle},receiver_handle.eq.${myHandle}`)
+      .or(`sender_handle.eq.${handle},receiver_handle.eq.${handle}`)
       .order('created_at', { ascending: false })
       .limit(500);
 
@@ -218,15 +238,17 @@ class MessageService {
     // Unsubscribe from previous channel if any
     this.unsubscribe();
 
+    const handle = sanitizeHandle(myHandle);
+
     this.channel = supabase
-      .channel(`messages:${myHandle}`)
+      .channel(`messages:${handle}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `receiver_handle=eq.${myHandle}`,
+          filter: `receiver_handle=eq.${handle}`,
         },
         (payload) => {
           onMessage(payload.new as ChatMessage);
@@ -238,7 +260,7 @@ class MessageService {
           event: 'UPDATE',
           schema: 'public',
           table: 'messages',
-          filter: `sender_handle=eq.${myHandle}`,
+          filter: `sender_handle=eq.${handle}`,
         },
         (payload) => {
           // Status changes on messages I sent (e.g. sent→delivered→read)
@@ -251,7 +273,7 @@ class MessageService {
           event: 'UPDATE',
           schema: 'public',
           table: 'messages',
-          filter: `receiver_handle=eq.${myHandle}`,
+          filter: `receiver_handle=eq.${handle}`,
         },
         (payload) => {
           // Status changes on messages I received (e.g. transaction accepted/declined)
