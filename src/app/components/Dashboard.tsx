@@ -747,7 +747,7 @@ export default function Dashboard() {
                 onClick={() => setActionSheet('add-money')}
                 className="flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 rounded-2xl flex items-center justify-center shadow-sm">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
                   <Plus className="w-6 h-6 text-white" strokeWidth={2} />
                 </div>
                 <span className="text-xs text-gray-600 font-medium">Add Money</span>
@@ -758,7 +758,7 @@ export default function Dashboard() {
                 onClick={() => setOpenModal('grow')}
                 className="flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-400 via-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center shadow-sm">
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
                   <LockKeyhole className="w-6 h-6 text-white" strokeWidth={2} />
                 </div>
                 <span className="text-xs text-gray-600 font-medium">Vault</span>
@@ -992,6 +992,7 @@ export default function Dashboard() {
                   { icon: Send, label: 'Send to User', desc: 'Send crypto to a contact or address', action: () => { setActionSheet(null); setOpenModal('send'); } },
                   { icon: LockKeyhole, label: 'Transfer to Vault', desc: 'Move funds to your vault for yield', action: () => { setActionSheet(null); setOpenModal('grow'); } },
                   { icon: PiggyBank, label: 'Transfer to Savings', desc: 'Move funds into a savings goal', action: () => { setActionSheet(null); setActiveTab('savings'); } },
+                  { icon: CreditCard, label: 'Transfer to Spend', desc: 'Move funds to your spend card', action: () => { setActionSheet(null); setActiveTab('spend'); } },
                   { icon: Building2, label: 'Withdraw to Bank', desc: 'Send USDT and recipient gets Naira', action: () => { setActionSheet(null); setActiveTab('spend'); } },
                 ].map((item) => (
                   <motion.button
@@ -1051,8 +1052,8 @@ export default function Dashboard() {
                     onClick={item.action}
                     className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-5 h-5 text-green-600" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-900 font-medium text-sm">{item.label}</p>
