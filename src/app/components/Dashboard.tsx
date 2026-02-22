@@ -626,6 +626,9 @@ export default function Dashboard() {
 
   // Action sheet state for Transfer / Add Money sub-menus
   const [actionSheet, setActionSheet] = useState<'transfer' | 'add-money' | null>(null);
+  // Auto-open flags for sub-page modals (triggered from Transfer action sheet)
+  const [vaultAutoDeposit, setVaultAutoDeposit] = useState(false);
+  const [savingsAutoDeposit, setSavingsAutoDeposit] = useState(false);
 
   const handleModalClose = () => {
     setOpenModal(null);
@@ -682,7 +685,7 @@ export default function Dashboard() {
       <div className={`flex-1 min-h-0 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
         activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics' || activeTab === 'savings' || activeTab === 'spend'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
-          : 'overflow-y-auto overflow-x-hidden pb-32 px-6 space-y-5' // Full scrolling for regular tabs with extra padding for nav
+          : 'overflow-y-auto overflow-x-hidden overscroll-contain pb-24 px-6 space-y-5' // Full scrolling for regular tabs
       }`}>
         {activeTab === 'home' && (
           <>
@@ -834,6 +837,7 @@ export default function Dashboard() {
             onSavingsUnlock={handleSavingsUnlock}
             onGoalContribution={handleGoalContribution}
             onExploreVaults={() => setOpenModal('grow')}
+            autoOpenDeposit={savingsAutoDeposit}
           />
         )}
 
@@ -907,7 +911,7 @@ export default function Dashboard() {
                   key={tab.id}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => { setSavingsAutoDeposit(false); setActiveTab(tab.id as any); }}
                   className="flex items-center justify-center p-3 transition-all relative"
                 >
                   {isActive && (
@@ -949,7 +953,7 @@ export default function Dashboard() {
       {openModal === 'swap' && <SwapModal onClose={handleModalClose} onBuy={handleBuy} />}
       {openModal === 'grow' && (
         <GrowModal
-          onClose={handleModalClose}
+          onClose={() => { handleModalClose(); setVaultAutoDeposit(false); }}
           vaultBalance={vaultBalance}
           vaultEarned={vaultEarned}
           onDeposit={handleVaultDeposit}
@@ -959,6 +963,7 @@ export default function Dashboard() {
           walletAssets={assets}
           activeInvestments={activeInvestments}
           totalWalletBalance={totalBalance}
+          autoDeposit={vaultAutoDeposit}
         />
       )}
       {openModal === 'settings' && <SettingsModal onClose={handleModalClose} />}
@@ -990,8 +995,8 @@ export default function Dashboard() {
               <div className="space-y-2">
                 {[
                   { icon: Send, label: 'Send to User', desc: 'Send crypto to a contact or address', action: () => { setActionSheet(null); setOpenModal('send'); } },
-                  { icon: LockKeyhole, label: 'Transfer to Vault', desc: 'Move funds to your vault for yield', action: () => { setActionSheet(null); setOpenModal('grow'); } },
-                  { icon: PiggyBank, label: 'Transfer to Savings', desc: 'Move funds into a savings goal', action: () => { setActionSheet(null); setActiveTab('savings'); } },
+                  { icon: LockKeyhole, label: 'Transfer to Vault', desc: 'Move funds to your vault for yield', action: () => { setActionSheet(null); setVaultAutoDeposit(true); setOpenModal('grow'); } },
+                  { icon: PiggyBank, label: 'Transfer to Savings', desc: 'Move funds into a savings goal', action: () => { setActionSheet(null); setSavingsAutoDeposit(true); setActiveTab('savings'); } },
                   { icon: CreditCard, label: 'Transfer to Spend', desc: 'Move funds to your spend card', action: () => { setActionSheet(null); setActiveTab('spend'); } },
                   { icon: Building2, label: 'Withdraw to Bank', desc: 'Send USDT and recipient gets Naira', action: () => { setActionSheet(null); setActiveTab('spend'); } },
                 ].map((item) => (
@@ -1044,7 +1049,6 @@ export default function Dashboard() {
                 {[
                   { icon: ShoppingBag, label: 'Buy Crypto', desc: 'Purchase crypto with card or bank', action: () => { setActionSheet(null); openParaModal({ step: ModalStep.ADD_FUNDS_BUY }); } },
                   { icon: QrCode, label: 'Share Address', desc: 'Show QR code or wallet address', action: () => { setActionSheet(null); setOpenModal('receive'); } },
-                  { icon: Download, label: 'Request Money', desc: 'Request payment from a contact', action: () => { setActionSheet(null); setActiveTab('link'); } },
                 ].map((item) => (
                   <motion.button
                     key={item.label}
