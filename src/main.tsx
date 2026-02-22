@@ -9,6 +9,19 @@ import "./styles/index.css";
 
 const queryClient = new QueryClient();
 
+// ── Mobile OAuth redirect return handler ──
+// When the postinstall patch redirects mobile users to Para's OAuth page
+// in the same tab (instead of a new tab), Para's callback will redirect
+// back here via appScheme. Clear the pending flag so the app boots normally
+// and Para SDK re-detects the completed auth session automatically.
+try {
+  if (sessionStorage.getItem('senti_oauth_pending')) {
+    sessionStorage.removeItem('senti_oauth_pending');
+  }
+} catch {
+  // sessionStorage unavailable (e.g. private browsing edge case)
+}
+
 // Hide Para SDK warning banners (BETA env + WalletConnect warnings)
 // These are styled-components rendered in the Para modal with #fffcec background
 const observer = new MutationObserver(() => {

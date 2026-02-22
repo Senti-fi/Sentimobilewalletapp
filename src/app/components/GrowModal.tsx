@@ -19,6 +19,7 @@ interface GrowModalProps {
   onWithdraw: (amount: number, asset: string) => void;
   onWithdrawToWallet?: (amount: number, asset: string) => void;
   onInvest: (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => void;
+  autoDeposit?: boolean;
   walletAssets: Array<{
     id: string;
     name: string;
@@ -104,9 +105,9 @@ const opportunities = [
   },
 ];
 
-export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance }: GrowModalProps) {
+export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance, autoDeposit }: GrowModalProps) {
   const [selectedVault, setSelectedVault] = useState<string | null>(null);
-  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(autoDeposit === true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedVaultData, setSelectedVaultData] = useState<{name: string, apy: string, protocol: string}>({name: '', apy: '', protocol: ''});

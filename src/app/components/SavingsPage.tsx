@@ -54,6 +54,7 @@ interface SavingsPageProps {
   onSavingsUnlock?: (amount: number, penalty: number) => void;
   onGoalContribution?: (amount: number, goalName: string) => void;
   onExploreVaults?: () => void;
+  autoOpenDeposit?: boolean;
 }
 
 export default function SavingsPage({
@@ -64,8 +65,9 @@ export default function SavingsPage({
   onSavingsUnlock,
   onGoalContribution,
   onExploreVaults,
+  autoOpenDeposit,
 }: SavingsPageProps) {
-  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(autoOpenDeposit === true);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showLockedSavings, setShowLockedSavings] = useState(false);
   const [showAllLockedSavings, setShowAllLockedSavings] = useState(false);
@@ -316,7 +318,7 @@ export default function SavingsPage({
   const sortedGoals = getSortedGoals();
 
   return (
-    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto overscroll-contain pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header - Compact */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
         <motion.div
