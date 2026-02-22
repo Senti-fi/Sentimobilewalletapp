@@ -8,7 +8,8 @@
     "dev": "concurrently \"vite\" \"tsx server/index.ts\" --names \"frontend,backend\" --prefix-colors \"cyan,yellow\"",
     "dev:frontend": "vite",
     "dev:backend": "tsx server/index.ts",
-    "server": "tsx server/index.ts"
+    "server": "tsx server/index.ts",
+    "postinstall": "node scripts/patch-para-mobile-oauth.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
