@@ -137,7 +137,7 @@ function AppContent() {
     profileCheckRef.current = authUserId;
 
     try {
-      // ── 1. Check Supabase (primary source of truth) ──
+      // ── 1. Check Supabase by auth ID (primary source of truth) ──
       const existingUser = await userService.getUserByAuthId(authUserId);
 
       if (existingUser) {
@@ -149,6 +149,22 @@ function AppContent() {
 
         setAppState('dashboard');
         return;
+      }
+
+      // ── 1b. Fallback: find by email (handles auth provider migration) ──
+      // When migrating from Clerk/Supabase Auth → Para, the user gets a new
+      // Para userId but their email stays the same. Find them by email and
+      // update their auth_user_id to the new Para ID.
+      if (email) {
+        const emailUser = await userService.getUserByEmail(email);
+        if (emailUser) {
+          const migrated = await userService.migrateAuthId(emailUser.id, authUserId);
+          if (migrated) {
+            restoreProfileToLocalStorage(migrated, authUserId);
+            setAppState('dashboard');
+            return;
+          }
+        }
       }
 
       // ── 2. Supabase has no record – try localStorage migration ──
@@ -338,7 +354,7 @@ function AppContent() {
     }
 
     const formattedUsername = formatUsername(username);
-    const userHandle = `@${username.toLowerCase()}.senti`;
+    const userHandle = `@${username.toLowerCase()}`;
     const userWalletAddress = walletAddress || localStorage.getItem('senti_wallet_address') || '';
     const email = localStorage.getItem('senti_user_email') || '';
     const imageUrl = localStorage.getItem('senti_user_image') || '';

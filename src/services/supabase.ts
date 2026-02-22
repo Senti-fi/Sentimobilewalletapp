@@ -65,6 +65,55 @@ export const userService = {
   },
 
   /**
+   * Find user by email (fallback for auth provider migrations)
+   */
+  async getUserByEmail(email: string): Promise<UserProfile | null> {
+    if (!email) return null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Migrate a user's auth_user_id (for auth provider migrations).
+   * Finds user by row ID and updates their auth_user_id to the new provider's ID.
+   */
+  async migrateAuthId(rowId: string, newAuthUserId: string): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          auth_user_id: newAuthUserId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', rowId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error migrating auth ID:', error);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error('Failed to migrate auth ID:', err);
+      return null;
+    }
+  },
+
+  /**
    * Check if a username is already taken
    */
   async isUsernameTaken(username: string): Promise<boolean> {
@@ -209,7 +258,7 @@ export const userService = {
   },
 
   /**
-   * Get user by handle (e.g., @john.senti)
+   * Get user by handle (e.g., @john)
    */
   async getUserByHandle(handle: string): Promise<UserProfile | null> {
     try {

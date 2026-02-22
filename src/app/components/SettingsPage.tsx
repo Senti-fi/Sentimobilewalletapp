@@ -50,7 +50,7 @@ export default function SettingsPage({
   // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
   const rawUsername = localStorage.getItem('senti_username') || 'User';
   const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
-  const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
+  const handle = localStorage.getItem('senti_user_handle') || '@user';
   const userId = localStorage.getItem('senti_user_id') || '';
   const userImage = localStorage.getItem('senti_user_image') || '';
 

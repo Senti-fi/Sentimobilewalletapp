@@ -155,7 +155,7 @@ export default function Dashboard() {
   // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
   const rawUsername = localStorage.getItem('senti_username') || 'User';
   const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
-  const userHandle = localStorage.getItem('senti_user_handle') || '@user.senti';
+  const userHandle = localStorage.getItem('senti_user_handle') || '@user';
   const userId = localStorage.getItem('senti_user_id') || '';
 
   // Vault balances
@@ -178,7 +178,7 @@ export default function Dashboard() {
   const defaultTransactions = [
     {
       id: 'tx-1',
-      merchant: 'Received from @david.senti',
+      merchant: 'Received from @david',
       category: 'Received',
       amount: 150.00,
       date: '2 hours ago',
@@ -189,7 +189,7 @@ export default function Dashboard() {
     },
     {
       id: 'tx-2',
-      merchant: 'Sent to @emma.senti',
+      merchant: 'Sent to @emma',
       category: 'Send',
       amount: -75.00,
       date: '5 hours ago',
