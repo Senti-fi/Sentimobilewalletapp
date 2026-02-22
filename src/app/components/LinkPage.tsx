@@ -187,7 +187,7 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
             const username = p.contact_handle.replace('@', '').replace('.senti', '');
             updated.unshift({
               id: p.contact_handle,
-              name: `${username.charAt(0).toUpperCase() + username.slice(1)} Senti`,
+              name: username.charAt(0).toUpperCase() + username.slice(1),
               avatar: '👤',
               color: getRandomGradient(),
               lastMessage: p.last_message,
@@ -259,7 +259,7 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
         const username = otherHandle.replace('@', '').replace('.senti', '');
         return [{
           id: otherHandle,
-          name: `${username.charAt(0).toUpperCase() + username.slice(1)} Senti`,
+          name: username.charAt(0).toUpperCase() + username.slice(1),
           avatar: '👤',
           color: getRandomGradient(),
           lastMessage: incoming.content,
@@ -463,7 +463,7 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search @username.senti to find friends"
+              placeholder="Search @username to find friends"
               className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           {!searchQuery && (
@@ -518,7 +518,7 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-200">
                     <User className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">No users found for "{searchQuery}"</p>
-                    <p className="text-xs text-gray-400 mt-1">Try searching for @username.senti</p>
+                    <p className="text-xs text-gray-400 mt-1">Try searching for @username</p>
                   </motion.div>
                 ) : null}
               </motion.div>

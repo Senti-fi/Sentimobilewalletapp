@@ -296,7 +296,7 @@ app.post('/api/migrate-clerk-users', async (req, res) => {
       toInsert.push({
         clerk_user_id: cu.id,
         username,
-        handle: `@${username}.senti`,
+        handle: `@${username}`,
         wallet_address: generateWalletAddress(),
         email,
         image_url: cu.image_url || '',

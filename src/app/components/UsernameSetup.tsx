@@ -17,7 +17,7 @@ const isValidUsername = (username: string): boolean => {
 // Format username for display (capitalize first letter)
 const formatDisplayName = (username: string): string => {
   if (!username) return '';
-  return username.charAt(0).toUpperCase() + username.slice(1) + 'Senti';
+  return username.charAt(0).toUpperCase() + username.slice(1);
 };
 
 export default function UsernameSetup({ onComplete, userImage }: UsernameSetupProps) {
@@ -124,7 +124,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
   const displayName = formatDisplayName(username);
 
   return (
-    <div className="size-full flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 overflow-hidden">
+    <div className="size-full flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 overflow-y-auto">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -145,7 +145,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
         />
       </div>
 
-      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-md mx-auto w-full relative z-10">
+      <div className="flex-1 flex flex-col justify-center px-6 py-8 pb-16 max-w-md mx-auto w-full relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -214,8 +214,8 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                       {username.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-white font-semibold text-lg">{displayName || 'YourNameSenti'}</p>
-                      <p className="text-blue-300/70 text-sm">@{username || 'username'}.senti</p>
+                      <p className="text-white font-semibold text-lg">{displayName || 'YourName'}</p>
+                      <p className="text-blue-300/70 text-sm">@{username || 'username'}</p>
                     </div>
                   </div>
                 </div>
@@ -245,12 +245,11 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                   onBlur={() => setIsFocused(false)}
                   placeholder="yourname"
                   autoFocus
-                  className={`w-full pl-12 pr-24 py-4 bg-white/10 backdrop-blur-xl border-2 rounded-2xl focus:outline-none transition-all text-lg text-white placeholder-blue-300/40 ${
+                  className={`w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-xl border-2 rounded-2xl focus:outline-none transition-all text-lg text-white placeholder-blue-300/40 ${
                     error ? 'border-red-400/50' : isValid ? 'border-green-400/50' : 'border-white/10'
                   }`}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <span className="text-blue-300/60 font-medium">.senti</span>
                   {isCheckingAvailability && (
                     <motion.div
                       initial={{ opacity: 0 }}

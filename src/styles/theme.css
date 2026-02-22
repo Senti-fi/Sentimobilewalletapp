@@ -221,4 +221,11 @@
   .safe-top {
     padding-top: max(2rem, env(safe-area-inset-top));
   }
+
+  /* Hide Para SDK warning banners (BETA environment + WalletConnect) */
+  /* Styled-components WarningBanner uses #fffcec background */
+  [class*="WarningBanner"],
+  [class*="BannerContainer"] {
+    display: none !important;
+  }
 }
