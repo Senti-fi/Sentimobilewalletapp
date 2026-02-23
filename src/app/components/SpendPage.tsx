@@ -21,6 +21,7 @@ import LucyChip from './LucyChip';
 import SentiPayModal from './SentiPayModal';
 import CardDrawer from './CardDrawer';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import Portal from './Portal';
 
 interface SpendPageProps {
   onOpenLucy: () => void;
@@ -379,10 +380,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Senti Pay Modal */}
       {showSentiPay && (
-        <SentiPayModal 
-          onClose={() => setShowSentiPay(false)}
-          onAddTransaction={onAddTransaction}
-        />
+        <Portal>
+          <SentiPayModal
+            onClose={() => setShowSentiPay(false)}
+            onAddTransaction={onAddTransaction}
+          />
+        </Portal>
       )}
 
       {/* Card Drawer */}
@@ -393,10 +396,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <Portal>
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        </Portal>
       )}
     </div>
   );

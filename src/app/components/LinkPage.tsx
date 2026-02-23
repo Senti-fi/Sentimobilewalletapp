@@ -15,6 +15,7 @@ import {
   CheckCheck
 } from 'lucide-react';
 import LinkSendModal from './LinkSendModal';
+import Portal from './Portal';
 import { userService, UserProfile } from '../../services/supabase';
 import { messageService, ChatMessage } from '../../services/messageService';
 
@@ -720,7 +721,9 @@ export default function LinkPage({ assets, onSend, onReceive, onUnreadCountChang
       </div>
 
       {showSendModal && (
-        <LinkSendModal onClose={() => setShowSendModal(false)} recipient={selectedContact} assets={assets} onTransactionComplete={handleTransactionComplete} />
+        <Portal>
+          <LinkSendModal onClose={() => setShowSendModal(false)} recipient={selectedContact} assets={assets} onTransactionComplete={handleTransactionComplete} />
+        </Portal>
       )}
     </div>
   );
