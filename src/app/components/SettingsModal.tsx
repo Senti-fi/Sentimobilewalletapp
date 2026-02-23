@@ -55,7 +55,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-gray-900">Settings</h2>

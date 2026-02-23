@@ -83,7 +83,7 @@ export default function CreateGoalModal({ onClose, onCreate, onOpenLucy }: Creat
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] flex flex-col"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] flex flex-col"
         >
           {/* Header */}
           <div className="flex-none bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">

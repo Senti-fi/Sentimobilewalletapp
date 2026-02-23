@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import Portal from './Portal';
 import { formatCompactBalance } from '../utils/formatBalance';
 
 interface Transaction {
@@ -202,14 +203,17 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <Portal>
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        </Portal>
       )}
 
       {/* View All Transactions Modal */}
       {showAllTransactions && (
+        <Portal>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -223,7 +227,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[80vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[80dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {/* Drag Handle */}
             <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -296,6 +300,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
             </div>
           </motion.div>
         </motion.div>
+        </Portal>
       )}
     </div>
   );

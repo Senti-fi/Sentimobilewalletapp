@@ -19,6 +19,7 @@ import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
 import ReferralModal from './ReferralModal';
+import Portal from './Portal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -391,21 +392,29 @@ export default function SettingsPage({
         </motion.div>
       </div>
 
-      {/* Modals */}
+      {/* Modals - wrapped in Portal to escape stacking context */}
       {showSecurityCenter && (
-        <SecurityCenterModal onClose={() => setShowSecurityCenter(false)} />
+        <Portal>
+          <SecurityCenterModal onClose={() => setShowSecurityCenter(false)} />
+        </Portal>
       )}
       {showEditEmail && (
-        <EditEmailModal
-          currentEmail={userEmail}
-          onClose={() => setShowEditEmail(false)}
-        />
+        <Portal>
+          <EditEmailModal
+            currentEmail={userEmail}
+            onClose={() => setShowEditEmail(false)}
+          />
+        </Portal>
       )}
       {showHelpSupport && (
-        <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+        <Portal>
+          <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+        </Portal>
       )}
       {showReferral && (
-        <ReferralModal onClose={() => setShowReferral(false)} />
+        <Portal>
+          <ReferralModal onClose={() => setShowReferral(false)} />
+        </Portal>
       )}
     </div>
   );
