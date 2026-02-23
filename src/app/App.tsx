@@ -258,6 +258,12 @@ function AppContent() {
   }, []);
 
   // ── Handle auth state and routing ─────────────────────────────────
+  // Track whether SDK is still settling after partial auth detection.
+  // When isConnected=true but embedded isn't ready yet, we stay on
+  // loading instead of bouncing to the signup page (the "loop" bug).
+  const authSettlingRef = useRef(false);
+  const authSettlingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     // Handle SSO callback route — let SSOCallback component redirect
     if (isCallbackRoute) {
@@ -271,8 +277,15 @@ function AppContent() {
       return;
     }
 
-    // User is authenticated via Para
+    // User is fully authenticated via Para (auth + wallet + userId all ready)
     if (isConnected && embedded?.isConnected && paraUserId) {
+      // Clear any settling state
+      authSettlingRef.current = false;
+      if (authSettlingTimerRef.current) {
+        clearTimeout(authSettlingTimerRef.current);
+        authSettlingTimerRef.current = null;
+      }
+
       const authUserId = paraUserId;
       const email = paraEmail || localStorage.getItem('senti_user_email') || '';
       const imageUrl = localStorage.getItem('senti_user_image') || '';
@@ -308,7 +321,31 @@ function AppContent() {
       return;
     }
 
-    // User is not signed in
+    // ── Auth is partially resolved (transitional state) ──
+    // isConnected=true but embedded wallet/userId not ready yet.
+    // This happens during wallet creation/session sync after OAuth.
+    // Stay on loading to prevent bouncing to signup page.
+    if (isConnected || isAccountLoading) {
+      if (!authSettlingRef.current) {
+        authSettlingRef.current = true;
+        // Safety: if auth doesn't fully resolve within 15s, give up
+        authSettlingTimerRef.current = setTimeout(() => {
+          authSettlingRef.current = false;
+          authSettlingTimerRef.current = null;
+        }, 15000);
+      }
+      setAppState('loading');
+      return;
+    }
+
+    // ── Genuinely not signed in ──
+    // Only reach here when isConnected=false AND not in a settling state
+    if (authSettlingRef.current) {
+      // Still waiting for auth to settle — don't jump to signup yet
+      setAppState('loading');
+      return;
+    }
+
     const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
     profileCheckRef.current = null;
 
@@ -317,17 +354,19 @@ function AppContent() {
     } else {
       setAppState('onboarding');
     }
-  }, [isLoaded, isConnected, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
+  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
 
-  // Safety net: stuck in 'loading' for more than 10s
+  // Safety net: stuck in 'loading' for more than 15s
   useEffect(() => {
     if (appState !== 'loading') return;
 
     const safetyTimer = setTimeout(() => {
       if (profileCheckRef.current) return;
+      // Reset settling state
+      authSettlingRef.current = false;
       const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
       setAppState(hasCompletedOnboarding ? 'signup' : 'onboarding');
-    }, 10000);
+    }, 15000);
 
     return () => clearTimeout(safetyTimer);
   }, [appState]);
