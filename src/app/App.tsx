@@ -116,6 +116,10 @@ function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const profileCheckRef = useRef<string | null>(null);
+  // Track current appState via ref so the auth useEffect can read it
+  // without adding appState to its dependency array (which would cause loops).
+  const appStateRef = useRef<AppState>(appState);
+  appStateRef.current = appState;
 
   const isCallbackRoute = window.location.pathname === '/sso-callback';
 
@@ -321,6 +325,14 @@ function AppContent() {
       return;
     }
 
+    // ── Guard: don't redirect away from authenticated screens ──
+    // Once a user reaches the dashboard (or username-setup), they should only
+    // leave via explicit sign-out. Transient SDK disconnects (token refresh,
+    // network hiccup, session re-sync) must NOT kick them back to signup.
+    if (appStateRef.current === 'dashboard' || appStateRef.current === 'username-setup') {
+      return;
+    }
+
     // ── Auth is partially resolved (transitional state) ──
     // isConnected=true but embedded wallet/userId not ready yet.
     // This happens during wallet creation/session sync after OAuth.
@@ -364,6 +376,17 @@ function AppContent() {
       if (profileCheckRef.current) return;
       // Reset settling state
       authSettlingRef.current = false;
+
+      // If the user has valid auth data in localStorage, they are a returning
+      // user whose SDK session is slow to restore.  Send them to the dashboard
+      // instead of kicking them back to signup.
+      const storedAuthId = localStorage.getItem('senti_auth_user_id');
+      const storedUsername = localStorage.getItem('senti_username');
+      if (storedAuthId && storedUsername) {
+        setAppState('dashboard');
+        return;
+      }
+
       const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
       setAppState(hasCompletedOnboarding ? 'signup' : 'onboarding');
     }, 15000);
