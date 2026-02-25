@@ -120,6 +120,10 @@ function AppContent() {
   // without adding appState to its dependency array (which would cause loops).
   const appStateRef = useRef<AppState>(appState);
   appStateRef.current = appState;
+  // Track isConnected via ref so the safety timeout can read the live value
+  // outside the React render cycle (setTimeout closures capture stale state).
+  const isConnectedRef = useRef(false);
+  isConnectedRef.current = isConnected;
 
   const isCallbackRoute = window.location.pathname === '/sso-callback';
 
@@ -374,6 +378,16 @@ function AppContent() {
 
     const safetyTimer = setTimeout(() => {
       if (profileCheckRef.current) return;
+
+      // If the user has an active OAuth session (isConnected=true), their
+      // embedded wallet is still initializing. Don't send them back to
+      // signup — that creates the redirect loop. Stay on loading and let
+      // the SDK finish; the main useEffect will route to dashboard once
+      // embedded.isConnected becomes true.
+      if (isConnectedRef.current) {
+        return;
+      }
+
       // Reset settling state
       authSettlingRef.current = false;
 
