@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
-import { useAccount, useWallet, useLogout } from '@getpara/react-sdk-lite';
+import { useAccount, useWallet, useLogout, useModal } from '@getpara/react-sdk-lite';
 import { userService, UserProfile } from '../services/supabase';
 import { referralService } from '../services/referralService';
 import SignUp from './components/SignUp';
@@ -112,6 +112,7 @@ function AppContent() {
   const { isConnected, isLoading: isAccountLoading, embedded } = useAccount();
   const wallet = useWallet();
   const { logoutAsync } = useLogout();
+  const { isOpen: isAuthModalOpen } = useModal();
 
   const [appState, setAppState] = useState<AppState>('loading');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -385,7 +386,7 @@ function AppContent() {
     } else {
       setAppState('onboarding');
     }
-  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
+  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, isAuthModalOpen, checkUserProfile]);
 
   // Safety net: stuck in 'loading' for more than 15s
   useEffect(() => {
@@ -398,6 +399,14 @@ function AppContent() {
       // Any live auth signal means Para may still be finishing mobile handoff.
       if (isConnectedRef.current || embeddedConnectedRef.current || !!paraUserIdRef.current) {
         return;
+      }
+
+      // If OAuth was recently started and modal is still open, keep waiting.
+      if (isAuthAttemptActive()) {
+        if (isAuthModalOpen) {
+          return;
+        }
+        clearAuthAttempt();
       }
 
       // Reset settling state
