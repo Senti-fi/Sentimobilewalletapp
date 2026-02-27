@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
 import { useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
+import { markAuthAttemptStarted } from '../../lib/authAttempt';
 
 interface SignUpProps {
   onComplete: () => void;
@@ -16,6 +17,7 @@ export default function SignUp({ onComplete }: SignUpProps) {
   const handleSignUp = () => {
     try {
       setError('');
+      markAuthAttemptStarted();
       openModal();
     } catch (err: any) {
       console.error('Auth error:', err);
