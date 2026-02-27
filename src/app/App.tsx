@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
-import { useAccount, useWallet, useLogout } from '@getpara/react-sdk-lite';
+import { useAccount, useWallet, useLogout, useModal } from '@getpara/react-sdk-lite';
 import { userService, UserProfile } from '../services/supabase';
 import { referralService } from '../services/referralService';
 import SignUp from './components/SignUp';
@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
 import Onboarding from './components/Onboarding';
+import { clearAuthAttempt, isAuthAttemptActive } from '../lib/authAttempt';
 
 // ─── Error Boundary ──────────────────────────────────────────────────
 
@@ -111,6 +112,7 @@ function AppContent() {
   const { isConnected, isLoading: isAccountLoading, embedded } = useAccount();
   const wallet = useWallet();
   const { logoutAsync } = useLogout();
+  const { isOpen: isAuthModalOpen } = useModal();
 
   const [appState, setAppState] = useState<AppState>('loading');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -120,17 +122,21 @@ function AppContent() {
   // without adding appState to its dependency array (which would cause loops).
   const appStateRef = useRef<AppState>(appState);
   appStateRef.current = appState;
-  // Track isConnected via ref so the safety timeout can read the live value
-  // outside the React render cycle (setTimeout closures capture stale state).
-  const isConnectedRef = useRef(false);
-  isConnectedRef.current = isConnected;
-
   const isCallbackRoute = window.location.pathname === '/sso-callback';
 
   // Derive Para user ID and email from embedded account
   const paraUserId = embedded?.userId || wallet?.userId || wallet?.id || null;
   const walletAddress = wallet?.address || null;
   const paraEmail = embedded?.email || null;
+
+  // Track auth signals via refs so timers read current SDK state
+  // outside the React render cycle (setTimeout closures capture stale state).
+  const isConnectedRef = useRef(false);
+  const embeddedConnectedRef = useRef(false);
+  const paraUserIdRef = useRef<string | null>(null);
+  isConnectedRef.current = isConnected;
+  embeddedConnectedRef.current = embedded?.isConnected ?? false;
+  paraUserIdRef.current = paraUserId;
 
   // ── Mark as loaded once Para SDK resolves auth state ────────────
   useEffect(() => {
@@ -285,8 +291,10 @@ function AppContent() {
       return;
     }
 
-    // User is fully authenticated via Para (auth + wallet + userId all ready)
-    if (isConnected && embedded?.isConnected && paraUserId) {
+    // User is fully authenticated via Para.
+    // On mobile OAuth handoff, SDKs can transiently report isConnected=false
+    // while embedded session + userId are already ready.
+    if (embedded?.isConnected && paraUserId) {
       // Clear any settling state
       authSettlingRef.current = false;
       if (authSettlingTimerRef.current) {
@@ -323,6 +331,7 @@ function AppContent() {
 
       // Mark onboarding as complete for signed-in users
       localStorage.setItem('senti_onboarding_completed', 'true');
+      clearAuthAttempt();
 
       // Check Supabase for existing user – ref guard prevents duplicate calls
       checkUserProfile(authUserId, email, imageUrl);
@@ -341,7 +350,7 @@ function AppContent() {
     // isConnected=true but embedded wallet/userId not ready yet.
     // This happens during wallet creation/session sync after OAuth.
     // Stay on loading to prevent bouncing to signup page.
-    if (isConnected || isAccountLoading) {
+    if (isConnected || embedded?.isConnected || !!paraUserId || isAccountLoading) {
       if (!authSettlingRef.current) {
         authSettlingRef.current = true;
         // Safety: if auth doesn't fully resolve within 15s, give up
@@ -362,6 +371,16 @@ function AppContent() {
       return;
     }
 
+    // If user just initiated OAuth and modal is still open, keep loading.
+    // If modal is closed and auth has not resolved, clear stale attempt and continue.
+    if (isAuthAttemptActive()) {
+      if (isAuthModalOpen) {
+        setAppState('loading');
+        return;
+      }
+      clearAuthAttempt();
+    }
+
     const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
     profileCheckRef.current = null;
 
@@ -370,7 +389,7 @@ function AppContent() {
     } else {
       setAppState('onboarding');
     }
-  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
+  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, isAuthModalOpen, checkUserProfile]);
 
   // Safety net: stuck in 'loading' for more than 15s
   useEffect(() => {
@@ -379,13 +398,18 @@ function AppContent() {
     const safetyTimer = setTimeout(() => {
       if (profileCheckRef.current) return;
 
-      // If the user has an active OAuth session (isConnected=true), their
-      // embedded wallet is still initializing. Don't send them back to
-      // signup — that creates the redirect loop. Stay on loading and let
-      // the SDK finish; the main useEffect will route to dashboard once
-      // embedded.isConnected becomes true.
-      if (isConnectedRef.current) {
+      // If OAuth/session restoration is in progress, do not bounce to signup.
+      // Any live auth signal means Para may still be finishing mobile handoff.
+      if (isConnectedRef.current || embeddedConnectedRef.current || !!paraUserIdRef.current) {
         return;
+      }
+
+      // If OAuth was recently started and modal is still open, keep waiting.
+      if (isAuthAttemptActive()) {
+        if (isAuthModalOpen) {
+          return;
+        }
+        clearAuthAttempt();
       }
 
       // Reset settling state
