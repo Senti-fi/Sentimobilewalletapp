@@ -58,22 +58,45 @@ export default function SettingsPage({
   // Get user initials from username
   const userInitials = username.slice(0, 2).toUpperCase();
 
+  const safeCopy = async (value: string, onCopied: (v: boolean) => void) => {
+    if (!value) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      onCopied(true);
+      setTimeout(() => onCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+    }
+  };
+
   const handleCopyWallet = () => {
-    navigator.clipboard.writeText(fullWalletAddress);
-    setCopiedWallet(true);
-    setTimeout(() => setCopiedWallet(false), 2000);
+    safeCopy(fullWalletAddress, setCopiedWallet);
   };
 
   const handleCopyUserId = () => {
-    navigator.clipboard.writeText(userId);
-    setCopiedUserId(true);
-    setTimeout(() => setCopiedUserId(false), 2000);
+    safeCopy(userId, setCopiedUserId);
   };
 
   const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out? Your wallet will remain safe.')) {
       try {
-        await logoutAsync();
+        // Avoid blocking sign-out UX if Para logout endpoint is unavailable (e.g. 403 in wrong env).
+        await Promise.race([
+          logoutAsync(),
+          new Promise((resolve) => setTimeout(resolve, 4000)),
+        ]);
       } catch (error) {
         console.error('Sign out error:', error);
       }
