@@ -361,6 +361,21 @@ export default function SettingsPage({
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
+
+          {/* Admin Sync */}
+          <button
+            onClick={() => setShowAdminSync(true)}
+            className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center flex-shrink-0">
+              <CloudUpload className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 font-medium">Admin Sync</p>
+              <p className="text-sm text-gray-500">Sync local users to Supabase</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
         </motion.div>
 
         {/* Sign Out */}
@@ -415,6 +430,9 @@ export default function SettingsPage({
         <Portal>
           <ReferralModal onClose={() => setShowReferral(false)} />
         </Portal>
+      )}
+      {showAdminSync && (
+        <AdminSyncModal onClose={() => setShowAdminSync(false)} />
       )}
     </div>
   );

@@ -371,14 +371,11 @@ function AppContent() {
       return;
     }
 
-    // If user just initiated OAuth and modal is still open, keep loading.
-    // If modal is closed and auth has not resolved, clear stale attempt and continue.
+    // If user just initiated OAuth, keep the app in loading until attempt expires.
+    // This prevents transient Para states from bouncing users back to signup.
     if (isAuthAttemptActive()) {
-      if (isAuthModalOpen) {
-        setAppState('loading');
-        return;
-      }
-      clearAuthAttempt();
+      setAppState('loading');
+      return;
     }
 
     const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
