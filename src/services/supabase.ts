@@ -1,25 +1,32 @@
 // Supabase Client Service
 // Handles database operations for user profiles and discovery
+// Auth is handled by Para SDK — Supabase is used for database only
 
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. Database features will be unavailable.');
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
+  console.warn(
+    '[Senti] Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.\n' +
+    'User discovery, messaging, and profiles will not work until configured.\n' +
+    'See .env.example for the required variables.'
+  );
 }
 
 // Create Supabase client
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder'
 );
 
 // User profile interface
 export interface UserProfile {
   id: string;
-  clerk_user_id: string;
+  auth_user_id: string;
   username: string;
   handle: string;
   wallet_address: string;
@@ -32,19 +39,18 @@ export interface UserProfile {
 // User profile service
 export const userService = {
   /**
-   * Check if a user profile exists by Clerk user ID
+   * Check if a user profile exists by auth user ID (Supabase Auth UUID)
    */
-  async getUserByClerkId(clerkUserId: string): Promise<UserProfile | null> {
+  async getUserByAuthId(authUserId: string): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('clerk_user_id', clerkUserId)
+        .eq('auth_user_id', authUserId)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No rows returned - user doesn't exist
           return null;
         }
         console.error('Error fetching user:', error);
@@ -53,7 +59,56 @@ export const userService = {
 
       return data;
     } catch (err) {
-      console.error('Failed to fetch user by Clerk ID:', err);
+      console.error('Failed to fetch user by auth ID:', err);
+      return null;
+    }
+  },
+
+  /**
+   * Find user by email (fallback for auth provider migrations)
+   */
+  async getUserByEmail(email: string): Promise<UserProfile | null> {
+    if (!email) return null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Migrate a user's auth_user_id (for auth provider migrations).
+   * Finds user by row ID and updates their auth_user_id to the new provider's ID.
+   */
+  async migrateAuthId(rowId: string, newAuthUserId: string): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          auth_user_id: newAuthUserId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', rowId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error migrating auth ID:', error);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error('Failed to migrate auth ID:', err);
       return null;
     }
   },
@@ -70,22 +125,23 @@ export const userService = {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // No rows returned - username is available
         return false;
       }
 
       return !!data;
     } catch (err) {
       console.error('Failed to check username:', err);
-      return false; // Assume available on error to not block user
+      return false;
     }
   },
 
   /**
-   * Create a new user profile
+   * Create a new user profile.
+   * Uses upsert on auth_user_id to safely handle re-creation attempts.
+   * Throws on username conflict so the caller can show a proper error.
    */
   async createUser(profile: {
-    clerkUserId: string;
+    authUserId: string;
     username: string;
     handle: string;
     walletAddress: string;
@@ -93,26 +149,43 @@ export const userService = {
     imageUrl?: string;
   }): Promise<UserProfile | null> {
     try {
+      const isTaken = await this.isUsernameTaken(profile.username);
+      if (isTaken) {
+        const existing = await this.getUserByAuthId(profile.authUserId);
+        if (existing && existing.username === profile.username.toLowerCase()) {
+          return existing;
+        }
+        throw new Error('USERNAME_TAKEN');
+      }
+
       const { data, error } = await supabase
         .from('users')
-        .insert({
-          clerk_user_id: profile.clerkUserId,
-          username: profile.username.toLowerCase(),
-          handle: profile.handle,
-          wallet_address: profile.walletAddress,
-          email: profile.email,
-          image_url: profile.imageUrl,
-        })
+        .upsert(
+          {
+            auth_user_id: profile.authUserId,
+            username: profile.username.toLowerCase(),
+            handle: profile.handle,
+            wallet_address: profile.walletAddress,
+            email: profile.email,
+            image_url: profile.imageUrl,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'auth_user_id' }
+        )
         .select()
         .single();
 
       if (error) {
+        if (error.code === '23505' && error.message?.includes('username')) {
+          throw new Error('USERNAME_TAKEN');
+        }
         console.error('Error creating user:', error);
         return null;
       }
 
       return data;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message === 'USERNAME_TAKEN') throw err;
       console.error('Failed to create user:', err);
       return null;
     }
@@ -122,7 +195,7 @@ export const userService = {
    * Update user profile
    */
   async updateUser(
-    clerkUserId: string,
+    authUserId: string,
     updates: Partial<{
       username: string;
       handle: string;
@@ -138,7 +211,7 @@ export const userService = {
           ...updates,
           updated_at: new Date().toISOString(),
         })
-        .eq('clerk_user_id', clerkUserId)
+        .eq('auth_user_id', authUserId)
         .select()
         .single();
 
@@ -155,17 +228,22 @@ export const userService = {
   },
 
   /**
-   * Search users by username or handle
+   * Search users by username or handle, excluding the current user
    */
-  async searchUsers(query: string, limit: number = 10): Promise<UserProfile[]> {
+  async searchUsers(query: string, currentAuthId?: string, limit: number = 20): Promise<UserProfile[]> {
     try {
       const searchTerm = query.toLowerCase().replace('@', '').replace('.senti', '');
 
-      const { data, error } = await supabase
+      let q = supabase
         .from('users')
         .select('*')
-        .or(`username.ilike.%${searchTerm}%,handle.ilike.%${searchTerm}%`)
-        .limit(limit);
+        .or(`username.ilike.%${searchTerm}%,handle.ilike.%${searchTerm}%`);
+
+      if (currentAuthId) {
+        q = q.neq('auth_user_id', currentAuthId);
+      }
+
+      const { data, error } = await q.limit(limit);
 
       if (error) {
         console.error('Error searching users:', error);
@@ -180,7 +258,7 @@ export const userService = {
   },
 
   /**
-   * Get user by handle (e.g., @john.senti)
+   * Get user by handle (e.g., @john)
    */
   async getUserByHandle(handle: string): Promise<UserProfile | null> {
     try {
@@ -206,15 +284,20 @@ export const userService = {
   },
 
   /**
-   * Get all users (for directory/discovery)
+   * Get all users (for directory/discovery), excluding the current user
    */
-  async getAllUsers(limit: number = 50): Promise<UserProfile[]> {
+  async getAllUsers(currentAuthId?: string, limit: number = 50): Promise<UserProfile[]> {
     try {
-      const { data, error } = await supabase
+      let q = supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+        .order('created_at', { ascending: false });
+
+      if (currentAuthId) {
+        q = q.neq('auth_user_id', currentAuthId);
+      }
+
+      const { data, error } = await q.limit(limit);
 
       if (error) {
         console.error('Error fetching users:', error);

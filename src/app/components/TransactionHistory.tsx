@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import Portal from './Portal';
 import { formatCompactBalance } from '../utils/formatBalance';
 
 interface Transaction {
@@ -202,14 +203,17 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <Portal>
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        </Portal>
       )}
 
       {/* View All Transactions Modal */}
       {showAllTransactions && (
+        <Portal>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -223,19 +227,24 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto"
+            className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[80dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            <div className="flex items-center justify-between mb-6">
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+
+            <div className="sticky top-0 bg-white/80 backdrop-blur-xl z-10 flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-gray-900 text-xl font-semibold">All Transactions</h2>
               <button
                 onClick={() => setShowAllTransactions(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2.5 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <ArrowUpRight className="w-5 h-5 text-gray-600 rotate-90" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 p-6">
               {allTransactions.map((transaction, index) => {
                 const Icon = hasRealTransactions ? transaction.icon : null;
                 return (
@@ -291,6 +300,7 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
             </div>
           </motion.div>
         </motion.div>
+        </Portal>
       )}
     </div>
   );

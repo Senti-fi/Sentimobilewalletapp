@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import { motion } from 'motion/react';
 import { Loader } from 'lucide-react';
 
@@ -7,14 +6,25 @@ interface SSOCallbackProps {
   onComplete: () => void;
 }
 
+/**
+ * Legacy SSO callback route handler.
+ *
+ * Para uses popup-based OAuth (not redirects), so this route is no longer
+ * part of the primary auth flow. If a user lands here (e.g., from a stale
+ * bookmark or back-navigation), we simply redirect them to the app root.
+ */
 export default function SSOCallback({ onComplete }: SSOCallbackProps) {
-  return (
-    <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 px-6">
-      <AuthenticateWithRedirectCallback
-        afterSignInUrl="/dashboard"
-        afterSignUpUrl="/dashboard"
-      />
+  useEffect(() => {
+    // Redirect to root — Para handles auth via popup, not redirect callbacks
+    const timeout = setTimeout(() => {
+      window.location.replace('/');
+    }, 1000);
 
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-6">
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -25,7 +35,7 @@ export default function SSOCallback({ onComplete }: SSOCallbackProps) {
         }}
         className="mb-8"
       >
-        <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center shadow-2xl">
+        <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl border border-white/20">
           <Loader className="w-12 h-12 text-white animate-spin" />
         </div>
       </motion.div>
@@ -34,29 +44,10 @@ export default function SSOCallback({ onComplete }: SSOCallbackProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="mb-4 text-gray-900 text-center text-xl font-semibold"
+        className="mb-4 text-white text-center text-xl font-semibold"
       >
-        Completing Sign In
+        Redirecting...
       </motion.h2>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="text-gray-600 text-center mb-8"
-      >
-        Setting up your account...
-      </motion.p>
-
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"
-      />
     </div>
   );
 }

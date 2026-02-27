@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Check, User, AlertCircle } from 'lucide-react';
 import LucyChip from './LucyChip';
-import { mockContacts } from './LinkPage';
+
+// Load saved contacts from localStorage (same source as LinkPage)
+function getSavedContacts(): Array<{ id: string; name: string; avatar: string; color: string; lastMessage: string; lastMessageTime: string; online: boolean; image_url?: string }> {
+  try {
+    const stored = localStorage.getItem('senti_contacts');
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return [];
+}
 
 interface Asset {
   id: string;
@@ -31,7 +39,8 @@ export default function SendModal({ onClose, onOpenLucy, assets, totalBalance, o
   const [amount, setAmount] = useState('');
   const [selectedAsset, setSelectedAsset] = useState('USDC');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null);
+  const savedContacts = getSavedContacts();
+  const [selectedContact, setSelectedContact] = useState<typeof savedContacts[0] | null>(null);
   const [error, setError] = useState<string>('');
 
   // Get current asset balance
@@ -49,7 +58,7 @@ export default function SendModal({ onClose, onOpenLucy, assets, totalBalance, o
   const totalWithGas = (parseFloat(amount) || 0) + gasFee;
 
   // Filter contacts based on input
-  const filteredContacts = mockContacts.filter(contact =>
+  const filteredContacts = savedContacts.filter(contact =>
     contact.name.toLowerCase().includes(recipient.toLowerCase()) ||
     contact.id.toLowerCase().includes(recipient.toLowerCase())
   );
@@ -60,7 +69,7 @@ export default function SendModal({ onClose, onOpenLucy, assets, totalBalance, o
     setShowSuggestions(value.length > 0);
   };
 
-  const handleSelectContact = (contact: typeof mockContacts[0]) => {
+  const handleSelectContact = (contact: typeof savedContacts[0]) => {
     setRecipient(contact.id);
     setSelectedContact(contact);
     setShowSuggestions(false);
@@ -124,7 +133,7 @@ export default function SendModal({ onClose, onOpenLucy, assets, totalBalance, o
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {step === 'form' && (
             <>

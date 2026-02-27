@@ -83,10 +83,10 @@ export default function CreateGoalModal({ onClose, onCreate, onOpenLucy }: Creat
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] flex flex-col"
         >
           {/* Header */}
-          <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+          <div className="flex-none bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
             <div>
               <h2 className="text-gray-900">Create Savings Goal</h2>
               <p className="text-sm text-gray-500">
@@ -101,7 +101,7 @@ export default function CreateGoalModal({ onClose, onCreate, onOpenLucy }: Creat
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="flex-1 overflow-y-auto p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Step 1: Template Selection */}
             {step === 1 && (
               <motion.div
@@ -243,25 +243,28 @@ export default function CreateGoalModal({ onClose, onCreate, onOpenLucy }: Creat
                   </motion.div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleCreate}
-                    disabled={!goalName || !targetAmount || !deadline}
-                    className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Create Goal
-                  </button>
-                </div>
               </motion.div>
             )}
           </div>
+
+          {/* Sticky Footer - Action Buttons (always visible) */}
+          {step === 2 && (
+            <div className="flex-none border-t border-gray-100 bg-white px-6 py-4 flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={!goalName || !targetAmount || !deadline}
+                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Goal
+              </button>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

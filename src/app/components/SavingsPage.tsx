@@ -22,6 +22,7 @@ import ViewAllGoalsModal from './ViewAllGoalsModal';
 import GoalDetailsModal from './GoalDetailsModal';
 import AddFundsToGoalModal from './AddFundsToGoalModal';
 import EditGoalModal from './EditGoalModal';
+import Portal from './Portal';
 
 interface Goal {
   id: string;
@@ -54,6 +55,7 @@ interface SavingsPageProps {
   onSavingsUnlock?: (amount: number, penalty: number) => void;
   onGoalContribution?: (amount: number, goalName: string) => void;
   onExploreVaults?: () => void;
+  autoOpenDeposit?: boolean;
 }
 
 export default function SavingsPage({
@@ -64,8 +66,9 @@ export default function SavingsPage({
   onSavingsUnlock,
   onGoalContribution,
   onExploreVaults,
+  autoOpenDeposit,
 }: SavingsPageProps) {
-  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(autoOpenDeposit === true);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [showLockedSavings, setShowLockedSavings] = useState(false);
   const [showAllLockedSavings, setShowAllLockedSavings] = useState(false);
@@ -185,11 +188,11 @@ export default function SavingsPage({
   };
 
   const handleWithdrawGoal = (goalId: string) => {
-    // In a real app, this would transfer funds back to wallet and remove/archive the goal
+    // Transfer funds back to available savings and remove the goal
     const goal = goals.find(g => g.id === goalId);
     if (goal) {
-      console.log(`Withdrew $${goal.currentAmount} from goal: ${goal.name}`);
-      setGoals(goals.filter(g => g.id !== goalId));
+      setAvailableSavings(prev => prev + goal.currentAmount);
+      setGoals(prev => prev.filter(g => g.id !== goalId));
     }
     setSelectedGoal(null);
     // Reset navigation tracking
@@ -223,11 +226,8 @@ export default function SavingsPage({
         if (newCurrentAmount >= g.targetAmount) {
           // Auto-transfer completed goal funds to Available Savings
           setAvailableSavings(prev => prev + newCurrentAmount);
-          // Remove the completed goal
-          setTimeout(() => {
-            setGoals(goals.filter(goal => goal.id !== goalId));
-          }, 100);
-          return null; // Will be filtered out
+          // Mark as null for removal (filtered below)
+          return null;
         }
 
         // If not complete, recalculate behind status
@@ -319,7 +319,7 @@ export default function SavingsPage({
   const sortedGoals = getSortedGoals();
 
   return (
-    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto overscroll-contain pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header - Compact */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
         <motion.div
@@ -749,99 +749,117 @@ export default function SavingsPage({
 
       </div>
 
-      {/* Modals */}
+      {/* Modals - wrapped in Portal to escape stacking context */}
       {showCreateGoal && (
-        <CreateGoalModal
-          onClose={() => setShowCreateGoal(false)}
-          onCreate={handleCreateGoal}
-          onOpenLucy={onOpenLucy}
-        />
+        <Portal>
+          <CreateGoalModal
+            onClose={() => setShowCreateGoal(false)}
+            onCreate={handleCreateGoal}
+            onOpenLucy={onOpenLucy}
+          />
+        </Portal>
       )}
 
       {showLockedSavings && (
-        <LockedSavingsModal
-          onClose={() => setShowLockedSavings(false)}
-          onCreate={handleCreateLockedSaving}
-          onExploreVaults={() => {
-            onExploreVaults?.();
-          }}
-        />
+        <Portal>
+          <LockedSavingsModal
+            onClose={() => setShowLockedSavings(false)}
+            onCreate={handleCreateLockedSaving}
+            onExploreVaults={() => {
+              onExploreVaults?.();
+            }}
+          />
+        </Portal>
       )}
 
       {showTransferModal && (
-        <SavingsTransferModal
-          onClose={() => setShowTransferModal(false)}
-          onTransfer={handleTransfer}
-          savingsBalance={availableSavings}
-        />
+        <Portal>
+          <SavingsTransferModal
+            onClose={() => setShowTransferModal(false)}
+            onTransfer={handleTransfer}
+            savingsBalance={availableSavings}
+          />
+        </Portal>
       )}
 
       {selectedLockedSaving && (
-        <UnlockSavingsModal
-          onClose={() => setSelectedLockedSaving(null)}
-          onUnlock={handleUnlock}
-          saving={selectedLockedSaving}
-        />
+        <Portal>
+          <UnlockSavingsModal
+            onClose={() => setSelectedLockedSaving(null)}
+            onUnlock={handleUnlock}
+            saving={selectedLockedSaving}
+          />
+        </Portal>
       )}
 
       {showAllLockedSavings && (
-        <ViewAllLockedSavingsModal
-          onClose={() => setShowAllLockedSavings(false)}
-          lockedSavings={lockedSavings}
-          onSelectSaving={(saving) => {
-            setSelectedLockedSaving(saving);
-            setShowAllLockedSavings(false);
-          }}
-        />
+        <Portal>
+          <ViewAllLockedSavingsModal
+            onClose={() => setShowAllLockedSavings(false)}
+            lockedSavings={lockedSavings}
+            onSelectSaving={(saving) => {
+              setSelectedLockedSaving(saving);
+              setShowAllLockedSavings(false);
+            }}
+          />
+        </Portal>
       )}
 
       {showAllGoals && (
-        <ViewAllGoalsModal
-          onClose={() => {
-            setShowAllGoals(false);
-            setCameFromAllGoals(false);
-          }}
-          goals={goals}
-          onSelectGoal={(goal) => {
-            setSelectedGoal(goal);
-            setShowAllGoals(false);
-          }}
-        />
+        <Portal>
+          <ViewAllGoalsModal
+            onClose={() => {
+              setShowAllGoals(false);
+              setCameFromAllGoals(false);
+            }}
+            goals={goals}
+            onSelectGoal={(goal) => {
+              setSelectedGoal(goal);
+              setShowAllGoals(false);
+            }}
+          />
+        </Portal>
       )}
 
       {selectedGoal && (
-        <GoalDetailsModal
-          onClose={() => {
-            setSelectedGoal(null);
-            // If we came from All Goals modal, reopen it
-            if (cameFromAllGoals) {
-              setTimeout(() => {
-                setShowAllGoals(true);
-              }, 300);
-            }
-          }}
-          goal={selectedGoal}
-          onWithdraw={handleWithdrawGoal}
-          onAddFunds={handleAddFundsToGoal}
-          onEdit={handleEditGoal}
-        />
+        <Portal>
+          <GoalDetailsModal
+            onClose={() => {
+              setSelectedGoal(null);
+              // If we came from All Goals modal, reopen it
+              if (cameFromAllGoals) {
+                setTimeout(() => {
+                  setShowAllGoals(true);
+                }, 300);
+              }
+            }}
+            goal={selectedGoal}
+            onWithdraw={handleWithdrawGoal}
+            onAddFunds={handleAddFundsToGoal}
+            onEdit={handleEditGoal}
+          />
+        </Portal>
       )}
 
       {goalToAddFunds && (
-        <AddFundsToGoalModal
-          onClose={() => setGoalToAddFunds(null)}
-          goal={goalToAddFunds}
-          savingsBalance={walletBalance}
-          onAddFunds={handleConfirmAddFunds}
-        />
+        <Portal>
+          <AddFundsToGoalModal
+            onClose={() => setGoalToAddFunds(null)}
+            goal={goalToAddFunds}
+            savingsBalance={walletBalance}
+            onAddFunds={handleConfirmAddFunds}
+          />
+        </Portal>
       )}
 
       {goalToEdit && (
-        <EditGoalModal
-          onClose={handleCancelEditGoal}
-          goal={goalToEdit}
-          onUpdate={handleConfirmEditGoal}
-        />
+        <Portal>
+          <EditGoalModal
+            onClose={handleCancelEditGoal}
+            goal={goalToEdit}
+            onUpdate={handleConfirmEditGoal}
+          />
+        </Portal>
       )}
     </div>
   );

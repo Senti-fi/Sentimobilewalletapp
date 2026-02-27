@@ -19,6 +19,7 @@ interface GrowModalProps {
   onWithdraw: (amount: number, asset: string) => void;
   onWithdrawToWallet?: (amount: number, asset: string) => void;
   onInvest: (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => void;
+  autoDeposit?: boolean;
   walletAssets: Array<{
     id: string;
     name: string;
@@ -104,9 +105,9 @@ const opportunities = [
   },
 ];
 
-export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance }: GrowModalProps) {
+export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance, autoDeposit }: GrowModalProps) {
   const [selectedVault, setSelectedVault] = useState<string | null>(null);
-  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(autoDeposit === true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedVaultData, setSelectedVaultData] = useState<{name: string, apy: string, protocol: string}>({name: '', apy: '', protocol: ''});
@@ -256,7 +257,7 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-gray-50 to-blue-50/30 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-gradient-to-br from-gray-50 to-blue-50/30 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {/* Header */}
           <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">

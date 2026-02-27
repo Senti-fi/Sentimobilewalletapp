@@ -68,7 +68,7 @@ function generateQRPattern(address: string): boolean[][] {
 
 export default function ReceiveModal({ onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const walletAddress = localStorage.getItem('senti_wallet_address') || '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb';
+  const walletAddress = localStorage.getItem('senti_wallet_address') || '';
 
   // Generate QR pattern once based on address
   const qrPattern = useMemo(() => generateQRPattern(walletAddress), [walletAddress]);
@@ -113,7 +113,7 @@ export default function ReceiveModal({ onClose }: ReceiveModalProps) {
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-gray-900">Receive Money</h2>

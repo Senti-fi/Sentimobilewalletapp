@@ -21,6 +21,7 @@ import LucyChip from './LucyChip';
 import SentiPayModal from './SentiPayModal';
 import CardDrawer from './CardDrawer';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import Portal from './Portal';
 
 interface SpendPageProps {
   onOpenLucy: () => void;
@@ -95,7 +96,7 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
   const isNearBudget = budgetUsedPercent > 80 && budgetUsedPercent <= 100;
 
   return (
-    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto overscroll-contain pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 px-6 pt-6 pb-8 text-white">
         <motion.div
@@ -379,10 +380,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Senti Pay Modal */}
       {showSentiPay && (
-        <SentiPayModal 
-          onClose={() => setShowSentiPay(false)}
-          onAddTransaction={onAddTransaction}
-        />
+        <Portal>
+          <SentiPayModal
+            onClose={() => setShowSentiPay(false)}
+            onAddTransaction={onAddTransaction}
+          />
+        </Portal>
       )}
 
       {/* Card Drawer */}
@@ -393,10 +396,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <Portal>
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        </Portal>
       )}
     </div>
   );

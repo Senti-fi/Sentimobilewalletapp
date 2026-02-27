@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform } from 'motion/react';
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'motion/react';
 import {
   Home,
   TrendingUp,
@@ -18,7 +18,12 @@ import {
   Smile,
   User,
   Activity,
-  MessageCircle
+  MessageCircle,
+  ArrowUpRight,
+  Plus,
+  QrCode,
+  Building2,
+  X
 } from 'lucide-react';
 import SendModal from './SendModal';
 import ReceiveModal from './ReceiveModal';
@@ -26,6 +31,7 @@ import SwapModal from './SwapModal';
 import GrowModal from './GrowModal';
 import TransactionHistory from './TransactionHistory';
 import SettingsPage from './SettingsPage';
+import SettingsModal from './SettingsModal';
 import LucyPage from './LucyPage';
 import Logo from './Logo';
 import SavingsPage from './SavingsPage';
@@ -33,6 +39,7 @@ import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
 import PortfolioAnalyticsPage from './PortfolioAnalyticsPage';
 import { useWalletContext } from '../../hooks/useWalletContext';
+import { useModal, ModalStep } from '@getpara/react-sdk-lite';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
 
@@ -98,6 +105,7 @@ const mockAssets: Asset[] = [
 ];
 
 export default function Dashboard() {
+  const { openModal: openParaModal } = useModal();
   // Load initial state from localStorage or use defaults
   const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
     try {
@@ -145,13 +153,14 @@ export default function Dashboard() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(() => loadFromStorage('senti_assets', mockAssets));
   const [selectedAsset, setSelectedAsset] = useState(0);
+  const [linkUnreadCount, setLinkUnreadCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // User profile data from localStorage
   // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
   const rawUsername = localStorage.getItem('senti_username') || 'User';
   const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
-  const userHandle = localStorage.getItem('senti_user_handle') || '@user.senti';
+  const userHandle = localStorage.getItem('senti_user_handle') || '@user';
   const userId = localStorage.getItem('senti_user_id') || '';
 
   // Vault balances
@@ -174,7 +183,7 @@ export default function Dashboard() {
   const defaultTransactions = [
     {
       id: 'tx-1',
-      merchant: 'Received from @david.senti',
+      merchant: 'Received from @david',
       category: 'Received',
       amount: 150.00,
       date: '2 hours ago',
@@ -185,7 +194,7 @@ export default function Dashboard() {
     },
     {
       id: 'tx-2',
-      merchant: 'Sent to @emma.senti',
+      merchant: 'Sent to @emma',
       category: 'Send',
       amount: -75.00,
       date: '5 hours ago',
@@ -615,48 +624,11 @@ export default function Dashboard() {
     });
   };
 
-  const quickActions = [
-    {
-      id: 'send',
-      label: 'Send',
-      icon: Send,
-      gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-      modal: 'send' as ModalType,
-      action: null as (() => void) | null,
-    },
-    {
-      id: 'receive',
-      label: 'Receive',
-      icon: Download,
-      gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-      modal: 'receive' as ModalType,
-      action: null as (() => void) | null,
-    },
-    {
-      id: 'buy',
-      label: 'Buy',
-      icon: ShoppingBag,
-      gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-      modal: 'swap' as ModalType,
-      action: null as (() => void) | null,
-    },
-    {
-      id: 'vault',
-      label: 'Vault',
-      icon: LockKeyhole,
-      gradient: 'from-cyan-400 via-blue-500 to-blue-700',
-      modal: 'grow' as ModalType,
-      action: null as (() => void) | null,
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      icon: Activity,
-      gradient: 'from-purple-400 via-indigo-500 to-indigo-700',
-      modal: null as ModalType,
-      action: () => setActiveTab('analytics'),
-    },
-  ];
+  // Action sheet state for Transfer / Add Money sub-menus
+  const [actionSheet, setActionSheet] = useState<'transfer' | 'add-money' | null>(null);
+  // Auto-open flags for sub-page modals (triggered from Transfer action sheet)
+  const [vaultAutoDeposit, setVaultAutoDeposit] = useState(false);
+  const [savingsAutoDeposit, setSavingsAutoDeposit] = useState(false);
 
   const handleModalClose = () => {
     setOpenModal(null);
@@ -711,9 +683,9 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={`flex-1 min-h-0 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics'
+        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics' || activeTab === 'savings' || activeTab === 'spend'
           ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
-          : 'overflow-y-auto overflow-x-hidden pb-32 px-6 space-y-5' // Full scrolling for regular tabs with extra padding for nav
+          : 'overflow-y-auto overflow-x-hidden overscroll-contain pb-24 px-6 space-y-5' // Full scrolling for regular tabs
       }`}>
         {activeTab === 'home' && (
           <>
@@ -755,36 +727,45 @@ export default function Dashboard() {
               </div>
             </motion.div>
 
-            {/* Action Buttons - Compact horizontal layout for mobile */}
+            {/* Action Buttons - 3 clean buttons: Transfer, Add Money, Vault */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="flex justify-between gap-2"
+              className="grid grid-cols-3 gap-3"
             >
-              {quickActions.map((action, index) => (
-                <motion.button
-                  key={action.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.05 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    if (action.action) {
-                      action.action();
-                    } else if (action.modal) {
-                      setOpenModal(action.modal);
-                    }
-                  }}
-                  className="flex flex-col items-center gap-1.5 flex-1"
-                >
-                  <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-2xl flex items-center justify-center shadow-sm`}>
-                    <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
-                  </div>
-                  <span className="text-xs text-gray-600 font-medium">{action.label}</span>
-                </motion.button>
-              ))}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActionSheet('transfer')}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
+                  <ArrowUpRight className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+                <span className="text-xs text-gray-600 font-medium">Transfer</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActionSheet('add-money')}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
+                  <Plus className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+                <span className="text-xs text-gray-600 font-medium">Add Money</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setOpenModal('grow')}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
+                  <LockKeyhole className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+                <span className="text-xs text-gray-600 font-medium">Vault</span>
+              </motion.button>
             </motion.div>
 
             {/* Assets List */}
@@ -856,6 +837,7 @@ export default function Dashboard() {
             onSavingsUnlock={handleSavingsUnlock}
             onGoalContribution={handleGoalContribution}
             onExploreVaults={() => setOpenModal('grow')}
+            autoOpenDeposit={savingsAutoDeposit}
           />
         )}
 
@@ -884,6 +866,7 @@ export default function Dashboard() {
             assets={assets}
             onSend={handleSend}
             onReceive={handleReceive}
+            onUnreadCountChange={setLinkUnreadCount}
           />
         )}
 
@@ -922,12 +905,13 @@ export default function Dashboard() {
               { id: 'link', label: 'Link', icon: MessageCircle },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
+              const badge = tab.id === 'link' && linkUnreadCount > 0 ? linkUnreadCount : 0;
               return (
                 <motion.button
                   key={tab.id}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => { setSavingsAutoDeposit(false); setActiveTab(tab.id as any); }}
                   className="flex items-center justify-center p-3 transition-all relative"
                 >
                   {isActive && (
@@ -943,6 +927,11 @@ export default function Dashboard() {
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.5}
                   />
+                  {badge > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 z-20 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-sm">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
                 </motion.button>
               );
             })}
@@ -964,7 +953,7 @@ export default function Dashboard() {
       {openModal === 'swap' && <SwapModal onClose={handleModalClose} onBuy={handleBuy} />}
       {openModal === 'grow' && (
         <GrowModal
-          onClose={handleModalClose}
+          onClose={() => { handleModalClose(); setVaultAutoDeposit(false); }}
           vaultBalance={vaultBalance}
           vaultEarned={vaultEarned}
           onDeposit={handleVaultDeposit}
@@ -974,9 +963,113 @@ export default function Dashboard() {
           walletAssets={assets}
           activeInvestments={activeInvestments}
           totalWalletBalance={totalBalance}
+          autoDeposit={vaultAutoDeposit}
         />
       )}
       {openModal === 'settings' && <SettingsModal onClose={handleModalClose} />}
+
+      {/* Transfer Action Sheet */}
+      <AnimatePresence>
+        {actionSheet === 'transfer' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+            onClick={() => setActionSheet(null)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-8"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-semibold text-gray-900">Transfer</h2>
+                <button onClick={() => setActionSheet(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { icon: Send, label: 'Send to User', desc: 'Send crypto to a contact or address', action: () => { setActionSheet(null); setOpenModal('send'); } },
+                  { icon: LockKeyhole, label: 'Transfer to Vault', desc: 'Move funds to your vault for yield', action: () => { setActionSheet(null); setVaultAutoDeposit(true); setOpenModal('grow'); } },
+                  { icon: PiggyBank, label: 'Transfer to Savings', desc: 'Move funds into a savings goal', action: () => { setActionSheet(null); setSavingsAutoDeposit(true); setActiveTab('savings'); } },
+                  { icon: CreditCard, label: 'Transfer to Spend', desc: 'Move funds to your spend card', action: () => { setActionSheet(null); setActiveTab('spend'); } },
+                  { icon: Building2, label: 'Withdraw to Bank', desc: 'Send USDT and recipient gets Naira', action: () => { setActionSheet(null); setActiveTab('spend'); } },
+                ].map((item) => (
+                  <motion.button
+                    key={item.label}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={item.action}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-gray-500">{item.desc}</p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Money Action Sheet */}
+      <AnimatePresence>
+        {actionSheet === 'add-money' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+            onClick={() => setActionSheet(null)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-8"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-semibold text-gray-900">Add Money</h2>
+                <button onClick={() => setActionSheet(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { icon: ShoppingBag, label: 'Buy Crypto', desc: 'Purchase crypto with card or bank', action: () => { setActionSheet(null); openParaModal({ step: ModalStep.ADD_FUNDS_BUY }); } },
+                  { icon: QrCode, label: 'Share Address', desc: 'Show QR code or wallet address', action: () => { setActionSheet(null); setOpenModal('receive'); } },
+                ].map((item) => (
+                  <motion.button
+                    key={item.label}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={item.action}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-gray-500">{item.desc}</p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
