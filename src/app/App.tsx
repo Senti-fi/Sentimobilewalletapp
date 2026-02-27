@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
 import Onboarding from './components/Onboarding';
+import { clearAuthAttempt, isAuthAttemptActive } from '../lib/authAttempt';
 
 // ─── Error Boundary ──────────────────────────────────────────────────
 
@@ -329,6 +330,7 @@ function AppContent() {
 
       // Mark onboarding as complete for signed-in users
       localStorage.setItem('senti_onboarding_completed', 'true');
+      clearAuthAttempt();
 
       // Check Supabase for existing user – ref guard prevents duplicate calls
       checkUserProfile(authUserId, email, imageUrl);
@@ -364,6 +366,13 @@ function AppContent() {
     // Only reach here when isConnected=false AND not in a settling state
     if (authSettlingRef.current) {
       // Still waiting for auth to settle — don't jump to signup yet
+      setAppState('loading');
+      return;
+    }
+
+    // If user just initiated OAuth, keep the app in loading until attempt expires.
+    // This prevents transient Para states from bouncing users back to signup.
+    if (isAuthAttemptActive()) {
       setAppState('loading');
       return;
     }
