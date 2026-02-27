@@ -70,16 +70,44 @@ export const userService = {
   async getUserByEmail(email: string): Promise<UserProfile | null> {
     if (!email) return null;
     try {
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email.toLowerCase())
-        .single();
+        .ilike('email', normalizedEmail)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') return null;
         return null;
       }
+      return data;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Find user by username (case-insensitive)
+   */
+  async getUserByUsername(username: string): Promise<UserProfile | null> {
+    if (!username) return null;
+    try {
+      const normalizedUsername = username.trim().toLowerCase();
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', normalizedUsername)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null;
+        return null;
+      }
+
       return data;
     } catch {
       return null;

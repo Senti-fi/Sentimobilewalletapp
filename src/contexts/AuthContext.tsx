@@ -222,6 +222,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        // 2b. Fallback: look up by remembered username and re-link auth ID
+        // This covers beta→production cutovers where Para IDs changed.
+        const knownName =
+          localStorage.getItem(`senti_username_${authId}`) ||
+          localStorage.getItem('senti_username');
+
+        if (knownName) {
+          const usernameUser = await userService.getUserByUsername(knownName);
+          if (usernameUser) {
+            const migrated = await userService.migrateAuthId(usernameUser.id, authId);
+            if (migrated) {
+              restoreProfile(migrated, authId);
+              if (migrated.email !== email || migrated.image_url !== imageUrl) {
+                userService.updateUser(authId, { email, image_url: imageUrl }).catch(() => {});
+              }
+              go('authenticated');
+              return;
+            }
+          }
+        }
+
         // 3. localStorage migration: per-user keys
         const hasSet = localStorage.getItem(`senti_username_set_${authId}`) === 'true';
         const storedName = localStorage.getItem(`senti_username_${authId}`);
