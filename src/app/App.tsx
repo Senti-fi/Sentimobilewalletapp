@@ -181,6 +181,30 @@ function AppContent() {
         }
       }
 
+      // ── 1c. Fallback: find by remembered username and re-link auth ID ──
+      // In beta→production rollouts, Para may issue a new user ID while Supabase
+      // still has the historical profile with the same username.
+      const knownUsername =
+        localStorage.getItem(`senti_username_${authUserId}`) ||
+        localStorage.getItem('senti_username');
+
+      if (knownUsername) {
+        const usernameUser = await userService.getUserByUsername(knownUsername);
+        if (usernameUser) {
+          const migrated = await userService.migrateAuthId(usernameUser.id, authUserId);
+          if (migrated) {
+            restoreProfileToLocalStorage(migrated, authUserId);
+
+            if (migrated.email !== email || migrated.image_url !== imageUrl) {
+              userService.updateUser(authUserId, { email, image_url: imageUrl }).catch(() => {});
+            }
+
+            setAppState('dashboard');
+            return;
+          }
+        }
+      }
+
       // ── 2. Supabase has no record – try localStorage migration ──
       const hasSetUsername = localStorage.getItem(`senti_username_set_${authUserId}`) === 'true';
       const storedUsername = localStorage.getItem(`senti_username_${authUserId}`);
