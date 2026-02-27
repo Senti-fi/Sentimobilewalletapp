@@ -37,6 +37,13 @@ export default function GoalDetailsModal({ onClose, goal, onWithdraw, onAddFunds
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  const formatDaysLeft = (deadline: string) => {
+    const days = getDaysRemaining(deadline);
+    if (days < 0) return 'Expired';
+    if (days === 0) return 'Due today';
+    return `${days} days remaining`;
+  };
+
   const handleWithdrawClick = () => {
     setShowWithdrawConfirm(true);
   };
@@ -71,7 +78,7 @@ export default function GoalDetailsModal({ onClose, goal, onWithdraw, onAddFunds
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <AnimatePresence mode="wait">
           {isProcessing ? (
@@ -217,7 +224,7 @@ export default function GoalDetailsModal({ onClose, goal, onWithdraw, onAddFunds
                             <span className="text-sm text-green-300">Goal Completed!</span>
                           </div>
                         ) : (
-                          <p className="text-sm text-white/80">{getDaysRemaining(goal.deadline)} days remaining</p>
+                          <p className="text-sm text-white/80">{formatDaysLeft(goal.deadline)}</p>
                         )}
                       </div>
                     </div>

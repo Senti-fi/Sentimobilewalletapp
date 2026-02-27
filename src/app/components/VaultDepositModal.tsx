@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CheckCircle, Loader, Lock } from 'lucide-react';
 import LucyChip from './LucyChip';
+import { formatCompactBalance } from '../utils/formatBalance';
 
 interface VaultDepositModalProps {
   onClose: () => void;
@@ -74,7 +75,7 @@ export default function VaultDepositModal({ onClose, vaultName, apy, onDeposit, 
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {/* Processing Screen */}
           {isProcessing && (
@@ -150,7 +151,7 @@ export default function VaultDepositModal({ onClose, vaultName, apy, onDeposit, 
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 border border-blue-100">
                   <p className="text-xs text-gray-600 mb-1">Main Wallet Balance</p>
                   <div className="flex items-baseline gap-2">
-                    <h3 className="text-2xl text-gray-900">${totalWalletBalance.toFixed(2)}</h3>
+                    <h3 className="text-2xl text-gray-900">${formatCompactBalance(totalWalletBalance)}</h3>
                     <span className="text-sm text-gray-500">available</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">Funds will be transferred from your main wallet</p>
@@ -185,7 +186,7 @@ export default function VaultDepositModal({ onClose, vaultName, apy, onDeposit, 
                       <option value="SOL">SOL</option>
                     </select>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">Available: ${totalWalletBalance.toFixed(2)}</p>
+                  <p className="text-sm text-gray-500 mt-2">Available: ${formatCompactBalance(totalWalletBalance)}</p>
                 </div>
 
                 {/* Vault Info */}

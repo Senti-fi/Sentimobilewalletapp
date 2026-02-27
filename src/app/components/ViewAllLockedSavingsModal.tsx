@@ -59,7 +59,7 @@ export default function ViewAllLockedSavingsModal({
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col"
+          className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="sticky top-0 bg-gradient-to-br from-purple-500 to-pink-500 px-6 py-5 text-white z-10">

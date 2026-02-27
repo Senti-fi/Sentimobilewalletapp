@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   CreditCard,
   Eye,
   EyeOff,
@@ -9,7 +9,7 @@ import {
   Lock,
   Unlock,
   X,
-  Sparkles
+  Gift
 } from 'lucide-react';
 
 interface CardDrawerProps {
@@ -31,28 +31,42 @@ export default function CardDrawer({ isOpen, onClose }: CardDrawerProps) {
   const cardholderName = 'Alex Johnson';
 
   const handleCopy = (text: string, field: string) => {
-    try {
-      // Try using Clipboard API
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-          .then(() => {
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-          })
-          .catch(() => {
-            // Fallback: just show copied state without actually copying
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 2000);
-          });
-      } else {
-        // Clipboard API not available, just show the feedback
-        setCopiedField(field);
-        setTimeout(() => setCopiedField(null), 2000);
-      }
-    } catch (error) {
-      // Handle any errors gracefully
+    const showSuccess = () => {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showSuccess).catch(() => {
+        // Fallback to execCommand
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          showSuccess();
+        } catch {
+          // Don't show false success if copy truly failed
+        }
+      });
+    } else {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSuccess();
+      } catch {
+        // Silently fail
+      }
     }
   };
 
@@ -234,7 +248,7 @@ export default function CardDrawer({ isOpen, onClose }: CardDrawerProps) {
                 className="bg-blue-50 rounded-2xl p-4 border border-blue-200"
               >
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Gift className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-gray-900 text-sm mb-1">Spend Anywhere</h4>
                     <p className="text-xs text-gray-700">

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, MessageCircle, Mail, FileText, ExternalLink, BookOpen, AlertCircle } from 'lucide-react';
 
@@ -6,13 +7,15 @@ interface HelpSupportModalProps {
 }
 
 export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
+  const [showComingSoon, setShowComingSoon] = useState(false);
+
   const handleContactSupport = () => {
     window.open('mailto:support@senti.com', '_blank');
   };
 
   const handleOpenChat = () => {
-    // In a real app, this would open a live chat widget
-    alert('Live chat feature coming soon!');
+    setShowComingSoon(true);
+    setTimeout(() => setShowComingSoon(false), 3000);
   };
 
   const handleOpenDocs = () => {
@@ -69,7 +72,7 @@ export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl p-6 max-h-[85dvh] overflow-y-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -110,6 +113,20 @@ export default function HelpSupportModal({ onClose }: HelpSupportModalProps) {
               );
             })}
           </div>
+
+          {/* Coming Soon Toast */}
+          <AnimatePresence>
+            {showComingSoon && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="bg-blue-600 text-white rounded-xl px-4 py-3 text-sm text-center mb-4"
+              >
+                Live chat is coming soon!
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Close Button */}
           <button

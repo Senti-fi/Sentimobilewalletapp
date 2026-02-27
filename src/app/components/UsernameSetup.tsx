@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AtSign, AlertCircle, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { AtSign, AlertCircle, CheckCircle, User, ArrowRight, Loader2, Gift } from 'lucide-react';
+import { userService } from '../../services/supabase';
 
 interface UsernameSetupProps {
-  onComplete: (username: string) => void;
+  onComplete: (username: string, referralCode?: string) => void;
   userImage?: string;
 }
 
@@ -16,14 +17,62 @@ const isValidUsername = (username: string): boolean => {
 // Format username for display (capitalize first letter)
 const formatDisplayName = (username: string): string => {
   if (!username) return '';
-  return username.charAt(0).toUpperCase() + username.slice(1) + 'Senti';
+  return username.charAt(0).toUpperCase() + username.slice(1);
 };
 
 export default function UsernameSetup({ onComplete, userImage }: UsernameSetupProps) {
   const [username, setUsername] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check username availability with debouncing
+  useEffect(() => {
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Reset states
+    setIsUsernameAvailable(false);
+
+    if (!username || !isValidUsername(username)) {
+      setIsCheckingAvailability(false);
+      return;
+    }
+
+    setIsCheckingAvailability(true);
+
+    // Debounce the API call
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const isTaken = await userService.isUsernameTaken(username);
+        setIsUsernameAvailable(!isTaken);
+        if (isTaken) {
+          setError('This username is already taken. Please choose another.');
+        } else {
+          setError('');
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        // Assume available on error to not block user
+        setIsUsernameAvailable(true);
+        setError('');
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [username]);
 
   const handleUsernameChange = (value: string) => {
     // Remove spaces, special chars and convert to lowercase
@@ -33,6 +82,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
     if (cleanedUsername && !isValidUsername(cleanedUsername)) {
       setError('Username must be 3-20 characters (letters, numbers, underscores only)');
     } else {
+      // Clear error - availability check will set it if needed
       setError('');
     }
   };
@@ -50,19 +100,31 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
       return;
     }
 
+    // Double-check uniqueness before submitting
     setIsSubmitting(true);
+    try {
+      const isTaken = await userService.isUsernameTaken(username);
+      if (isTaken) {
+        setError('This username is already taken. Please choose another.');
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking username on submit:', err);
+      // Continue anyway on error
+    }
 
     // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    onComplete(username);
+    onComplete(username, referralCode.trim() || undefined);
   };
 
-  const isValid = username.length >= 3 && isValidUsername(username);
+  const isValid = username.length >= 3 && isValidUsername(username) && isUsernameAvailable && !isCheckingAvailability;
   const displayName = formatDisplayName(username);
 
   return (
-    <div className="size-full flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 overflow-hidden">
+    <div className="size-full flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 overflow-y-auto">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -83,7 +145,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
         />
       </div>
 
-      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-md mx-auto w-full relative z-10">
+      <div className="flex-1 flex flex-col justify-center px-6 py-8 pb-16 max-w-md mx-auto w-full relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,7 +167,7 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                 />
               ) : (
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center shadow-2xl">
-                  <Sparkles className="w-12 h-12 text-white" />
+                  <User className="w-12 h-12 text-white" />
                 </div>
               )}
               <motion.div
@@ -152,8 +214,8 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                       {username.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-white font-semibold text-lg">{displayName || 'YourNameSenti'}</p>
-                      <p className="text-blue-300/70 text-sm">@{username || 'username'}.senti</p>
+                      <p className="text-white font-semibold text-lg">{displayName || 'YourName'}</p>
+                      <p className="text-blue-300/70 text-sm">@{username || 'username'}</p>
                     </div>
                   </div>
                 </div>
@@ -183,13 +245,21 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                   onBlur={() => setIsFocused(false)}
                   placeholder="yourname"
                   autoFocus
-                  className={`w-full pl-12 pr-24 py-4 bg-white/10 backdrop-blur-xl border-2 rounded-2xl focus:outline-none transition-all text-lg text-white placeholder-blue-300/40 ${
+                  className={`w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-xl border-2 rounded-2xl focus:outline-none transition-all text-lg text-white placeholder-blue-300/40 ${
                     error ? 'border-red-400/50' : isValid ? 'border-green-400/50' : 'border-white/10'
                   }`}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <span className="text-blue-300/60 font-medium">.senti</span>
-                  {isValid && (
+                  {isCheckingAvailability && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="ml-1"
+                    >
+                      <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                    </motion.div>
+                  )}
+                  {!isCheckingAvailability && isValid && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -215,6 +285,23 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Referral Code (optional) */}
+            <div>
+              <label className="block text-sm font-medium text-blue-200/80 mb-2">
+                Referral Code <span className="text-blue-300/40">(optional)</span>
+              </label>
+              <div className="relative rounded-2xl">
+                <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-300/50" />
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="SENTI-XXXX-XXXX"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white/10 backdrop-blur-xl border-2 border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all text-white placeholder-blue-300/40"
+                />
+              </div>
             </div>
 
             {/* Submit button */}

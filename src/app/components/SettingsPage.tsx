@@ -7,17 +7,19 @@ import {
   Key,
   Copy,
   Shield,
-  CreditCard,
   Bell,
   LogOut,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Gift
 } from 'lucide-react';
 import { useState } from 'react';
-import { useClerk } from '@clerk/clerk-react';
+import { useLogout, useWallet } from '@getpara/react-sdk-lite';
 import SecurityCenterModal from './SecurityCenterModal';
 import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
+import ReferralModal from './ReferralModal';
+import Portal from './Portal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -32,22 +34,24 @@ export default function SettingsPage({
   activeGoals = 4,
   totalRewards = 2300
 }: SettingsPageProps) {
-  const { signOut } = useClerk();
+  const { logoutAsync } = useLogout();
+  const wallet = useWallet();
   const [showSecurityCenter, setShowSecurityCenter] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
 
-  // Load user data from localStorage
-  const fullWalletAddress = localStorage.getItem('senti_wallet_address') || '0x0000000000000000000000000000000000000000';
-  const walletId = fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4);
+  // Load user data — prefer live Para wallet address, fall back to localStorage
+  const fullWalletAddress = wallet?.address || localStorage.getItem('senti_wallet_address') || '';
+  const walletId = fullWalletAddress ? fullWalletAddress.slice(0, 6) + '...' + fullWalletAddress.slice(-4) : 'No wallet yet';
   const userEmail = localStorage.getItem('senti_user_email') || 'user@mail.com';
   const userPhone = '+1 (415) 555-0189'; // Phone remains as placeholder
   // Always capitalize first letter for display (e.g., "tomi" -> "Tomi")
   const rawUsername = localStorage.getItem('senti_username') || 'User';
   const username = rawUsername.charAt(0).toUpperCase() + rawUsername.slice(1);
-  const handle = localStorage.getItem('senti_user_handle') || '@user.senti';
+  const handle = localStorage.getItem('senti_user_handle') || '@user';
   const userId = localStorage.getItem('senti_user_id') || '';
   const userImage = localStorage.getItem('senti_user_image') || '';
 
@@ -69,18 +73,20 @@ export default function SettingsPage({
   const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out? Your wallet will remain safe.')) {
       try {
-        // Sign out from Clerk
-        await signOut();
-        // Clear local storage
-        localStorage.clear();
-        // Reload the page
-        window.location.reload();
+        await logoutAsync();
       } catch (error) {
         console.error('Sign out error:', error);
-        // Fallback: just clear localStorage and reload
-        localStorage.clear();
-        window.location.reload();
       }
+      // Clear senti-specific keys but preserve onboarding flag
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('senti_') && key !== 'senti_onboarding_completed') {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      window.location.reload();
     }
   };
 
@@ -114,10 +120,10 @@ export default function SettingsPage({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-gray-900 text-lg font-semibold">{username}Senti</h2>
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 rounded-md">
-                  <CheckCircle className="w-3 h-3 text-green-600" />
-                  <span className="text-xs text-green-700 font-medium">Verified</span>
+                <h2 className="text-white text-lg font-semibold">{username}<span className="text-blue-300">Senti</span></h2>
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 rounded-md">
+                  <CheckCircle className="w-3 h-3 text-green-400" />
+                  <span className="text-xs text-green-400 font-medium">Verified</span>
                 </div>
               </div>
               <p className="text-sm text-gray-500">{handle}</p>
@@ -127,9 +133,9 @@ export default function SettingsPage({
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
             <div className="text-center">
-              <p className="text-xs text-gray-500 mb-1">Net Worth</p>
-              <p className="text-gray-900 font-semibold">
-                ${(totalBalance / 1000).toFixed(1)}k
+              <p className="text-xs text-blue-300/60 mb-1">Net Worth</p>
+              <p className="text-white font-semibold">
+                ${totalBalance >= 1e9 ? `${(totalBalance / 1e9).toFixed(1)}B` : totalBalance >= 1e6 ? `${(totalBalance / 1e6).toFixed(1)}M` : totalBalance >= 1e3 ? `${(totalBalance / 1e3).toFixed(1)}k` : totalBalance.toFixed(0)}
               </p>
             </div>
             <div className="text-center">
@@ -154,7 +160,7 @@ export default function SettingsPage({
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
-              <span className="text-lg">✨</span>
+              <Shield className="w-4 h-4 text-blue-600" />
             </div>
             <h3 className="text-gray-900 font-medium">Account details</h3>
           </div>
@@ -314,6 +320,21 @@ export default function SettingsPage({
             <ChevronRight className="w-5 h-5 text-gray-400" />
           </button>
 
+          {/* Invite Friends */}
+          <button
+            onClick={() => setShowReferral(true)}
+            className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+              <Gift className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 font-medium">Invite Friends</p>
+              <p className="text-sm text-gray-500">Share your referral code & earn rewards</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-400" />
+          </button>
+
           {/* Smart Alerts */}
           <button className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center flex-shrink-0">
@@ -371,18 +392,29 @@ export default function SettingsPage({
         </motion.div>
       </div>
 
-      {/* Modals */}
+      {/* Modals - wrapped in Portal to escape stacking context */}
       {showSecurityCenter && (
-        <SecurityCenterModal onClose={() => setShowSecurityCenter(false)} />
+        <Portal>
+          <SecurityCenterModal onClose={() => setShowSecurityCenter(false)} />
+        </Portal>
       )}
       {showEditEmail && (
-        <EditEmailModal
-          currentEmail={userEmail}
-          onClose={() => setShowEditEmail(false)}
-        />
+        <Portal>
+          <EditEmailModal
+            currentEmail={userEmail}
+            onClose={() => setShowEditEmail(false)}
+          />
+        </Portal>
       )}
       {showHelpSupport && (
-        <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+        <Portal>
+          <HelpSupportModal onClose={() => setShowHelpSupport(false)} />
+        </Portal>
+      )}
+      {showReferral && (
+        <Portal>
+          <ReferralModal onClose={() => setShowReferral(false)} />
+        </Portal>
       )}
     </div>
   );

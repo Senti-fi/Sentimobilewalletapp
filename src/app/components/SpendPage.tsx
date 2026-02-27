@@ -12,7 +12,7 @@ import {
   Utensils,
   Zap,
   ChevronRight,
-  Sparkles,
+  Star,
   AlertCircle,
   ArrowUpRight,
   ArrowDownRight
@@ -21,6 +21,7 @@ import LucyChip from './LucyChip';
 import SentiPayModal from './SentiPayModal';
 import CardDrawer from './CardDrawer';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import Portal from './Portal';
 
 interface SpendPageProps {
   onOpenLucy: () => void;
@@ -48,20 +49,20 @@ interface SpendPageProps {
 
 // Mock spending data by category
 const spendingByCategory = [
-  { name: 'Shopping', amount: 420, color: '#3b82f6', icon: ShoppingBag },
-  { name: 'Food & Dining', amount: 385, color: '#10b981', icon: Utensils },
-  { name: 'Transport', amount: 220, color: '#f59e0b', icon: Car },
-  { name: 'Utilities', amount: 180, color: '#8b5cf6', icon: Zap },
-  { name: 'Entertainment', amount: 150, color: '#ec4899', icon: Coffee },
-  { name: 'Other', amount: 95, color: '#6b7280', icon: Home },
+  { name: 'Shopping', amount: 312.45, color: '#3b82f6', icon: ShoppingBag },
+  { name: 'Food & Dining', amount: 287.80, color: '#10b981', icon: Utensils },
+  { name: 'Transport', amount: 156.20, color: '#f59e0b', icon: Car },
+  { name: 'Utilities', amount: 142.50, color: '#8b5cf6', icon: Zap },
+  { name: 'Entertainment', amount: 98.75, color: '#ec4899', icon: Coffee },
+  { name: 'Other', amount: 67.30, color: '#6b7280', icon: Home },
 ];
 
 // Mock cashflow data (weekly)
 const cashflowData = [
-  { week: 'Week 1', income: 1200, spending: 450 },
-  { week: 'Week 2', income: 800, spending: 520 },
-  { week: 'Week 3', income: 1500, spending: 380 },
-  { week: 'Week 4', income: 950, spending: 650 },
+  { week: 'Week 1', income: 875, spending: 312 },
+  { week: 'Week 2', income: 650, spending: 428 },
+  { week: 'Week 3', income: 1120, spending: 267 },
+  { week: 'Week 4', income: 780, spending: 385 },
 ];
 
 export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransaction }: SpendPageProps) {
@@ -71,9 +72,11 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
   // Default mock transactions
   const defaultTransactions = [
-    { id: 'default-1', merchant: 'Amazon', category: 'Shopping', amount: 89.99, date: '2 hours ago', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { id: 'default-2', merchant: 'Starbucks', category: 'Food & Dining', amount: 12.50, date: '5 hours ago', icon: Coffee, color: 'text-pink-600', bg: 'bg-pink-100' },
-    { id: 'default-3', merchant: 'Uber', category: 'Transport', amount: 25.00, date: '1 day ago', icon: Car, color: 'text-orange-600', bg: 'bg-orange-100' },
+    { id: 'spend-1', merchant: 'Whole Foods Market', category: 'Shopping', amount: 67.42, date: '3 hours ago', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { id: 'spend-2', merchant: 'Chipotle', category: 'Food & Dining', amount: 14.85, date: '6 hours ago', icon: Utensils, color: 'text-green-600', bg: 'bg-green-100' },
+    { id: 'spend-3', merchant: 'Uber', category: 'Transport', amount: 18.50, date: 'Yesterday', icon: Car, color: 'text-orange-600', bg: 'bg-orange-100' },
+    { id: 'spend-4', merchant: 'Netflix', category: 'Entertainment', amount: 15.99, date: '2 days ago', icon: Coffee, color: 'text-pink-600', bg: 'bg-pink-100' },
+    { id: 'spend-5', merchant: 'Shell Gas Station', category: 'Transport', amount: 42.30, date: '3 days ago', icon: Car, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
   // Merge new transactions with default ones
@@ -93,7 +96,7 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
   const isNearBudget = budgetUsedPercent > 80 && budgetUsedPercent <= 100;
 
   return (
-    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="h-full overflow-y-auto overscroll-contain pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Header */}
       <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 px-6 pt-6 pb-8 text-white">
         <motion.div
@@ -194,7 +197,7 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
         {(isOverBudget || isNearBudget) && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-5 h-5 text-gray-900" />
+              <Star className="w-5 h-5 text-gray-900" />
               <h3 className="text-gray-900">Lucy's Insight</h3>
             </div>
 
@@ -377,10 +380,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Senti Pay Modal */}
       {showSentiPay && (
-        <SentiPayModal 
-          onClose={() => setShowSentiPay(false)}
-          onAddTransaction={onAddTransaction}
-        />
+        <Portal>
+          <SentiPayModal
+            onClose={() => setShowSentiPay(false)}
+            onAddTransaction={onAddTransaction}
+          />
+        </Portal>
       )}
 
       {/* Card Drawer */}
@@ -391,10 +396,12 @@ export default function SpendPage({ onOpenLucy, recentTransactions, onAddTransac
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <TransactionDetailsModal
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
+        <Portal>
+          <TransactionDetailsModal
+            transaction={selectedTransaction}
+            onClose={() => setSelectedTransaction(null)}
+          />
+        </Portal>
       )}
     </div>
   );

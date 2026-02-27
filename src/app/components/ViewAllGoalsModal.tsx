@@ -28,7 +28,15 @@ export default function ViewAllGoalsModal({ onClose, goals, onSelectGoal }: View
     const now = new Date();
     const end = new Date(deadline);
     const diff = end.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days;
+  };
+
+  const formatDaysLeft = (deadline: string) => {
+    const days = getDaysRemaining(deadline);
+    if (days < 0) return 'Expired';
+    if (days === 0) return 'Due today';
+    return `${days} days left`;
   };
 
   const handleSelectGoal = (goal: Goal) => {
@@ -49,7 +57,7 @@ export default function ViewAllGoalsModal({ onClose, goals, onSelectGoal }: View
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {/* Header */}
         <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
@@ -85,7 +93,7 @@ export default function ViewAllGoalsModal({ onClose, goals, onSelectGoal }: View
                   <div className="flex items-start justify-between mb-1">
                     <div className="text-left">
                       <h4 className="text-gray-900">{goal.name}</h4>
-                      <p className="text-xs text-gray-500">{getDaysRemaining(goal.deadline)} days left</p>
+                      <p className="text-xs text-gray-500">{formatDaysLeft(goal.deadline)}</p>
                     </div>
                     {goal.isBehind && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg">

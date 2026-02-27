@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Building2, User, Hash, DollarSign, Zap, CheckCircle, Loader, Sparkles, ArrowRight, ChevronDown, MessageSquare, Wallet } from 'lucide-react';
+import { X, Building2, User, Hash, DollarSign, Zap, CheckCircle, Loader, Star, ArrowRight, ChevronDown, MessageSquare, Wallet } from 'lucide-react';
 
 interface SentiPayModalProps {
   onClose: () => void;
@@ -93,7 +93,7 @@ export default function SentiPayModal({ onClose, onAddTransaction }: SentiPayMod
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {/* Processing Screen */}
           {step === 'processing' && (
@@ -492,7 +492,7 @@ export default function SentiPayModal({ onClose, onAddTransaction }: SentiPayMod
                     {/* Confirmation Note */}
                     <div className="bg-purple-50 rounded-2xl p-4 border border-purple-200">
                       <div className="flex items-start gap-3">
-                        <Sparkles className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-xs text-gray-700">
                             Your USDT will be converted to Naira and sent directly to the recipient's bank account. The transaction is instant and has no fees.

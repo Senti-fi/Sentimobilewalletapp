@@ -1,151 +1,481 @@
-import { useState, useEffect } from 'react';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
+import { useAccount, useWallet, useLogout } from '@getpara/react-sdk-lite';
+import { userService, UserProfile } from '../services/supabase';
+import { referralService } from '../services/referralService';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import LoadingScreen from './components/LoadingScreen';
 import SSOCallback from './components/SSOCallback';
 import UsernameSetup from './components/UsernameSetup';
+import Onboarding from './components/Onboarding';
 
-type AppState = 'loading' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
+// ─── Error Boundary ──────────────────────────────────────────────────
 
-// Generate a unique user ID for Senti
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('App crashed:', error, info.componentStack);
+  }
+
+  handleReload = () => {
+    try {
+      const keysToPreserve = ['senti_onboarding_completed', 'senti_auth_user_id'];
+      const preserved: Record<string, string> = {};
+      keysToPreserve.forEach(key => {
+        const val = localStorage.getItem(key);
+        if (val) preserved[key] = val;
+      });
+
+      const allKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('senti_') && !keysToPreserve.includes(key)) {
+          allKeys.push(key);
+        }
+      }
+      allKeys.forEach(key => localStorage.removeItem(key));
+
+      Object.entries(preserved).forEach(([key, val]) => localStorage.setItem(key, val));
+    } catch {
+      localStorage.clear();
+    }
+
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 px-6 text-center">
+          <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mb-6">
+            <span className="text-4xl">S</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Something went wrong</h2>
+          <p className="text-blue-200/70 mb-8 max-w-xs">
+            An unexpected error occurred. Tap below to restart the app.
+          </p>
+          <button
+            onClick={this.handleReload}
+            className="px-8 py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-white rounded-2xl font-medium shadow-lg"
+          >
+            Restart App
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ─── App Types & Helpers ─────────────────────────────────────────────
+
+type AppState = 'loading' | 'onboarding' | 'signup' | 'dashboard' | 'sso-callback' | 'username-setup';
+
 const generateSentiUserId = (): string => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `SENTI-${timestamp}-${randomPart}`;
 };
 
-// Format username with capital first letter (e.g., "oxsenti" -> "OxSenti")
 const formatUsername = (username: string): string => {
   return username.charAt(0).toUpperCase() + username.slice(1);
 };
 
-export default function App() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { signOut } = useClerk();
+function restoreProfileToLocalStorage(profile: UserProfile, authUserId: string) {
+  const formattedUsername = profile.username.charAt(0).toUpperCase() + profile.username.slice(1);
+  localStorage.setItem('senti_username', formattedUsername);
+  localStorage.setItem('senti_user_handle', profile.handle);
+  localStorage.setItem(`senti_username_${authUserId}`, formattedUsername);
+  localStorage.setItem(`senti_user_handle_${authUserId}`, profile.handle);
+  localStorage.setItem(`senti_username_set_${authUserId}`, 'true');
+
+  if (profile.wallet_address) {
+    localStorage.setItem('senti_wallet_address', profile.wallet_address);
+    localStorage.setItem(`senti_wallet_address_${authUserId}`, profile.wallet_address);
+  }
+}
+
+// ─── Main App Component ──────────────────────────────────────────────
+
+function AppContent() {
+  const { isConnected, isLoading: isAccountLoading, embedded } = useAccount();
+  const wallet = useWallet();
+  const { logoutAsync } = useLogout();
+
   const [appState, setAppState] = useState<AppState>('loading');
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Check current route for SSO callback
+  const profileCheckRef = useRef<string | null>(null);
+  // Track current appState via ref so the auth useEffect can read it
+  // without adding appState to its dependency array (which would cause loops).
+  const appStateRef = useRef<AppState>(appState);
+  appStateRef.current = appState;
+  // Track isConnected via ref so the safety timeout can read the live value
+  // outside the React render cycle (setTimeout closures capture stale state).
+  const isConnectedRef = useRef(false);
+  isConnectedRef.current = isConnected;
+
   const isCallbackRoute = window.location.pathname === '/sso-callback';
-  const isDashboardRoute = window.location.pathname === '/dashboard';
 
-  // Handle authentication state and routing
+  // Derive Para user ID and email from embedded account
+  const paraUserId = embedded?.userId || wallet?.userId || wallet?.id || null;
+  const walletAddress = wallet?.address || null;
+  const paraEmail = embedded?.email || null;
+
+  // ── Mark as loaded once Para SDK resolves auth state ────────────
   useEffect(() => {
-    // Handle SSO callback route
+    if (!isAccountLoading) {
+      setIsLoaded(true);
+    }
+  }, [isAccountLoading]);
+
+  // Check Supabase for existing user profile – runs once per auth user ID
+  const checkUserProfile = useCallback(async (authUserId: string, email: string, imageUrl: string) => {
+    if (profileCheckRef.current === authUserId) return;
+    profileCheckRef.current = authUserId;
+
+    try {
+      // ── 1. Check Supabase by auth ID (primary source of truth) ──
+      const existingUser = await userService.getUserByAuthId(authUserId);
+
+      if (existingUser) {
+        restoreProfileToLocalStorage(existingUser, authUserId);
+
+        if (existingUser.email !== email || existingUser.image_url !== imageUrl) {
+          userService.updateUser(authUserId, { email, image_url: imageUrl }).catch(() => {});
+        }
+
+        setAppState('dashboard');
+        return;
+      }
+
+      // ── 1b. Fallback: find by email (handles auth provider migration) ──
+      // When migrating from Clerk/Supabase Auth → Para, the user gets a new
+      // Para userId but their email stays the same. Find them by email and
+      // update their auth_user_id to the new Para ID.
+      if (email) {
+        const emailUser = await userService.getUserByEmail(email);
+        if (emailUser) {
+          const migrated = await userService.migrateAuthId(emailUser.id, authUserId);
+          if (migrated) {
+            restoreProfileToLocalStorage(migrated, authUserId);
+            setAppState('dashboard');
+            return;
+          }
+        }
+      }
+
+      // ── 2. Supabase has no record – try localStorage migration ──
+      const hasSetUsername = localStorage.getItem(`senti_username_set_${authUserId}`) === 'true';
+      const storedUsername = localStorage.getItem(`senti_username_${authUserId}`);
+      const storedHandle = localStorage.getItem(`senti_user_handle_${authUserId}`);
+
+      if (hasSetUsername && storedUsername && storedHandle) {
+        const storedWalletAddress =
+          localStorage.getItem(`senti_wallet_address_${authUserId}`) ||
+          localStorage.getItem('senti_wallet_address') || '';
+
+        try {
+          const migrated = await userService.createUser({
+            authUserId,
+            username: storedUsername.toLowerCase(),
+            handle: storedHandle,
+            walletAddress: storedWalletAddress,
+            email,
+            imageUrl,
+          });
+
+          if (migrated) {
+            restoreProfileToLocalStorage(migrated, authUserId);
+          } else {
+            localStorage.setItem('senti_username', storedUsername);
+            localStorage.setItem('senti_user_handle', storedHandle);
+          }
+        } catch (migrationErr: any) {
+          if (migrationErr?.message === 'USERNAME_TAKEN') {
+            localStorage.removeItem(`senti_username_set_${authUserId}`);
+            setAppState('username-setup');
+            return;
+          }
+          localStorage.setItem('senti_username', storedUsername);
+          localStorage.setItem('senti_user_handle', storedHandle);
+        }
+
+        setAppState('dashboard');
+        return;
+      }
+
+      // ── 3. Check legacy localStorage keys ──
+      const legacyUsername = localStorage.getItem('senti_username');
+      const legacyHandle = localStorage.getItem('senti_user_handle');
+      const legacySet = localStorage.getItem('senti_username_set') === 'true';
+
+      if (legacySet && legacyUsername && legacyHandle) {
+        const storedWalletAddress = localStorage.getItem('senti_wallet_address') || '';
+
+        try {
+          const migrated = await userService.createUser({
+            authUserId,
+            username: legacyUsername.toLowerCase(),
+            handle: legacyHandle,
+            walletAddress: storedWalletAddress,
+            email,
+            imageUrl,
+          });
+
+          if (migrated) {
+            restoreProfileToLocalStorage(migrated, authUserId);
+            localStorage.setItem(`senti_username_set_${authUserId}`, 'true');
+          }
+        } catch (legacyErr: any) {
+          if (legacyErr?.message === 'USERNAME_TAKEN') {
+            setAppState('username-setup');
+            return;
+          }
+        }
+
+        setAppState('dashboard');
+        return;
+      }
+
+      // ── 4. Truly new user – needs to create identity ──
+      setAppState('username-setup');
+    } catch (err) {
+      console.error('Error checking user profile:', err);
+      const storedUsername = localStorage.getItem(`senti_username_${authUserId}`) || localStorage.getItem('senti_username');
+      const storedHandle = localStorage.getItem(`senti_user_handle_${authUserId}`) || localStorage.getItem('senti_user_handle');
+
+      if (storedUsername && storedHandle) {
+        localStorage.setItem('senti_username', storedUsername);
+        localStorage.setItem('senti_user_handle', storedHandle);
+        setAppState('dashboard');
+      } else {
+        setAppState('username-setup');
+      }
+    }
+  }, []);
+
+  // ── Handle auth state and routing ─────────────────────────────────
+  // Track whether SDK is still settling after partial auth detection.
+  // When isConnected=true but embedded isn't ready yet, we stay on
+  // loading instead of bouncing to the signup page (the "loop" bug).
+  const authSettlingRef = useRef(false);
+  const authSettlingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Handle SSO callback route — let SSOCallback component redirect
     if (isCallbackRoute) {
       setAppState('sso-callback');
       return;
     }
 
-    // Wait for Clerk to load
+    // Wait for Para SDK to resolve auth state
     if (!isLoaded) {
       setAppState('loading');
       return;
     }
 
-    // User is signed in with Clerk
-    if (isSignedIn && user) {
-      // Sync Clerk user data to localStorage for app-wide use
-      const clerkUserId = user.id;
-      const existingSentiId = localStorage.getItem('senti_user_id');
-
-      // Generate Senti ID if this is a new user
-      if (!existingSentiId || !existingSentiId.startsWith('SENTI-')) {
-        localStorage.setItem('senti_user_id', generateSentiUserId());
+    // User is fully authenticated via Para (auth + wallet + userId all ready)
+    if (isConnected && embedded?.isConnected && paraUserId) {
+      // Clear any settling state
+      authSettlingRef.current = false;
+      if (authSettlingTimerRef.current) {
+        clearTimeout(authSettlingTimerRef.current);
+        authSettlingTimerRef.current = null;
       }
 
-      // Store Clerk data
-      const email = user.primaryEmailAddress?.emailAddress || '';
-      localStorage.setItem('senti_clerk_user_id', clerkUserId);
-      localStorage.setItem('senti_user_email', email);
-      localStorage.setItem('senti_user_image', user.imageUrl || '');
+      const authUserId = paraUserId;
+      const email = paraEmail || localStorage.getItem('senti_user_email') || '';
+      const imageUrl = localStorage.getItem('senti_user_image') || '';
 
-      // Generate wallet address if not exists
-      if (!localStorage.getItem('senti_wallet_address')) {
-        const mockWalletAddress = '0x' + Math.random().toString(16).substring(2, 42);
-        localStorage.setItem('senti_wallet_address', mockWalletAddress);
+      // Persist email from Para to localStorage
+      if (paraEmail) {
+        localStorage.setItem('senti_user_email', paraEmail);
+      }
+
+      // Generate Senti ID for this user if they don't have one
+      const userSentiIdKey = `senti_user_id_${authUserId}`;
+      let existingSentiId = localStorage.getItem(userSentiIdKey);
+      if (!existingSentiId || !existingSentiId.startsWith('SENTI-')) {
+        existingSentiId = generateSentiUserId();
+        localStorage.setItem(userSentiIdKey, existingSentiId);
+      }
+      localStorage.setItem('senti_user_id', existingSentiId);
+
+      // Store auth data
+      localStorage.setItem('senti_auth_user_id', authUserId);
+
+      // Use Para's real wallet address if available
+      if (walletAddress) {
+        localStorage.setItem('senti_wallet_address', walletAddress);
+        localStorage.setItem(`senti_wallet_address_${authUserId}`, walletAddress);
       }
 
       // Mark onboarding as complete for signed-in users
       localStorage.setItem('senti_onboarding_completed', 'true');
 
-      // Clean up URL if coming from OAuth redirect
-      if (isDashboardRoute) {
-        window.history.replaceState({}, '', '/');
-      }
-
-      // Check if user has set up their custom username
-      const hasSetUsername = localStorage.getItem('senti_username_set') === 'true';
-
-      if (!hasSetUsername) {
-        // New user needs to set up username
-        setAppState('username-setup');
-      } else {
-        // Existing user with username set
-        setAppState('dashboard');
-      }
+      // Check Supabase for existing user – ref guard prevents duplicate calls
+      checkUserProfile(authUserId, email, imageUrl);
       return;
     }
 
-    // User is not signed in - go directly to signup (onboarding removed)
-    // Small delay to show loading screen
-    setTimeout(() => {
-      // Mark onboarding as complete and go to signup
-      localStorage.setItem('senti_onboarding_completed', 'true');
+    // ── Guard: don't redirect away from authenticated screens ──
+    // Once a user reaches the dashboard (or username-setup), they should only
+    // leave via explicit sign-out. Transient SDK disconnects (token refresh,
+    // network hiccup, session re-sync) must NOT kick them back to signup.
+    if (appStateRef.current === 'dashboard' || appStateRef.current === 'username-setup') {
+      return;
+    }
+
+    // ── Auth is partially resolved (transitional state) ──
+    // isConnected=true but embedded wallet/userId not ready yet.
+    // This happens during wallet creation/session sync after OAuth.
+    // Stay on loading to prevent bouncing to signup page.
+    if (isConnected || isAccountLoading) {
+      if (!authSettlingRef.current) {
+        authSettlingRef.current = true;
+        // Safety: if auth doesn't fully resolve within 15s, give up
+        authSettlingTimerRef.current = setTimeout(() => {
+          authSettlingRef.current = false;
+          authSettlingTimerRef.current = null;
+        }, 15000);
+      }
+      setAppState('loading');
+      return;
+    }
+
+    // ── Genuinely not signed in ──
+    // Only reach here when isConnected=false AND not in a settling state
+    if (authSettlingRef.current) {
+      // Still waiting for auth to settle — don't jump to signup yet
+      setAppState('loading');
+      return;
+    }
+
+    const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
+    profileCheckRef.current = null;
+
+    if (hasCompletedOnboarding) {
       setAppState('signup');
-    }, 1000);
-  }, [isLoaded, isSignedIn, user, isCallbackRoute, isDashboardRoute]);
+    } else {
+      setAppState('onboarding');
+    }
+  }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, checkUserProfile]);
+
+  // Safety net: stuck in 'loading' for more than 15s
+  useEffect(() => {
+    if (appState !== 'loading') return;
+
+    const safetyTimer = setTimeout(() => {
+      if (profileCheckRef.current) return;
+
+      // If the user has an active OAuth session (isConnected=true), their
+      // embedded wallet is still initializing. Don't send them back to
+      // signup — that creates the redirect loop. Stay on loading and let
+      // the SDK finish; the main useEffect will route to dashboard once
+      // embedded.isConnected becomes true.
+      if (isConnectedRef.current) {
+        return;
+      }
+
+      // Reset settling state
+      authSettlingRef.current = false;
+
+      // If the user has valid auth data in localStorage, they are a returning
+      // user whose SDK session is slow to restore.  Send them to the dashboard
+      // instead of kicking them back to signup.
+      const storedAuthId = localStorage.getItem('senti_auth_user_id');
+      const storedUsername = localStorage.getItem('senti_username');
+      if (storedAuthId && storedUsername) {
+        setAppState('dashboard');
+        return;
+      }
+
+      const hasCompletedOnboarding = localStorage.getItem('senti_onboarding_completed') === 'true';
+      setAppState(hasCompletedOnboarding ? 'signup' : 'onboarding');
+    }, 15000);
+
+    return () => clearTimeout(safetyTimer);
+  }, [appState]);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('senti_onboarding_completed', 'true');
+    setAppState('signup');
+  };
 
   const handleSignUpComplete = () => {
-    // This is called after successful passkey authentication
-    // Clerk user data will be synced in the useEffect above
     setAppState('dashboard');
   };
 
   const handleSSOComplete = () => {
-    // Redirect to dashboard after SSO callback is processed
     window.history.replaceState({}, '', '/');
-    // The useEffect will handle checking if username is set
   };
 
-  const handleUsernameComplete = (username: string) => {
-    // Format and save the custom username with capital first letter
-    const formattedUsername = formatUsername(username);
-    localStorage.setItem('senti_username', formattedUsername);
-    localStorage.setItem('senti_user_handle', `@${username.toLowerCase()}.senti`);
-    localStorage.setItem('senti_username_set', 'true');
+  const handleUsernameComplete = async (username: string, referralCode?: string) => {
+    const authUserId = paraUserId || localStorage.getItem('senti_auth_user_id');
 
-    // Register user in the global users database so other users can find them
-    const userHandle = `@${username.toLowerCase()}.senti`;
-    const displayName = `${formattedUsername}Senti`;
-    const newUser = {
-      id: userHandle,
-      name: displayName,
-      online: true,
-      registeredAt: Date.now(),
-    };
-
-    // Get existing registered users or initialize empty array
-    const existingUsersJson = localStorage.getItem('senti_registered_users');
-    const existingUsers = existingUsersJson ? JSON.parse(existingUsersJson) : [];
-
-    // Check if user already exists (by id)
-    const userExists = existingUsers.some((u: any) => u.id === userHandle);
-    if (!userExists) {
-      existingUsers.push(newUser);
-      localStorage.setItem('senti_registered_users', JSON.stringify(existingUsers));
+    if (!authUserId) {
+      console.error('No user ID available for username setup');
+      return;
     }
+
+    const formattedUsername = formatUsername(username);
+    const userHandle = `@${username.toLowerCase()}`;
+    const userWalletAddress = walletAddress || localStorage.getItem('senti_wallet_address') || '';
+    const email = localStorage.getItem('senti_user_email') || '';
+    const imageUrl = localStorage.getItem('senti_user_image') || '';
+
+    try {
+      await userService.createUser({
+        authUserId,
+        username: username.toLowerCase(),
+        handle: userHandle,
+        walletAddress: userWalletAddress,
+        email,
+        imageUrl,
+      });
+
+      // Apply referral code if provided
+      if (referralCode) {
+        referralService.applyReferralCode(referralCode, authUserId).catch(() => {});
+      }
+    } catch (err: any) {
+      if (err?.message === 'USERNAME_TAKEN') {
+        console.error('Username was taken during final creation');
+        return;
+      }
+      console.error('Failed to save user to Supabase:', err);
+    }
+
+    localStorage.setItem('senti_username', formattedUsername);
+    localStorage.setItem('senti_user_handle', userHandle);
+    localStorage.setItem(`senti_username_${authUserId}`, formattedUsername);
+    localStorage.setItem(`senti_user_handle_${authUserId}`, userHandle);
+    localStorage.setItem(`senti_username_set_${authUserId}`, 'true');
+    localStorage.setItem('senti_username_set', 'true');
 
     setAppState('dashboard');
   };
 
-  // Get user image for username setup page
-  const userImage = user?.imageUrl || localStorage.getItem('senti_user_image') || '';
+  const userImage = localStorage.getItem('senti_user_image') || '';
 
   return (
     <div className="size-full bg-gray-50 overflow-hidden relative">
       {appState === 'loading' && (
         <LoadingScreen />
+      )}
+      {appState === 'onboarding' && (
+        <Onboarding onComplete={handleOnboardingComplete} />
       )}
       {appState === 'sso-callback' && (
         <SSOCallback onComplete={handleSSOComplete} />
@@ -160,5 +490,15 @@ export default function App() {
         <Dashboard />
       )}
     </div>
+  );
+}
+
+// ─── Export wrapped in ErrorBoundary ─────────────────────────────────
+
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
   );
 }

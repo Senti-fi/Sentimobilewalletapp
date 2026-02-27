@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, TrendingUp, Lock, Zap, ArrowRight, Plus, Wallet, DollarSign, PieChart, ArrowUpRight, ArrowDownToLine, ChevronDown, ChevronUp, Info, Shield, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { formatCompactBalance } from '../utils/formatBalance';
 import LucyChip from './LucyChip';
 import VaultDepositModal from './VaultDepositModal';
 import InvestInPoolModal from './InvestInPoolModal';
@@ -18,6 +19,7 @@ interface GrowModalProps {
   onWithdraw: (amount: number, asset: string) => void;
   onWithdrawToWallet?: (amount: number, asset: string) => void;
   onInvest: (vaultName: string, amount: number, asset: string, apy: string, protocol: string) => void;
+  autoDeposit?: boolean;
   walletAssets: Array<{
     id: string;
     name: string;
@@ -103,9 +105,9 @@ const opportunities = [
   },
 ];
 
-export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance }: GrowModalProps) {
+export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposit, onWithdraw, onWithdrawToWallet, onInvest, walletAssets, activeInvestments, totalWalletBalance, autoDeposit }: GrowModalProps) {
   const [selectedVault, setSelectedVault] = useState<string | null>(null);
-  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(autoDeposit === true);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showInvestModal, setShowInvestModal] = useState(false);
   const [selectedVaultData, setSelectedVaultData] = useState<{name: string, apy: string, protocol: string}>({name: '', apy: '', protocol: ''});
@@ -255,7 +257,7 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-gray-50 to-blue-50/30 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="bg-gradient-to-br from-gray-50 to-blue-50/30 w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[85dvh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {/* Header */}
           <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
@@ -288,19 +290,19 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                 <Wallet className="w-5 h-5" />
                 <p className="text-sm text-white/80">Total Portfolio Value</p>
               </div>
-              <h2 className="text-4xl mb-3">${(vaultBalance + totalInvestedValue).toFixed(2)}</h2>
+              <h2 className="text-4xl mb-3">${formatCompactBalance(vaultBalance + totalInvestedValue)}</h2>
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/20">
                 <div>
                   <p className="text-xs text-white/70 mb-1">Available</p>
-                  <p className="text-lg">${vaultBalance.toFixed(2)}</p>
+                  <p className="text-lg">${formatCompactBalance(vaultBalance)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-white/70 mb-1">Invested</p>
-                  <p className="text-lg">${totalInvestedValue.toFixed(2)}</p>
+                  <p className="text-lg">${formatCompactBalance(totalInvestedValue)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-white/70 mb-1">Earned</p>
-                  <p className="text-lg text-green-300">${totalEarnings.toFixed(2)}</p>
+                  <p className="text-lg text-green-300">${formatCompactBalance(totalEarnings)}</p>
                 </div>
               </div>
               {weightedAPY > 0 && (
@@ -662,15 +664,15 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <p className="text-xs text-gray-600 mb-0.5">Total Invested</p>
-                            <p className="text-xl text-gray-900">${totalInvested.toFixed(2)}</p>
+                            <p className="text-xl text-gray-900">${formatCompactBalance(totalInvested)}</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-600 mb-0.5">Current Value</p>
-                            <p className="text-xl text-gray-900">${totalInvestedValue.toFixed(2)}</p>
+                            <p className="text-xl text-gray-900">${formatCompactBalance(totalInvestedValue)}</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-600 mb-0.5">Total Earnings</p>
-                            <p className="text-lg text-green-600">+${totalEarnings.toFixed(2)}</p>
+                            <p className="text-lg text-green-600">+${formatCompactBalance(totalEarnings)}</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-600 mb-0.5">Weighted APY</p>
@@ -748,19 +750,19 @@ export default function GrowModal({ onClose, vaultBalance, vaultEarned, onDeposi
                                       <div className="flex items-center justify-between">
                                         <div>
                                           <p className="text-xs text-gray-500 mb-0.5">Current Value</p>
-                                          <p className="text-2xl text-gray-900">${currentValue.toFixed(2)}</p>
+                                          <p className="text-2xl text-gray-900">${formatCompactBalance(currentValue)}</p>
                                         </div>
                                         <div className="text-right">
                                           <p className="text-xs text-gray-500 mb-0.5">Earned</p>
-                                          <p className="text-lg text-green-600">+${simulatedEarnings.toFixed(2)}</p>
+                                          <p className="text-lg text-green-600">+${formatCompactBalance(simulatedEarnings)}</p>
                                         </div>
                                       </div>
                                       
                                       {/* Progress Bar */}
                                       <div className="mt-3 pt-3 border-t border-blue-200/50">
                                         <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
-                                          <span>Initial: ${investment.amount.toFixed(2)}</span>
-                                          <span>Daily: +${dailyYield.toFixed(2)}</span>
+                                          <span>Initial: ${formatCompactBalance(investment.amount)}</span>
+                                          <span>Daily: +${formatCompactBalance(dailyYield)}</span>
                                         </div>
                                         <div className="w-full bg-blue-200 rounded-full h-1.5 overflow-hidden">
                                           <motion.div

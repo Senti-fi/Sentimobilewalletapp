@@ -4,9 +4,10 @@ interface LogoProps {
   size?: number;
   className?: string;
   animate?: 'entrance' | 'float' | 'pulse' | 'spin' | 'none';
+  color?: string;
 }
 
-export default function Logo({ size = 64, className = '', animate = 'entrance' }: LogoProps) {
+export default function Logo({ size = 64, className = '', animate = 'entrance', color = '#38BDF8' }: LogoProps) {
   const animationVariants = {
     entrance: {
       initial: { scale: 0, rotate: -180, opacity: 0 },
@@ -71,18 +72,21 @@ export default function Logo({ size = 64, className = '', animate = 'entrance' }
       style={{ width: size, height: size }}
     >
       <svg viewBox="0 0 100 100" className="w-full h-full">
-        <defs>
-          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#06b6d4', stopOpacity: 1 }} />
-            <stop offset="50%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#1d4ed8', stopOpacity: 1 }} />
-          </linearGradient>
-        </defs>
-        <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" />
+        {/* Rounded square background */}
+        <rect
+          x="5"
+          y="5"
+          width="90"
+          height="90"
+          rx="20"
+          ry="20"
+          fill={color}
+        />
+        {/* S letter */}
         <text
           x="50"
-          y="65"
-          fontSize="42"
+          y="68"
+          fontSize="52"
           fill="white"
           fontWeight="bold"
           textAnchor="middle"
