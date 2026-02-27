@@ -400,11 +400,6 @@ function AppContent() {
         return;
       }
 
-      // If OAuth was recently started, keep waiting instead of forcing signup.
-      if (isAuthAttemptActive()) {
-        return;
-      }
-
       // Reset settling state
       authSettlingRef.current = false;
 
