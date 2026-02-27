@@ -11,7 +11,8 @@ import {
   LogOut,
   ChevronRight,
   HelpCircle,
-  Gift
+  Gift,
+  CloudUpload
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLogout, useWallet } from '@getpara/react-sdk-lite';
@@ -20,6 +21,7 @@ import EditEmailModal from './EditEmailModal';
 import HelpSupportModal from './HelpSupportModal';
 import ReferralModal from './ReferralModal';
 import Portal from './Portal';
+import AdminSyncModal from './AdminSyncModal';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -40,6 +42,7 @@ export default function SettingsPage({
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
+  const [showAdminSync, setShowAdminSync] = useState(false);
   const [copiedWallet, setCopiedWallet] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
 
