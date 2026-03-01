@@ -3,10 +3,15 @@ import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
 import { useAccount, useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
-import { markAuthAttemptStarted } from '../../lib/authAttempt';
+import { clearAuthAttempt, markAuthAttemptStarted } from '../../lib/authAttempt';
+
+type AuthMethod = 'google' | 'apple';
+type SignUpPhase = 'idle' | 'launching' | 'awaiting_auth';
+
+const AUTH_LAUNCH_TIMEOUT_MS = 8000;
 
 interface SignUpProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
@@ -48,13 +53,16 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
     }
   };
 
+  const isCreating = phase !== 'idle';
+  const disableAuthButtons = isCreating || isAuthModalOpen;
+
   if (isCreating) {
     return (
       <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-6">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
           className="mb-8"
         >
           <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl border border-white/20">
@@ -82,7 +90,7 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
 
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           className="w-8 h-8 border-4 border-white border-t-transparent rounded-full"
         />
       </div>
@@ -91,7 +99,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden relative">
-      {/* Background decorative elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
@@ -114,7 +121,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
       </div>
 
       <div className="flex-1 flex flex-col justify-between px-6 py-8 max-w-md mx-auto w-full relative z-10">
-        {/* Top section — Logo + Branding */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -141,7 +147,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
             Your all-in-one wallet for sending, saving, and growing your money.
           </motion.p>
 
-          {/* Trust badges */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -163,13 +168,11 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
           </motion.div>
         </motion.div>
 
-        {/* Bottom section — Auth buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -182,7 +185,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
           )}
 
           <div className="space-y-3 mb-6">
-            {/* Primary Sign Up Button — opens Para Modal */}
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
@@ -199,7 +201,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
               <span className="text-gray-700 font-semibold">Continue with Google</span>
             </motion.button>
 
-            {/* Apple */}
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
@@ -214,7 +215,6 @@ export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
             </motion.button>
           </div>
 
-          {/* Footer text */}
           <div className="text-center space-y-2 pb-2">
             <p className="text-xs text-blue-200/60">
               By continuing, you agree to our Terms of Service and Privacy Policy.
