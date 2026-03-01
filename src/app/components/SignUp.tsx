@@ -1,29 +1,100 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
-import { useModal } from '@getpara/react-sdk-lite';
+import { useAccount, useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
-import { markAuthAttemptStarted } from '../../lib/authAttempt';
+import { clearAuthAttempt, markAuthAttemptStarted } from '../../lib/authAttempt';
 
-interface SignUpProps {
-  onComplete: () => void;
-}
+type AuthMethod = 'google' | 'apple';
+type SignUpPhase = 'idle' | 'launching' | 'awaiting_auth';
 
-export default function SignUp({ onComplete }: SignUpProps) {
-  const [isCreating, setIsCreating] = useState(false);
+const AUTH_LAUNCH_TIMEOUT_MS = 8000;
+
+export default function SignUp() {
+  const [phase, setPhase] = useState<SignUpPhase>('idle');
+  const [selectedMethod, setSelectedMethod] = useState<AuthMethod | null>(null);
   const [error, setError] = useState('');
-  const { openModal } = useModal();
 
-  const handleSignUp = () => {
+  const { openModal, isOpen: isAuthModalOpen } = useModal();
+  const { isConnected, embedded } = useAccount();
+
+  const launchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const phaseRef = useRef<SignUpPhase>('idle');
+  phaseRef.current = phase;
+
+  const clearLaunchTimer = () => {
+    if (!launchTimerRef.current) return;
+    clearTimeout(launchTimerRef.current);
+    launchTimerRef.current = null;
+  };
+
+  const resetToIdle = (clearAttempt = false) => {
+    clearLaunchTimer();
+    setPhase('idle');
+    setSelectedMethod(null);
+    if (clearAttempt) {
+      clearAuthAttempt();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearLaunchTimer();
+    };
+  }, []);
+
+  // Once auth modal opens, transition out of launch state.
+  useEffect(() => {
+    if (isAuthModalOpen && phase === 'launching') {
+      clearLaunchTimer();
+      setPhase('awaiting_auth');
+    }
+  }, [isAuthModalOpen, phase]);
+
+  // If user closes modal before auth succeeds, recover cleanly.
+  useEffect(() => {
+    if (!isAuthModalOpen && phase === 'awaiting_auth' && !(embedded?.isConnected || isConnected)) {
+      resetToIdle(true);
+    }
+  }, [isAuthModalOpen, phase, embedded?.isConnected, isConnected]);
+
+  // Auth completed: clean up local transient state and let App route by auth state.
+  useEffect(() => {
+    if (embedded?.isConnected || isConnected) {
+      clearLaunchTimer();
+      setError('');
+      setPhase('awaiting_auth');
+    }
+  }, [embedded?.isConnected, isConnected]);
+
+  const handleSignUp = async (method: AuthMethod) => {
+    if (phase !== 'idle' || isAuthModalOpen) {
+      return;
+    }
+
     try {
       setError('');
+      setSelectedMethod(method);
+      setPhase('launching');
       markAuthAttemptStarted();
-      openModal();
+
+      launchTimerRef.current = setTimeout(() => {
+        if (phaseRef.current === 'launching') {
+          resetToIdle(true);
+          setError('Authentication took too long to open. Please try again.');
+        }
+      }, AUTH_LAUNCH_TIMEOUT_MS);
+
+      await openModal();
     } catch (err: any) {
       console.error('Auth error:', err);
+      resetToIdle(true);
       setError('Failed to open authentication. Please try again.');
     }
   };
+
+  const isCreating = phase !== 'idle';
+  const disableAuthButtons = isCreating || isAuthModalOpen;
 
   if (isCreating) {
     return (
@@ -31,7 +102,7 @@ export default function SignUp({ onComplete }: SignUpProps) {
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
           className="mb-8"
         >
           <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl border border-white/20">
@@ -54,12 +125,12 @@ export default function SignUp({ onComplete }: SignUpProps) {
           transition={{ delay: 0.3 }}
           className="text-blue-200 text-center mb-8"
         >
-          Setting up your secure digital wallet...
+          {selectedMethod === 'apple' ? 'Opening Apple sign in...' : 'Opening secure sign in...'}
         </motion.p>
 
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
           className="w-8 h-8 border-4 border-white border-t-transparent rounded-full"
         />
       </div>
@@ -68,7 +139,6 @@ export default function SignUp({ onComplete }: SignUpProps) {
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden relative">
-      {/* Background decorative elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
@@ -91,7 +161,6 @@ export default function SignUp({ onComplete }: SignUpProps) {
       </div>
 
       <div className="flex-1 flex flex-col justify-between px-6 py-8 max-w-md mx-auto w-full relative z-10">
-        {/* Top section — Logo + Branding */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +187,6 @@ export default function SignUp({ onComplete }: SignUpProps) {
             Your all-in-one wallet for sending, saving, and growing your money.
           </motion.p>
 
-          {/* Trust badges */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -140,13 +208,11 @@ export default function SignUp({ onComplete }: SignUpProps) {
           </motion.div>
         </motion.div>
 
-        {/* Bottom section — Auth buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -159,12 +225,12 @@ export default function SignUp({ onComplete }: SignUpProps) {
           )}
 
           <div className="space-y-3 mb-6">
-            {/* Primary Sign Up Button — opens Para Modal */}
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSignUp}
-              className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
+              onClick={() => handleSignUp('google')}
+              disabled={disableAuthButtons}
+              className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -175,12 +241,12 @@ export default function SignUp({ onComplete }: SignUpProps) {
               <span className="text-gray-700 font-semibold">Continue with Google</span>
             </motion.button>
 
-            {/* Apple */}
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSignUp}
-              className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 transition-all flex items-center justify-center gap-3"
+              onClick={() => handleSignUp('apple')}
+              disabled={disableAuthButtons}
+              className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -189,7 +255,6 @@ export default function SignUp({ onComplete }: SignUpProps) {
             </motion.button>
           </div>
 
-          {/* Footer text */}
           <div className="text-center space-y-2 pb-2">
             <p className="text-xs text-blue-200/60">
               By continuing, you agree to our Terms of Service and Privacy Policy.
