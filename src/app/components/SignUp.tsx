@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
 import { useAccount, useModal } from '@getpara/react-sdk-lite';
@@ -10,85 +10,41 @@ type SignUpPhase = 'idle' | 'launching' | 'awaiting_auth';
 
 const AUTH_LAUNCH_TIMEOUT_MS = 8000;
 
-export default function SignUp() {
-  const [phase, setPhase] = useState<SignUpPhase>('idle');
-  const [selectedMethod, setSelectedMethod] = useState<AuthMethod | null>(null);
+export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLaunchingAuth, setIsLaunchingAuth] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<'google' | 'apple' | null>(null);
   const [error, setError] = useState('');
-
   const { openModal, isOpen: isAuthModalOpen } = useModal();
   const { isConnected, embedded } = useAccount();
 
-  const launchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const phaseRef = useRef<SignUpPhase>('idle');
-  phaseRef.current = phase;
-
-  const clearLaunchTimer = () => {
-    if (!launchTimerRef.current) return;
-    clearTimeout(launchTimerRef.current);
-    launchTimerRef.current = null;
-  };
-
-  const resetToIdle = (clearAttempt = false) => {
-    clearLaunchTimer();
-    setPhase('idle');
-    setSelectedMethod(null);
-    if (clearAttempt) {
-      clearAuthAttempt();
-    }
-  };
-
+  // Keep the UI responsive if modal launch fails or user closes it without signing in.
   useEffect(() => {
-    return () => {
-      clearLaunchTimer();
-    };
-  }, []);
-
-  // Once auth modal opens, transition out of launch state.
-  useEffect(() => {
-    if (isAuthModalOpen && phase === 'launching') {
-      clearLaunchTimer();
-      setPhase('awaiting_auth');
+    if (!isAuthModalOpen && !(embedded?.isConnected || isConnected)) {
+      setIsCreating(false);
+      setIsLaunchingAuth(false);
+      setSelectedMethod(null);
     }
-  }, [isAuthModalOpen, phase]);
+  }, [isAuthModalOpen, embedded?.isConnected, isConnected]);
 
-  // If user closes modal before auth succeeds, recover cleanly.
-  useEffect(() => {
-    if (!isAuthModalOpen && phase === 'awaiting_auth' && !(embedded?.isConnected || isConnected)) {
-      resetToIdle(true);
-    }
-  }, [isAuthModalOpen, phase, embedded?.isConnected, isConnected]);
-
-  // Auth completed: clean up local transient state and let App route by auth state.
-  useEffect(() => {
-    if (embedded?.isConnected || isConnected) {
-      clearLaunchTimer();
-      setError('');
-      setPhase('awaiting_auth');
-    }
-  }, [embedded?.isConnected, isConnected]);
-
-  const handleSignUp = async (method: AuthMethod) => {
-    if (phase !== 'idle' || isAuthModalOpen) {
+  const handleSignUp = async (method: 'google' | 'apple') => {
+    if (isLaunchingAuth || isAuthModalOpen) {
       return;
     }
 
     try {
       setError('');
       setSelectedMethod(method);
-      setPhase('launching');
+      setIsLaunchingAuth(true);
+      setIsCreating(true);
       markAuthAttemptStarted();
-
-      launchTimerRef.current = setTimeout(() => {
-        if (phaseRef.current === 'launching') {
-          resetToIdle(true);
-          setError('Authentication took too long to open. Please try again.');
-        }
-      }, AUTH_LAUNCH_TIMEOUT_MS);
-
       await openModal();
+      setIsLaunchingAuth(false);
     } catch (err: any) {
       console.error('Auth error:', err);
-      resetToIdle(true);
+      setIsCreating(false);
+      setIsLaunchingAuth(false);
+      setSelectedMethod(null);
       setError('Failed to open authentication. Please try again.');
     }
   };
@@ -229,7 +185,7 @@ export default function SignUp() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSignUp('google')}
-              disabled={disableAuthButtons}
+              disabled={isCreating || isLaunchingAuth || isAuthModalOpen}
               className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -245,7 +201,7 @@ export default function SignUp() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSignUp('apple')}
-              disabled={disableAuthButtons}
+              disabled={isCreating || isLaunchingAuth || isAuthModalOpen}
               className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
