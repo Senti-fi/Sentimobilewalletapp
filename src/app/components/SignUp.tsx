@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
-import { useModal } from '@getpara/react-sdk-lite';
+import { useAccount, useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
 import { markAuthAttemptStarted } from '../../lib/authAttempt';
 
@@ -9,18 +9,41 @@ interface SignUpProps {
   onComplete: () => void;
 }
 
-export default function SignUp({ onComplete }: SignUpProps) {
+export default function SignUp({ onComplete: _onComplete }: SignUpProps) {
   const [isCreating, setIsCreating] = useState(false);
+  const [isLaunchingAuth, setIsLaunchingAuth] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<'google' | 'apple' | null>(null);
   const [error, setError] = useState('');
-  const { openModal } = useModal();
+  const { openModal, isOpen: isAuthModalOpen } = useModal();
+  const { isConnected, embedded } = useAccount();
 
-  const handleSignUp = () => {
+  // Keep the UI responsive if modal launch fails or user closes it without signing in.
+  useEffect(() => {
+    if (!isAuthModalOpen && !(embedded?.isConnected || isConnected)) {
+      setIsCreating(false);
+      setIsLaunchingAuth(false);
+      setSelectedMethod(null);
+    }
+  }, [isAuthModalOpen, embedded?.isConnected, isConnected]);
+
+  const handleSignUp = async (method: 'google' | 'apple') => {
+    if (isLaunchingAuth || isAuthModalOpen) {
+      return;
+    }
+
     try {
       setError('');
+      setSelectedMethod(method);
+      setIsLaunchingAuth(true);
+      setIsCreating(true);
       markAuthAttemptStarted();
-      openModal();
+      await openModal();
+      setIsLaunchingAuth(false);
     } catch (err: any) {
       console.error('Auth error:', err);
+      setIsCreating(false);
+      setIsLaunchingAuth(false);
+      setSelectedMethod(null);
       setError('Failed to open authentication. Please try again.');
     }
   };
@@ -54,7 +77,7 @@ export default function SignUp({ onComplete }: SignUpProps) {
           transition={{ delay: 0.3 }}
           className="text-blue-200 text-center mb-8"
         >
-          Setting up your secure digital wallet...
+          {selectedMethod === 'apple' ? 'Opening Apple sign in...' : 'Opening secure sign in...'}
         </motion.p>
 
         <motion.div
@@ -163,8 +186,9 @@ export default function SignUp({ onComplete }: SignUpProps) {
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSignUp}
-              className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
+              onClick={() => handleSignUp('google')}
+              disabled={isCreating || isLaunchingAuth || isAuthModalOpen}
+              className="w-full py-4 bg-white rounded-2xl hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-lg shadow-black/10"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -179,8 +203,9 @@ export default function SignUp({ onComplete }: SignUpProps) {
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleSignUp}
-              className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 transition-all flex items-center justify-center gap-3"
+              onClick={() => handleSignUp('apple')}
+              disabled={isCreating || isLaunchingAuth || isAuthModalOpen}
+              className="w-full py-4 bg-white/10 backdrop-blur-sm text-white rounded-2xl border border-white/20 hover:bg-white/15 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
