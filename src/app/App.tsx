@@ -146,7 +146,7 @@ function AppContent() {
   }, [isAccountLoading]);
 
   // Check Supabase for existing user profile – runs once per auth user ID
-  const checkUserProfile = useCallback(async (authUserId: string, email: string, imageUrl: string) => {
+  const checkUserProfile = useCallback(async (authUserId: string, email: string, imageUrl: string, liveWalletAddress: string) => {
     if (profileCheckRef.current === authUserId) return;
     profileCheckRef.current = authUserId;
 
@@ -157,8 +157,19 @@ function AppContent() {
       if (existingUser) {
         restoreProfileToLocalStorage(existingUser, authUserId);
 
-        if (existingUser.email !== email || existingUser.image_url !== imageUrl) {
-          userService.updateUser(authUserId, { email, image_url: imageUrl }).catch(() => {});
+        const updates: Partial<{ email: string; image_url: string; wallet_address: string }> = {};
+        if (existingUser.email !== email) {
+          updates.email = email;
+        }
+        if (existingUser.image_url !== imageUrl) {
+          updates.image_url = imageUrl;
+        }
+        if (!existingUser.wallet_address && liveWalletAddress) {
+          updates.wallet_address = liveWalletAddress;
+        }
+
+        if (Object.keys(updates).length > 0) {
+          userService.updateUser(authUserId, updates).catch(() => {});
         }
 
         setAppState('dashboard');
@@ -166,9 +177,9 @@ function AppContent() {
       }
 
       // ── 1b. Fallback: find by email (handles auth provider migration) ──
-      // When migrating from Clerk/Supabase Auth → Para, the user gets a new
-      // Para userId but their email stays the same. Find them by email and
-      // update their auth_user_id to the new Para ID.
+      // During auth-provider migrations, users may receive a new
+      // Para userId while keeping the same email. Find by email and
+      // re-link auth_user_id to the current Para ID.
       if (email) {
         const emailUser = await userService.getUserByEmail(email);
         if (emailUser) {
@@ -195,8 +206,19 @@ function AppContent() {
           if (migrated) {
             restoreProfileToLocalStorage(migrated, authUserId);
 
-            if (migrated.email !== email || migrated.image_url !== imageUrl) {
-              userService.updateUser(authUserId, { email, image_url: imageUrl }).catch(() => {});
+            const updates: Partial<{ email: string; image_url: string; wallet_address: string }> = {};
+            if (migrated.email !== email) {
+              updates.email = email;
+            }
+            if (migrated.image_url !== imageUrl) {
+              updates.image_url = imageUrl;
+            }
+            if (!migrated.wallet_address && liveWalletAddress) {
+              updates.wallet_address = liveWalletAddress;
+            }
+
+            if (Object.keys(updates).length > 0) {
+              userService.updateUser(authUserId, updates).catch(() => {});
             }
 
             setAppState('dashboard');
@@ -358,7 +380,8 @@ function AppContent() {
       clearAuthAttempt();
 
       // Check Supabase for existing user – ref guard prevents duplicate calls
-      checkUserProfile(authUserId, email, imageUrl);
+      const userWalletAddress = walletAddress || localStorage.getItem('senti_wallet_address') || '';
+      checkUserProfile(authUserId, email, imageUrl, userWalletAddress);
       return;
     }
 
@@ -411,6 +434,17 @@ function AppContent() {
       setAppState('onboarding');
     }
   }, [isLoaded, isConnected, isAccountLoading, embedded?.isConnected, paraUserId, paraEmail, walletAddress, isCallbackRoute, isAuthModalOpen, checkUserProfile]);
+
+  // Backfill missing wallet addresses for already-created profiles.
+  useEffect(() => {
+    if (!embedded?.isConnected || !paraUserId || !walletAddress) {
+      return;
+    }
+
+    userService.updateUser(paraUserId, { wallet_address: walletAddress }).catch(() => {});
+    localStorage.setItem('senti_wallet_address', walletAddress);
+    localStorage.setItem(`senti_wallet_address_${paraUserId}`, walletAddress);
+  }, [embedded?.isConnected, paraUserId, walletAddress]);
 
   // Safety net: stuck in 'loading' for more than 15s
   useEffect(() => {
