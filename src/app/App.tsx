@@ -379,6 +379,15 @@ function AppContent() {
       localStorage.setItem('senti_onboarding_completed', 'true');
       clearAuthAttempt();
 
+      // Optimistic restore for returning users to avoid perceived auth lag.
+      const cachedUsername = localStorage.getItem(`senti_username_${authUserId}`) || localStorage.getItem('senti_username');
+      const cachedHandle = localStorage.getItem(`senti_user_handle_${authUserId}`) || localStorage.getItem('senti_user_handle');
+      if (cachedUsername && cachedHandle && appStateRef.current !== 'dashboard') {
+        localStorage.setItem('senti_username', cachedUsername);
+        localStorage.setItem('senti_user_handle', cachedHandle);
+        setAppState('dashboard');
+      }
+
       // Check Supabase for existing user – ref guard prevents duplicate calls
       const userWalletAddress = walletAddress || localStorage.getItem('senti_wallet_address') || '';
       checkUserProfile(authUserId, email, imageUrl, userWalletAddress);
