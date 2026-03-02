@@ -51,7 +51,6 @@ import {
 } from 'react';
 import { useAccount, useWallet } from '@getpara/react-sdk-lite';
 import { userService, type UserProfile } from '../services/supabase';
-import { referralService } from '../services/referralService';
 
 // ─── Public types ─────────────────────────────────────────────────────
 
@@ -492,9 +491,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           imageUrl,
         });
 
-        if (referralCode) {
-          referralService.applyReferralCode(referralCode, authId).catch(() => {});
-        }
       } catch (err: any) {
         if (err?.message === 'USERNAME_TAKEN') {
           console.error('Username was taken during final creation');

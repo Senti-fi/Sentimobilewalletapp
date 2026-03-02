@@ -3,6 +3,9 @@
 
 import { supabase } from './supabase';
 
+const POINTS_PER_REFERRAL = 50;
+const MAX_CODE_RETRIES = 3;
+
 export interface Referral {
   id: string;
   referrer_id: string;
@@ -14,11 +17,11 @@ export interface Referral {
 
 /**
  * Generate a short, unique referral code from the user's handle.
- * Format: SENTI-{first4ofUsername}-{random4}
+ * Format: SENTI-{first4ofUsername}-{random6}
  */
 function generateReferralCode(username: string): string {
   const prefix = username.slice(0, 4).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `SENTI-${prefix}-${random}`;
 }
 
@@ -26,6 +29,7 @@ export const referralService = {
   /**
    * Get or create a referral code for the current user.
    * Stores the code on the user's profile in Supabase.
+   * Retries on collision with the UNIQUE constraint.
    */
   async getOrCreateReferralCode(authUserId: string, username: string): Promise<string | null> {
     try {
@@ -40,20 +44,31 @@ export const referralService = {
         return user.referral_code;
       }
 
-      // Generate a new one
-      const code = generateReferralCode(username);
+      // Generate a new one with retry on collision
+      for (let attempt = 0; attempt < MAX_CODE_RETRIES; attempt++) {
+        const code = generateReferralCode(username);
 
-      const { error } = await supabase
-        .from('users')
-        .update({ referral_code: code })
-        .eq('auth_user_id', authUserId);
+        const { error } = await supabase
+          .from('users')
+          .update({ referral_code: code })
+          .eq('auth_user_id', authUserId);
 
-      if (error) {
+        if (!error) {
+          return code;
+        }
+
+        // If it's a unique constraint violation, retry with a new code
+        if (error.code === '23505') {
+          console.warn(`Referral code collision (attempt ${attempt + 1}), retrying...`);
+          continue;
+        }
+
         console.error('Error saving referral code:', error);
         return null;
       }
 
-      return code;
+      console.error('Failed to generate unique referral code after retries');
+      return null;
     } catch (err) {
       console.error('Failed to get/create referral code:', err);
       return null;
@@ -62,7 +77,7 @@ export const referralService = {
 
   /**
    * Apply a referral code during sign-up.
-   * Links the new user to the referrer.
+   * Links the new user to the referrer and awards points to both parties.
    */
   async applyReferralCode(referralCode: string, newUserAuthId: string): Promise<boolean> {
     try {
@@ -94,19 +109,37 @@ export const referralService = {
       }
 
       // Create the referral record
-      const { error } = await supabase
+      const { data: referral, error } = await supabase
         .from('referrals')
         .insert({
           referrer_id: referrer.auth_user_id,
           referred_id: newUserAuthId,
           referral_code: referralCode.toUpperCase(),
           status: 'completed',
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Error creating referral:', error);
         return false;
       }
+
+      // Award points to both referrer and referred user
+      await Promise.allSettled([
+        supabase.from('referral_points').insert({
+          auth_user_id: referrer.auth_user_id,
+          referral_id: referral.id,
+          points: POINTS_PER_REFERRAL,
+          reason: 'referral_bonus',
+        }),
+        supabase.from('referral_points').insert({
+          auth_user_id: newUserAuthId,
+          referral_id: referral.id,
+          points: POINTS_PER_REFERRAL,
+          reason: 'referred_signup_bonus',
+        }),
+      ]);
 
       return true;
     } catch (err) {
@@ -156,6 +189,28 @@ export const referralService = {
       return count || 0;
     } catch (err) {
       console.error('Failed to count referrals:', err);
+      return 0;
+    }
+  },
+
+  /**
+   * Get total points earned by a user from referrals.
+   */
+  async getUserPoints(authUserId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('referral_points')
+        .select('points')
+        .eq('auth_user_id', authUserId);
+
+      if (error) {
+        console.error('Error fetching user points:', error);
+        return 0;
+      }
+
+      return (data || []).reduce((sum, row) => sum + row.points, 0);
+    } catch (err) {
+      console.error('Failed to fetch user points:', err);
       return 0;
     }
   },

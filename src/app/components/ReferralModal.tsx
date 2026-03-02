@@ -10,6 +10,7 @@ interface ReferralModalProps {
 export default function ReferralModal({ onClose }: ReferralModalProps) {
   const [referralCode, setReferralCode] = useState('');
   const [referralCount, setReferralCount] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -23,13 +24,15 @@ export default function ReferralModal({ onClose }: ReferralModalProps) {
         return;
       }
 
-      const [code, count] = await Promise.all([
+      const [code, count, points] = await Promise.all([
         referralService.getOrCreateReferralCode(authUserId, username),
         referralService.getReferralCount(authUserId),
+        referralService.getUserPoints(authUserId),
       ]);
 
       if (code) setReferralCode(code);
       setReferralCount(count);
+      setTotalPoints(points);
       setLoading(false);
     }
 
@@ -107,7 +110,7 @@ export default function ReferralModal({ onClose }: ReferralModalProps) {
                 </div>
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 text-center border border-green-100">
                   <Gift className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-gray-900">{referralCount * 50}</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalPoints}</p>
                   <p className="text-xs text-gray-600">Points Earned</p>
                 </div>
               </div>
