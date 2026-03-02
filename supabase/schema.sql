@@ -117,8 +117,8 @@ CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
 
 CREATE TABLE IF NOT EXISTS referrals (
   id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-  referrer_id     TEXT        NOT NULL REFERENCES users(auth_user_id) ON DELETE CASCADE,
-  referred_id     TEXT        NOT NULL REFERENCES users(auth_user_id) ON DELETE CASCADE,
+  referrer_id     TEXT        NOT NULL,
+  referred_id     TEXT        NOT NULL,
   referral_code   TEXT        NOT NULL,          -- the code used
   status          TEXT        DEFAULT 'completed', -- completed, pending, rewarded
   created_at      TIMESTAMPTZ DEFAULT NOW()
@@ -126,6 +126,27 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_id);
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
+
+-- Add FK constraints (safe for both new and existing tables)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_referrals_referrer' AND table_name = 'referrals'
+  ) THEN
+    ALTER TABLE referrals
+      ADD CONSTRAINT fk_referrals_referrer
+      FOREIGN KEY (referrer_id) REFERENCES users(auth_user_id) ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_referrals_referred' AND table_name = 'referrals'
+  ) THEN
+    ALTER TABLE referrals
+      ADD CONSTRAINT fk_referrals_referred
+      FOREIGN KEY (referred_id) REFERENCES users(auth_user_id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- RLS
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;

@@ -126,20 +126,31 @@ export const referralService = {
       }
 
       // Award points to both referrer and referred user
-      await Promise.allSettled([
-        supabase.from('referral_points').insert({
+      const { error: referrerPointsErr } = await supabase
+        .from('referral_points')
+        .insert({
           auth_user_id: referrer.auth_user_id,
           referral_id: referral.id,
           points: POINTS_PER_REFERRAL,
           reason: 'referral_bonus',
-        }),
-        supabase.from('referral_points').insert({
+        });
+
+      if (referrerPointsErr) {
+        console.error('Failed to award referrer points:', referrerPointsErr);
+      }
+
+      const { error: referredPointsErr } = await supabase
+        .from('referral_points')
+        .insert({
           auth_user_id: newUserAuthId,
           referral_id: referral.id,
           points: POINTS_PER_REFERRAL,
           reason: 'referred_signup_bonus',
-        }),
-      ]);
+        });
+
+      if (referredPointsErr) {
+        console.error('Failed to award referred user points:', referredPointsErr);
+      }
 
       return true;
     } catch (err) {
