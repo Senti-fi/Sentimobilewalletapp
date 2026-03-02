@@ -65,6 +65,12 @@ interface Asset {
   icon: string;
 }
 
+const assetIcons: Record<string, string> = {
+  USDC: '/tokens-usdc.svg',
+  USDT: '/tokens-usdt.svg',
+  SOL: '/tokens-sol.svg',
+};
+
 const mockAssets: Asset[] = [
   {
     id: '1',
@@ -76,7 +82,7 @@ const mockAssets: Asset[] = [
     changePercent: 0,
     color: 'bg-blue-500',
     gradient: 'from-blue-500 via-blue-600 to-indigo-600',
-    icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+    icon: assetIcons.USDC,
   },
   {
     id: '2',
@@ -88,7 +94,7 @@ const mockAssets: Asset[] = [
     changePercent: 0,
     color: 'bg-white',
     gradient: 'from-teal-400 via-teal-500 to-cyan-500',
-    icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
+    icon: assetIcons.USDT,
   },
   {
     id: '3',
@@ -100,7 +106,7 @@ const mockAssets: Asset[] = [
     changePercent: 2.40,
     color: 'bg-black',
     gradient: 'from-purple-600 via-purple-700 to-indigo-900',
-    icon: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+    icon: assetIcons.SOL,
   },
 ];
 
@@ -124,6 +130,12 @@ export default function Dashboard() {
           return parsed.map(t => ({
             ...t,
             icon: getIconFromName(t.icon)
+          })) as T;
+        }
+        if (key === 'senti_assets' && Array.isArray(parsed)) {
+          return parsed.map((asset: Asset) => ({
+            ...asset,
+            icon: assetIcons[asset.symbol] || asset.icon,
           })) as T;
         }
         return parsed;
