@@ -66,9 +66,9 @@ interface Asset {
 }
 
 const assetIcons: Record<string, string> = {
-  USDC: '/tokens-usdc.svg',
-  USDT: '/tokens-usdt.svg',
-  SOL: '/tokens-sol.svg',
+  USDC: '/tokens/usdc.png',
+  USDT: '/tokens/usdt.png',
+  SOL: '/tokens/sol.png',
 };
 
 const mockAssets: Asset[] = [
