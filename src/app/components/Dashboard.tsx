@@ -76,7 +76,7 @@ const mockAssets: Asset[] = [
     changePercent: 0,
     color: 'bg-blue-500',
     gradient: 'from-blue-500 via-blue-600 to-indigo-600',
-    icon: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+    icon: '/tokens/usdc.svg',
   },
   {
     id: '2',
@@ -88,7 +88,7 @@ const mockAssets: Asset[] = [
     changePercent: 0,
     color: 'bg-white',
     gradient: 'from-teal-400 via-teal-500 to-cyan-500',
-    icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
+    icon: '/tokens/usdt.svg',
   },
   {
     id: '3',
@@ -100,7 +100,7 @@ const mockAssets: Asset[] = [
     changePercent: 2.40,
     color: 'bg-black',
     gradient: 'from-purple-600 via-purple-700 to-indigo-900',
-    icon: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+    icon: '/tokens/sol.svg',
   },
 ];
 
