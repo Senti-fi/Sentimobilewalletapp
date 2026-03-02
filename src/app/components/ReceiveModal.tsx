@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
+import { useAccount, useWallet } from '@getpara/react-sdk-lite';
 
 interface ReceiveModalProps {
   onClose: () => void;
@@ -68,7 +69,15 @@ function generateQRPattern(address: string): boolean[][] {
 
 export default function ReceiveModal({ onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const walletAddress = localStorage.getItem('senti_wallet_address') || '';
+  const { embedded } = useAccount();
+  const wallet = useWallet();
+
+  const authUserId = embedded?.userId || wallet?.userId || wallet?.id || '';
+  const walletAddress =
+    wallet?.address ||
+    (authUserId ? localStorage.getItem(`senti_wallet_address_${authUserId}`) : null) ||
+    localStorage.getItem('senti_wallet_address') ||
+    '';
 
   // Generate QR pattern once based on address
   const qrPattern = useMemo(() => generateQRPattern(walletAddress), [walletAddress]);
