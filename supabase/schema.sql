@@ -117,8 +117,8 @@ CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
 
 CREATE TABLE IF NOT EXISTS referrals (
   id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-  referrer_id     TEXT        NOT NULL,          -- auth_user_id of the person who shared
-  referred_id     TEXT        NOT NULL,          -- auth_user_id of the person who signed up
+  referrer_id     TEXT        NOT NULL REFERENCES users(auth_user_id) ON DELETE CASCADE,
+  referred_id     TEXT        NOT NULL REFERENCES users(auth_user_id) ON DELETE CASCADE,
   referral_code   TEXT        NOT NULL,          -- the code used
   status          TEXT        DEFAULT 'completed', -- completed, pending, rewarded
   created_at      TIMESTAMPTZ DEFAULT NOW()
@@ -138,4 +138,45 @@ CREATE POLICY "Referrals are viewable by everyone"
 DROP POLICY IF EXISTS "Users can create referrals" ON referrals;
 CREATE POLICY "Users can create referrals"
   ON referrals FOR INSERT
+  WITH CHECK (
+    referred_id IN (
+      SELECT auth_user_id FROM users
+    )
+    AND referrer_id IN (
+      SELECT auth_user_id FROM users
+    )
+    AND referrer_id <> referred_id
+  );
+
+DROP POLICY IF EXISTS "Users can update their own referrals" ON referrals;
+CREATE POLICY "Users can update their own referrals"
+  ON referrals FOR UPDATE
+  USING (true)
+  WITH CHECK (status IN ('completed', 'pending', 'rewarded'));
+
+-- ============================================================================
+-- Referral Points Ledger — Track points earned from referrals
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS referral_points (
+  id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  auth_user_id    TEXT        NOT NULL REFERENCES users(auth_user_id) ON DELETE CASCADE,
+  referral_id     UUID        REFERENCES referrals(id) ON DELETE SET NULL,
+  points          INTEGER     NOT NULL DEFAULT 0,
+  reason          TEXT        NOT NULL,           -- e.g. 'referral_bonus', 'referred_signup_bonus'
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_referral_points_user ON referral_points(auth_user_id);
+
+ALTER TABLE referral_points ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own points" ON referral_points;
+CREATE POLICY "Users can view their own points"
+  ON referral_points FOR SELECT
+  USING (true);
+
+DROP POLICY IF EXISTS "System can insert points" ON referral_points;
+CREATE POLICY "System can insert points"
+  ON referral_points FOR INSERT
   WITH CHECK (true);
