@@ -494,10 +494,6 @@ function AppContent() {
     setAppState('signup');
   };
 
-  const handleSignUpComplete = () => {
-    setAppState('dashboard');
-  };
-
   const handleSSOComplete = () => {
     window.history.replaceState({}, '', '/');
   };
@@ -562,7 +558,7 @@ function AppContent() {
         <SSOCallback onComplete={handleSSOComplete} />
       )}
       {appState === 'signup' && (
-        <SignUp onComplete={handleSignUpComplete} />
+        <SignUp />
       )}
       {appState === 'username-setup' && (
         <UsernameSetup onComplete={handleUsernameComplete} userImage={userImage} />
