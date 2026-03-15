@@ -30,6 +30,7 @@ import SavingsPage from './SavingsPage';
 import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
 import PortfolioAnalyticsPage from './PortfolioAnalyticsPage';
+import NetWorthCard from './ui/NetWorthCard';
 import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
@@ -699,63 +700,12 @@ export default function Dashboard() {
             </div>
 
             {/* Net Worth card */}
-            <div
-              className="mx-6 mb-5 overflow-hidden relative"
-              style={{ backgroundColor: '#007bff', borderRadius: '20px' }}
-            >
-              {/* Wave decoration */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ borderRadius: '20px' }}>
-                <div
-                  className="absolute"
-                  style={{ top: '-10%', left: 0, width: '88%', height: '135%', borderRadius: '50%', background: 'rgba(255,255,255,0.09)' }}
-                />
-                <div
-                  className="absolute"
-                  style={{ top: '-10%', left: '87%', width: '100%', height: '135%', borderRadius: '50%', background: 'rgba(255,255,255,0.09)' }}
-                />
-              </div>
-              <div className="relative" style={{ padding: '20px 20px 16px' }}>
-                <p className="text-white text-xs font-normal leading-4 mb-2">Net Worth</p>
-                <p className="text-white font-bold tracking-tight mb-1" style={{ fontSize: '32px', lineHeight: '36px' }}>
-                  {balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
-                </p>
-                <div className="flex items-center gap-1 mb-4">
-                  <span className="text-white font-semibold" style={{ fontSize: '11px' }}>Today's Earnings</span>
-                  <span className="font-semibold" style={{ fontSize: '11px', color: '#32fc65' }}>+$146.30 (+ 2.4%)</span>
-                </div>
-                {/* Dots */}
-                <div className="flex items-center justify-center gap-1 mb-3">
-                  <div style={{ width: '12px', height: '4px', borderRadius: '9999px', background: '#2c14dd' }} />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
-                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
-                </div>
-                {/* Actions */}
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setOpenModal('swap')}
-                    className="flex items-center gap-1.5 text-white text-xs"
-                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
-                  >
-                    <Plus className="w-4 h-4" strokeWidth={2} /> Deposit
-                  </button>
-                  <button
-                    onClick={() => setOpenModal('send')}
-                    className="flex items-center gap-1.5 text-white text-xs"
-                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
-                  >
-                    <ArrowUpFromLine className="w-4 h-4" strokeWidth={2} /> Send
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('wallet')}
-                    className="flex items-center gap-1.5 text-white text-xs"
-                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
-                  >
-                    <Send className="w-4 h-4" strokeWidth={2} /> Transfer
-                  </button>
-                </div>
-              </div>
-            </div>
+            <NetWorthCard
+              balance={balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
+              onDeposit={() => setOpenModal('swap')}
+              onSend={() => setOpenModal('send')}
+              onTransfer={() => setActiveTab('wallet')}
+            />
 
             {/* Savings goal cards – horizontal scroll */}
             <div className="mb-4">
