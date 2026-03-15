@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Logo from './Logo';
+import AuthFlowHeader from './AuthFlowHeader';
 import { ChevronRight, Send, TrendingUp, Zap, CreditCard, Check, Wifi, Battery, Signal } from 'lucide-react';
 
 interface OnboardingProps {
@@ -795,14 +796,21 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   return (
     <div className="size-full flex flex-col bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 overflow-hidden">
-      {/* Skip button */}
-      <div className="flex justify-end px-5 pt-4 pb-2 z-10 flex-shrink-0">
-        <button
-          onClick={handleSkip}
-          className="text-white/70 text-sm hover:text-white transition-colors px-2 py-1"
-        >
-          Skip
-        </button>
+      <div className="px-5 pt-4 pb-2 z-10 flex-shrink-0">
+        <AuthFlowHeader
+          step={1}
+          totalSteps={3}
+          title="Learn Senti"
+          subtitle="Quick walkthrough before you create your wallet"
+          rightSlot={
+            <button
+              onClick={handleSkip}
+              className="text-white/70 text-sm hover:text-white transition-colors px-2 py-1"
+            >
+              Skip
+            </button>
+          }
+        />
       </div>
 
       {/* Content */}

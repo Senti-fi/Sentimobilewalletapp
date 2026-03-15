@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { User, AlertCircle, Shield, Zap, Globe } from 'lucide-react';
 import { useAccount, useModal } from '@getpara/react-sdk-lite';
 import Logo from './Logo';
+import AuthFlowHeader from './AuthFlowHeader';
 import { markAuthAttemptStarted } from '../../lib/authAttempt';
 
 interface SignUpProps {
@@ -61,6 +62,14 @@ export default function SignUp({ onComplete }: SignUpProps) {
   if (isCreating) {
     return (
       <div className="size-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-6">
+        <div className="w-full max-w-md absolute top-6 left-1/2 -translate-x-1/2 px-6">
+          <AuthFlowHeader
+            step={2}
+            totalSteps={3}
+            title="Create your wallet"
+            subtitle="Secure login to initialize your Senti account"
+          />
+        </div>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -124,6 +133,12 @@ export default function SignUp({ onComplete }: SignUpProps) {
       </div>
 
       <div className="flex-1 flex flex-col justify-between px-6 py-8 max-w-md mx-auto w-full relative z-10">
+        <AuthFlowHeader
+          step={2}
+          totalSteps={3}
+          title="Connect your account"
+          subtitle="Choose a sign in method to continue"
+        />
         {/* Top section — Logo + Branding */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
