@@ -18,9 +18,11 @@ if (!isSupabaseConfigured) {
 }
 
 // Create Supabase client
+// Uses actual credentials when configured, otherwise creates a non-functional client
+// that will fail gracefully (all service methods already handle errors)
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  supabaseUrl || 'https://not-configured.supabase.co',
+  supabaseAnonKey || 'not-configured'
 );
 
 // User profile interface
@@ -260,7 +262,10 @@ export const userService = {
    */
   async searchUsers(query: string, currentAuthId?: string, limit: number = 20): Promise<UserProfile[]> {
     try {
-      const searchTerm = query.toLowerCase().replace('@', '').replace('.senti', '');
+      const searchTerm = query.toLowerCase().replace('@', '').replace('.senti', '')
+        .replace(/[%_\\]/g, ''); // Escape SQL LIKE wildcards to prevent filter injection
+
+      if (!searchTerm || searchTerm.length < 1) return [];
 
       let q = supabase
         .from('users')

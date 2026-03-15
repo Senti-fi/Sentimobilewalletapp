@@ -13,7 +13,7 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ParaProvider
       paraClientConfig={{
-        env: Environment.BETA,
+        env: import.meta.env.PROD ? Environment.PRODUCTION : Environment.BETA,
         apiKey: PARA_API_KEY,
       }}
       config={{
@@ -27,7 +27,7 @@ createRoot(document.getElementById("root")!).render(
         disablePhoneLogin: true,
         authLayout: ["AUTH:FULL"],
         recoverySecretStepEnabled: true,
-        onRampTestMode: true,
+        onRampTestMode: !import.meta.env.PROD,
       }}
     >
       <App />

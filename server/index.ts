@@ -3,6 +3,7 @@ import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 
@@ -83,10 +84,12 @@ app.post('/api/chat', async (req, res) => {
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 512,
       system: systemPrompt,
-      messages: messages.map((msg: any) => ({
-        role: msg.type === 'user' ? 'user' : 'assistant',
-        content: msg.text,
-      })),
+      messages: messages
+        .filter((msg: any) => msg && typeof msg.text === 'string' && msg.text.trim())
+        .map((msg: any) => ({
+          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+          content: msg.text,
+        })),
     });
 
     // Stream tokens to client
@@ -242,12 +245,9 @@ function deriveUsername(clerkUser: any): string {
   return base;
 }
 
-/** Generate a hex wallet address (40 hex chars). */
+/** Generate a hex wallet address (40 hex chars) using cryptographic randomness. */
 function generateWalletAddress(): string {
-  const hex = '0123456789abcdef';
-  let addr = '0x';
-  for (let i = 0; i < 40; i++) addr += hex[Math.floor(Math.random() * 16)];
-  return addr;
+  return '0x' + crypto.randomBytes(20).toString('hex');
 }
 
 app.post('/api/migrate-clerk-users', async (req, res) => {

@@ -71,6 +71,11 @@ export class LucyService {
 
     this.abortController = new AbortController();
 
+    if (!API_URL) {
+      onError(new Error('Lucy AI is not configured. Set VITE_LUCY_API_URL.'));
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
@@ -98,7 +103,8 @@ export class LucyService {
         throw new Error('No response body');
       }
 
-      // Read the stream
+      // Read the stream, buffering incomplete SSE lines across chunks
+      let buffer = '';
       while (true) {
         const { done, value } = await reader.read();
 
@@ -107,9 +113,11 @@ export class LucyService {
           break;
         }
 
-        // Decode and process SSE data
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        // Decode and process SSE data, buffering incomplete lines
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // Keep the last (potentially incomplete) line in the buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {

@@ -250,22 +250,22 @@ export const adminSyncService = {
   },
 
   /**
-   * Generate a placeholder Clerk ID for migrated users
+   * Generate a placeholder Clerk ID for migrated users using crypto-random suffix.
    */
   generateMigrationClerkId(handle: string): string {
-    return `migrated_${handle.replace('@', '').replace('.', '_')}_${Date.now()}`;
+    const array = new Uint8Array(8);
+    globalThis.crypto.getRandomValues(array);
+    const suffix = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    return `migrated_${handle.replace('@', '').replace('.', '_')}_${suffix}`;
   },
 
   /**
-   * Generate a wallet address if not available
+   * Generate a wallet address if not available, using cryptographic randomness.
    */
   generateWalletAddress(): string {
-    const hexChars = '0123456789abcdef';
-    let address = '0x';
-    for (let i = 0; i < 40; i++) {
-      address += hexChars[Math.floor(Math.random() * 16)];
-    }
-    return address;
+    const array = new Uint8Array(20);
+    globalThis.crypto.getRandomValues(array);
+    return '0x' + Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
   },
 
   /**

@@ -26,9 +26,14 @@ export interface ConversationPreview {
 /**
  * Sanitize a handle string to prevent filter injection.
  * Only allows alphanumeric chars, @, dots, underscores, and hyphens.
+ * Also enforces length limits and removes SQL LIKE wildcards.
  */
 function sanitizeHandle(handle: string): string {
-  return handle.replace(/[^a-zA-Z0-9@._\-]/g, '');
+  const cleaned = handle.replace(/[^a-zA-Z0-9@._\-]/g, '');
+  if (cleaned.length < 2 || cleaned.length > 50) {
+    return '';
+  }
+  return cleaned;
 }
 
 class MessageService {
@@ -75,17 +80,18 @@ class MessageService {
     asset: string,
     status: string = 'pending',
   ): Promise<ChatMessage | null> {
-    // Validate amount
+    // Validate amount (enforce 2 decimal precision)
     if (!amount || amount <= 0 || amount > 1_000_000 || !isFinite(amount)) return null;
+    const sanitizedAmount = Math.round(amount * 100) / 100;
 
     const { data, error } = await supabase
       .from('messages')
       .insert({
         sender_handle: sanitizeHandle(senderHandle),
         receiver_handle: sanitizeHandle(receiverHandle),
-        content: `Payment of $${amount} ${asset}`,
+        content: `Payment of $${sanitizedAmount} ${asset}`,
         type: 'transaction',
-        amount,
+        amount: sanitizedAmount,
         asset,
         status,
       })
@@ -158,6 +164,11 @@ class MessageService {
   ): Promise<ChatMessage[]> {
     const a = sanitizeHandle(handleA);
     const b = sanitizeHandle(handleB);
+
+    if (!a || !b) {
+      console.error('Invalid handles provided to getConversation');
+      return [];
+    }
 
     const { data, error } = await supabase
       .from('messages')

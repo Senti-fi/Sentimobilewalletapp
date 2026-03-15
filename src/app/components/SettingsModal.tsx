@@ -6,9 +6,20 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
+  // Load actual user info from localStorage
+  const authUserId = localStorage.getItem('senti_auth_user_id') || '';
+  const displayName = localStorage.getItem(`senti_username_${authUserId}`) || localStorage.getItem('senti_username') || 'Senti User';
+  const userEmail = localStorage.getItem('senti_user_email') || '';
+
   const handleReset = () => {
-    if (confirm('Are you sure you want to reset the app? This will clear all data and show the onboarding again.')) {
-      localStorage.clear();
+    if (confirm('Are you sure you want to reset the app? This will clear all local app data (balances, settings, chat history). Your wallet keys are managed by Para and will not be affected.')) {
+      // Only clear senti-specific keys, preserving auth and third-party data
+      const allKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('senti_')) allKeys.push(key);
+      }
+      allKeys.forEach(key => localStorage.removeItem(key));
       window.location.reload();
     }
   };
@@ -73,8 +84,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               S
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-gray-900 mb-0.5">Senti User</p>
-              <p className="text-sm text-gray-600 truncate">user@example.com</p>
+              <p className="text-gray-900 mb-0.5">{displayName}</p>
+              {userEmail && <p className="text-sm text-gray-600 truncate">{userEmail}</p>}
             </div>
           </div>
 
@@ -111,8 +122,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </button>
             <button
               onClick={() => {
-                if (confirm('Are you sure you want to log out?')) {
-                  localStorage.clear();
+                if (confirm('Are you sure you want to log out? Your local app data will be cleared.')) {
+                  // Only clear senti-specific keys on logout
+                  const allKeys: string[] = [];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key?.startsWith('senti_')) allKeys.push(key);
+                  }
+                  allKeys.forEach(key => localStorage.removeItem(key));
                   window.location.reload();
                 }
               }}

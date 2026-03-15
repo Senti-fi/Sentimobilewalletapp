@@ -17,11 +17,14 @@ export interface Referral {
 
 /**
  * Generate a short, unique referral code from the user's handle.
- * Format: SENTI-{first4ofUsername}-{random6}
+ * Format: SENTI-{first4ofUsername}-{random8}
+ * Uses crypto-random for unpredictable codes.
  */
 function generateReferralCode(username: string): string {
   const prefix = username.slice(0, 4).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const array = new Uint8Array(6);
+  globalThis.crypto.getRandomValues(array);
+  const random = Array.from(array, b => b.toString(36).padStart(2, '0')).join('').substring(0, 8).toUpperCase();
   return `SENTI-${prefix}-${random}`;
 }
 
