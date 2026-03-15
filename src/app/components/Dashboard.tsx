@@ -88,30 +88,30 @@ export default function Dashboard() {
   return (
     <div className="absolute inset-0 mx-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-[#04133A] text-white">
       <main className="flex-1 overflow-y-auto px-6 pb-28 pt-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <header className="mb-8 flex items-center justify-between">
+        <header className="mb-7 flex items-center justify-between">
           <button className="p-1 text-white/95" aria-label="Back">
             <ArrowLeft className="h-6 w-6" strokeWidth={2.1} />
           </button>
-          <h1 className="text-[31px] text-white">Wallet</h1>
+          <h1 className="text-[30px] leading-none text-white">Wallet</h1>
           <button className="p-1 text-white/95" aria-label="History">
             <Clock3 className="h-5 w-5" strokeWidth={2} />
           </button>
         </header>
 
-        <section className="mb-8 rounded-[22px] bg-[#1B88FF] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-          <p className="mb-2 text-[22px] text-[#BBDDFF]">Wallet Balance</p>
-          <p className="mb-2 text-[58px] tracking-[-0.03em] text-white">$6,247.50</p>
-          <p className="mb-6 text-[22px] text-[#D5EEFF]">
+        <section className="mb-8 h-[204px] rounded-[22px] bg-[#1B88FF] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+          <p className="mb-1.5 text-[21px] leading-tight text-[#BBDDFF]">Wallet Balance</p>
+          <p className="mb-1 text-[54px] leading-[1.05] tracking-[-0.03em] text-white">$6,247.50</p>
+          <p className="mb-5 text-[22px] leading-tight text-[#D5EEFF]">
             Today&apos;s P&amp;L <span className="text-[#4DFF86]">+$146.30 (+ 2.4%)</span>
           </p>
 
-          <div className="mb-4 flex items-center justify-center gap-1">
+          <div className="mb-3.5 flex items-center justify-center gap-1.5">
             <span className="h-1.5 w-4 rounded-full bg-[#4B29F8]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-            <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/70" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/70" />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {[
               { label: 'Deposit', icon: Plus },
               { label: 'Send', icon: Send },
@@ -119,35 +119,40 @@ export default function Dashboard() {
             ].map((action) => (
               <button
                 key={action.label}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#8CC7FF] text-[21px] text-white"
+                className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full border border-[#8CC7FF] text-[20px] leading-none text-white"
               >
                 <action.icon className="h-4 w-4" strokeWidth={2} />
                 {action.label}
               </button>
             ))}
-            <button className="flex h-11 w-11 items-center justify-center rounded-full border border-[#8CC7FF]" aria-label="More actions">
+            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-[#8CC7FF]" aria-label="More actions">
               <Grid2x2 className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-[43px] text-white">My Assets</h2>
+        <section className="mb-9">
+          <h2 className="mb-3 text-[42px] leading-none text-white">My Assets</h2>
           <div>
-            {assets.map((asset) => (
-              <div key={asset.symbol} className="flex items-center justify-between border-b border-white/10 py-4">
+            {assets.map((asset, index) => (
+              <div
+                key={asset.symbol}
+                className={`grid grid-cols-[1fr_auto] items-center gap-4 border-b py-4 ${
+                  index === assets.length - 1 ? 'border-white/[0.12]' : 'border-white/[0.10]'
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#123367] text-[13px] text-[#D8EDFF]">
                     {asset.symbol}
                   </div>
                   <div>
-                    <p className="text-[34px] text-white">{asset.symbol}</p>
-                    <p className="text-[23px] text-[#7AB8FF]">{asset.name}</p>
+                    <p className="text-[34px] leading-tight text-white">{asset.symbol}</p>
+                    <p className="text-[23px] leading-tight text-[#7AB8FF]">{asset.name}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[34px] text-white">{asset.value}</p>
-                  <p className="text-[23px] text-[#7AB8FF]">{asset.amount}</p>
+                <div className="min-w-[136px] text-right">
+                  <p className="text-[34px] leading-tight text-white">{asset.value}</p>
+                  <p className="text-[23px] leading-tight text-[#7AB8FF]">{asset.amount}</p>
                 </div>
               </div>
             ))}
@@ -155,13 +160,13 @@ export default function Dashboard() {
         </section>
 
         <section className="rounded-[20px] bg-[#0C214A] px-5 pb-2 pt-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[31px] text-white">Recent Activities</h2>
-            <button className="text-[31px] text-[#35A8FF]">View All</button>
+          <div className="mb-2.5 flex items-center justify-between">
+            <h2 className="text-[31px] leading-none text-white">Recent Activities</h2>
+            <button className="text-[31px] leading-none text-[#35A8FF]">View All</button>
           </div>
 
           {activities.map((activity) => (
-            <div key={activity.title} className="flex items-center justify-between border-b border-white/10 py-4 last:border-b-0">
+            <div key={activity.title} className="flex items-center justify-between border-b border-white/[0.09] py-4 last:border-b-0">
               <div className="flex items-center gap-3">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -174,20 +179,20 @@ export default function Dashboard() {
                   />
                 </div>
                 <div>
-                  <p className="text-[34px] text-white">{activity.title}</p>
-                  <p className="text-[23px] text-[#7AB8FF]">{activity.subtitle}</p>
+                  <p className="text-[34px] leading-tight text-white">{activity.title}</p>
+                  <p className="text-[23px] leading-tight text-[#7AB8FF]">{activity.subtitle}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className={`text-[34px] ${activity.positive ? 'text-[#13F0FF]' : 'text-[#FF5A63]'}`}>{activity.amount}</p>
-                <p className="text-[23px] text-[#7AB8FF]">{activity.date}</p>
+              <div className="min-w-[132px] text-right">
+                <p className={`text-[34px] leading-tight ${activity.positive ? 'text-[#13F0FF]' : 'text-[#FF5A63]'}`}>{activity.amount}</p>
+                <p className="text-[23px] leading-tight text-[#7AB8FF]">{activity.date}</p>
               </div>
             </div>
           ))}
         </section>
       </main>
 
-      <nav className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-[#071A42] px-3 pb-5 pt-2">
+      <nav className="absolute bottom-0 left-0 right-0 border-t border-white/[0.08] bg-[#06193F]/95 px-4 pb-5 pt-2.5 backdrop-blur-md">
         <ul className="flex items-end justify-between">
           {tabs.map((tab) => {
             const active = tab.id === activeTab;
@@ -197,8 +202,8 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex min-w-[62px] flex-col items-center gap-1 ${active ? 'text-[#15F3FF]' : 'text-[#95CAFF]'}`}
                 >
-                  <tab.icon className="h-4.5 w-4.5" strokeWidth={active ? 2.2 : 1.9} />
-                  <span className="text-[13px]">{tab.label}</span>
+                  <tab.icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.2 : 1.9} />
+                  <span className="text-[12px] leading-none">{tab.label}</span>
                 </button>
               </li>
             );
