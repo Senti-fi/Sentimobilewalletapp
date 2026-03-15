@@ -652,42 +652,32 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto overflow-x-hidden">
+    <div className="absolute inset-0 flex flex-col bg-[#03103A] max-w-md mx-auto overflow-x-hidden">
       {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy/analytics */}
       {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && activeTab !== 'analytics' && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex-none px-6 pt-6 pb-4 flex items-center justify-between bg-gradient-to-br from-gray-50 to-blue-50/30 z-10"
+          className="flex-none px-6 pt-8 pb-4 flex items-center justify-between bg-[#03103A] z-10"
         >
         <div className="flex items-center gap-3">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-11 h-11 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center border border-gray-200"
-          >
-            <User className="w-6 h-6 text-gray-600" strokeWidth={1.5} />
-          </motion.div>
-          <div>
-            <p className="text-xs text-gray-500">Welcome back</p>
-            <p className="text-gray-900">{username}<span className="text-blue-600">Senti</span></p>
-          </div>
+          <p className="text-white/90">Wallet</p>
         </div>
         <div className="flex items-center gap-1">
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
+            className="p-2.5 hover:bg-white/10 rounded-xl transition-all"
           >
-            <Bell className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+            <Activity className="w-5 h-5 text-white/80" strokeWidth={1.5} />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab('settings')}
-            className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
+            className="p-2.5 hover:bg-white/10 rounded-xl transition-all"
           >
-            <Settings className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
+            <Settings className="w-5 h-5 text-white/80" strokeWidth={1.5} />
           </motion.button>
         </div>
       </motion.div>
@@ -706,36 +696,36 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="pt-2 pb-4"
+              className="pt-2 pb-1"
             >
               <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm text-gray-500">Total Balance</p>
+                <p className="text-sm text-[#8EB9E6]">Wallet Balance</p>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setBalanceVisible(!balanceVisible)}
-                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1 hover:bg-white/10 rounded-lg transition-colors"
                 >
                   {balanceVisible ? (
-                    <Eye className="w-4 h-4 text-gray-400" />
+                    <Eye className="w-4 h-4 text-[#8EB9E6]" />
                   ) : (
-                    <EyeOff className="w-4 h-4 text-gray-400" />
+                    <EyeOff className="w-4 h-4 text-[#8EB9E6]" />
                   )}
                 </motion.button>
               </div>
-              {balanceVisible ? (
-                <h1 className="text-5xl text-gray-900 tracking-tight mb-2 truncate">
-                  ${formatCompactBalance(totalBalance)}
-                </h1>
-              ) : (
-                <h1 className="text-5xl text-gray-900 tracking-tight mb-2">••••••</h1>
-              )}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-green-100 rounded-full">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                  <span className="text-xs text-green-700">+2.4%</span>
+              <div className="rounded-3xl p-5 bg-gradient-to-br from-[#1E88FF] to-[#1D6CE0] border border-[#5FB3FF]/30">
+                {balanceVisible ? (
+                  <h1 className="text-5xl text-white tracking-tight mb-2 truncate">${formatCompactBalance(totalBalance)}</h1>
+                ) : (
+                  <h1 className="text-5xl text-white tracking-tight mb-2">••••••</h1>
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white/90">Today's P&amp;L</span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-[#1EE2A9]/20 rounded-full">
+                    <TrendingUp className="w-3.5 h-3.5 text-[#3BFFCD]" />
+                    <span className="text-xs text-[#3BFFCD]">+2.4%</span>
+                  </div>
                 </div>
-                <span className="text-sm text-gray-500">+$197.50 today</span>
               </div>
             </motion.div>
 
@@ -744,28 +734,39 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-3 gap-3"
+              className="grid grid-cols-4 gap-2"
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActionSheet('transfer')}
                 className="flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
-                  <ArrowUpRight className="w-6 h-6 text-white" strokeWidth={2} />
+                <div className="w-14 h-10 border border-white/60 rounded-full flex items-center justify-center shadow-sm">
+                  <Plus className="w-4 h-4 text-white" strokeWidth={2} />
+                  <span className="text-sm text-white ml-1">Deposit</span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium">Transfer</span>
               </motion.button>
 
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setActionSheet('add-money')}
+                onClick={() => setOpenModal('send')}
                 className="flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
-                  <Plus className="w-6 h-6 text-white" strokeWidth={2} />
+                <div className="w-14 h-10 border border-white/60 rounded-full flex items-center justify-center shadow-sm">
+                  <Send className="w-4 h-4 text-white" strokeWidth={2} />
+                  <span className="text-sm text-white ml-1">Send</span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium">Add Money</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActionSheet('transfer')}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <div className="w-16 h-10 border border-white/60 rounded-full flex items-center justify-center shadow-sm">
+                  <ArrowUpRight className="w-6 h-6 text-white" strokeWidth={2} />
+                  <span className="text-sm text-white ml-1">Transfer</span>
+                </div>
               </motion.button>
 
               <motion.button
@@ -773,10 +774,9 @@ export default function Dashboard() {
                 onClick={() => setOpenModal('grow')}
                 className="flex flex-col items-center gap-1.5"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-sm">
-                  <LockKeyhole className="w-6 h-6 text-white" strokeWidth={2} />
+                <div className="w-10 h-10 border border-white/60 rounded-full flex items-center justify-center shadow-sm">
+                  <WalletIcon className="w-5 h-5 text-white" strokeWidth={2} />
                 </div>
-                <span className="text-xs text-gray-600 font-medium">Vault</span>
               </motion.button>
             </motion.div>
 
@@ -787,7 +787,7 @@ export default function Dashboard() {
               transition={{ delay: 0.5 }}
             >
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-gray-900">Your Assets</h2>
+                <h2 className="text-white">My Assets</h2>
               </div>
               
               {/* Single unified assets card */}
@@ -795,7 +795,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-[#11204A] rounded-2xl border border-white/10 overflow-hidden"
               >
                 {assets.map((asset, index) => (
                   <motion.div
@@ -803,20 +803,20 @@ export default function Dashboard() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.6 + index * 0.05 }}
-                    whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
+                    whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                     className={`p-4 flex items-center gap-4 cursor-pointer transition-colors ${
-                      index !== assets.length - 1 ? 'border-b border-gray-100' : ''
+                      index !== assets.length - 1 ? 'border-b border-white/10' : ''
                     }`}
                   >
                     <div className={`w-12 h-12 ${asset.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
                       <img src={asset.icon} alt={asset.symbol} className="w-7 h-7 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 mb-0.5">{asset.symbol}</p>
-                      <p className="text-xs text-gray-500 truncate">{formatCompactBalance(asset.balance)} {asset.symbol}</p>
+                      <p className="text-white mb-0.5">{asset.symbol}</p>
+                      <p className="text-xs text-[#8EB9E6] truncate">{formatCompactBalance(asset.balance)} {asset.symbol}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-gray-900 mb-0.5">${formatCompactBalance(asset.value)}</p>
+                      <p className="text-white mb-0.5">${formatCompactBalance(asset.value)}</p>
                       {asset.change !== 0 && (
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="w-3 h-3 text-green-600" />
@@ -905,16 +905,16 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-40"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40"
       >
-        <div className="bg-white/80 backdrop-blur-2xl border border-gray-200 rounded-3xl px-4 py-2 shadow-2xl shadow-gray-300/50">
+        <div className="bg-[#0A173D]/95 backdrop-blur-2xl border-t border-white/10 px-4 py-2">
           <div className="flex items-center justify-around">
             {[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'savings', label: 'Savings', icon: PiggyBank },
-              { id: 'lucy', label: 'Lucy', icon: Smile },
-              { id: 'spend', label: 'Spend', icon: CreditCard },
-              { id: 'link', label: 'Link', icon: MessageCircle },
+              { id: 'savings', label: 'Save', icon: PiggyBank },
+              { id: 'lucy', label: 'Wallet', icon: ArrowLeftRight },
+              { id: 'analytics', label: 'Invest', icon: TrendingUp },
+              { id: 'settings', label: 'Account', icon: User },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               const badge = tab.id === 'link' && linkUnreadCount > 0 ? linkUnreadCount : 0;
@@ -924,21 +924,22 @@ export default function Dashboard() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => { setSavingsAutoDeposit(false); setActiveTab(tab.id as any); }}
-                  className="flex items-center justify-center p-3 transition-all relative"
+                  className="flex flex-col items-center justify-center p-2 transition-all relative"
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute inset-0 bg-blue-50 rounded-2xl"
+                      className="absolute inset-0 bg-transparent rounded-2xl"
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                   )}
                   <tab.icon
                     className={`w-5 h-5 relative z-10 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-gray-500'
+                      isActive ? 'text-[#00E9FF]' : 'text-[#8EB9E6]'
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.5}
                   />
+                  <span className={`text-[11px] ${isActive ? 'text-[#00E9FF]' : 'text-[#8EB9E6]'} relative z-10 mt-1`}>{tab.label}</span>
                   {badge > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 z-20 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-sm">
                       {badge > 99 ? '99+' : badge}
@@ -980,7 +981,7 @@ export default function Dashboard() {
       )}
       {openModal === 'settings' && <SettingsModal onClose={handleModalClose} />}
 
-      {/* Transfer Action Sheet */}
+      {/* Withdraw Action Sheet */}
       <AnimatePresence>
         {actionSheet === 'transfer' && (
           <motion.div
@@ -996,37 +997,41 @@ export default function Dashboard() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-8"
+              className="bg-[#061746] w-full max-w-md rounded-t-3xl p-6 pb-8 border border-white/10"
             >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-gray-900">Transfer</h2>
-                <button onClick={() => setActionSheet(null)} className="p-2 hover:bg-gray-100 rounded-full">
-                  <X className="w-5 h-5 text-gray-600" />
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-4xl font-semibold text-white">Withdraw</h2>
+                <button onClick={() => setActionSheet(null)} className="p-2 bg-white rounded-full">
+                  <X className="w-5 h-5 text-[#061746]" />
                 </button>
               </div>
+              <p className="text-[#8EB9E6] mb-5">How would you like to withdraw?</p>
               <div className="space-y-2">
                 {[
-                  { icon: Send, label: 'Send to User', desc: 'Send crypto to a contact or address', action: () => { setActionSheet(null); setOpenModal('send'); } },
-                  { icon: LockKeyhole, label: 'Transfer to Vault', desc: 'Move funds to your vault for yield', action: () => { setActionSheet(null); setVaultAutoDeposit(true); setOpenModal('grow'); } },
-                  { icon: PiggyBank, label: 'Transfer to Savings', desc: 'Move funds into a savings goal', action: () => { setActionSheet(null); setSavingsAutoDeposit(true); setActiveTab('savings'); } },
-                  { icon: CreditCard, label: 'Transfer to Spend', desc: 'Move funds to your spend card', action: () => { setActionSheet(null); setActiveTab('spend'); } },
-                  { icon: Building2, label: 'Withdraw to Bank', desc: 'Send USDT and recipient gets Naira', action: () => { setActionSheet(null); setActiveTab('spend'); } },
+                  { icon: ArrowLeftRight, label: 'Onchain Withdrawal', desc: 'Send crypto directly to an onchain wallet address', action: () => { setActionSheet(null); setActiveTab('spend'); } },
+                  { icon: Building2, label: 'Sell for Fiat', desc: 'Instantly receive cash in your bank account or e-wallet.', action: () => { setActionSheet(null); setActiveTab('spend'); } },
+                  { icon: Send, label: 'Send via Link', desc: 'Transfer to another Senti user using their tag or email', action: () => { setActionSheet(null); setOpenModal('send'); } },
                 ].map((item) => (
                   <motion.button
                     key={item.label}
                     whileTap={{ scale: 0.98 }}
                     onClick={item.action}
-                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[#1D2D55] hover:bg-[#233665] transition-colors text-left border border-white/10"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-5 h-5 text-blue-600" />
+                    <div className="w-12 h-12 bg-[#003A8C] rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-[#70BEFF]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 font-medium text-sm">{item.label}</p>
-                      <p className="text-xs text-gray-500">{item.desc}</p>
+                      <p className="text-white font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-[#8EB9E6]">{item.desc}</p>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-[#70BEFF]" />
                   </motion.button>
                 ))}
+              </div>
+              <div className="mt-5 rounded-2xl border border-[#1E88FF] p-4 flex items-center gap-3 bg-[#172959]">
+                <div className="size-8 rounded-full bg-[#1E88FF] flex items-center justify-center text-white text-sm">L</div>
+                <p className="text-[#D9E9FF] text-sm">Send via Link is instant and fee-free. Best option for sending to other Senti users.</p>
               </div>
             </motion.div>
           </motion.div>
@@ -1049,34 +1054,40 @@ export default function Dashboard() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white w-full max-w-md rounded-t-3xl p-6 pb-8"
+              className="bg-[#061746] w-full max-w-md rounded-t-3xl p-6 pb-8 border border-white/10"
             >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-gray-900">Add Money</h2>
-                <button onClick={() => setActionSheet(null)} className="p-2 hover:bg-gray-100 rounded-full">
-                  <X className="w-5 h-5 text-gray-600" />
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-4xl font-semibold text-white">Add Money</h2>
+                <button onClick={() => setActionSheet(null)} className="p-2 bg-white rounded-full">
+                  <X className="w-5 h-5 text-[#061746]" />
                 </button>
               </div>
+              <p className="text-[#8EB9E6] mb-5">How would you like to add funds?</p>
               <div className="space-y-2">
                 {[
-                  { icon: ShoppingBag, label: 'Buy Crypto', desc: 'Purchase crypto with card or bank', action: () => { setActionSheet(null); openParaModal({ step: ModalStep.ADD_FUNDS_BUY }); } },
-                  { icon: QrCode, label: 'Share Address', desc: 'Show QR code or wallet address', action: () => { setActionSheet(null); setOpenModal('receive'); } },
+                  { icon: QrCode, label: 'Deposit Crypto', desc: 'Already have crypto? Deposit directly or receive from a Senti user.', action: () => { setActionSheet(null); setOpenModal('receive'); } },
+                  { icon: ShoppingBag, label: 'Buy with Fiat', desc: 'Use your bank, card, or third party provider to buy crypto.', action: () => { setActionSheet(null); openParaModal({ step: ModalStep.ADD_FUNDS_BUY }); } },
                 ].map((item) => (
                   <motion.button
                     key={item.label}
                     whileTap={{ scale: 0.98 }}
                     onClick={item.action}
-                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[#1D2D55] hover:bg-[#233665] transition-colors text-left border border-white/10"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-5 h-5 text-blue-600" />
+                    <div className="w-12 h-12 bg-[#003A8C] rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-[#70BEFF]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 font-medium text-sm">{item.label}</p>
-                      <p className="text-xs text-gray-500">{item.desc}</p>
+                      <p className="text-white font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-[#8EB9E6]">{item.desc}</p>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-[#70BEFF]" />
                   </motion.button>
                 ))}
+              </div>
+              <div className="mt-5 rounded-2xl border border-[#1E88FF] p-4 flex items-center gap-3 bg-[#172959]">
+                <div className="size-8 rounded-full bg-[#1E88FF] flex items-center justify-center text-white text-sm">L</div>
+                <p className="text-[#D9E9FF] text-sm">Bank Transfer has the lowest fees. Best option for most users.</p>
               </div>
             </motion.div>
           </motion.div>
