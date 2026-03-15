@@ -679,135 +679,122 @@ export default function Dashboard() {
 
         {/* HOME TAB */}
         {activeTab === 'home' && (
-          <div className="flex flex-col h-full overflow-y-auto">
-            {/* Status bar row */}
-            <div className="flex items-center justify-between px-5 h-11 shrink-0">
+          <div className="flex flex-col h-full overflow-y-auto pb-2">
+            <div className="flex items-center justify-between px-6 h-11 shrink-0 pt-1">
               <span className="text-white text-[15px] font-semibold tracking-tight">9:41</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-white/90" />
+                <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+                <span className="w-4 h-2 rounded-sm border border-white/80" />
+              </div>
             </div>
 
-            {/* Header: avatar + greeting + bell */}
-            <div className="flex items-center gap-3 px-6 pt-1 pb-3">
-              <div className="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center shrink-0">
-                <span className="text-[#007bff] text-xl font-bold leading-none">
-                  {username.charAt(0).toUpperCase()}
-                </span>
+            <div className="flex items-center gap-3 px-6 pt-1 pb-4">
+              <div className="w-10 h-10 rounded-full bg-[#313541] flex items-center justify-center shrink-0">
+                <span className="text-[#1f88ff] text-xl font-bold leading-none">{username.charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white text-base font-semibold leading-5">Gm, {username}</p>
-                <p className="text-[#8ac7ff] text-sm font-medium leading-[18px]">Your money is working for you.</p>
+                <p className="text-white text-[31px] leading-[1]" style={{ zoom: 0.52 }}>Gm, {username}</p>
+                <p className="text-[#8bc8ff] text-sm leading-5">Your money is working for you.</p>
               </div>
-              <div className="relative shrink-0">
-                <Bell className="w-6 h-6 text-white" strokeWidth={1.5} />
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#ff4444]" />
+              <div className="relative shrink-0 mr-0.5">
+                <Bell className="w-5 h-5 text-white" strokeWidth={1.75} />
+                <span className="absolute -top-0.5 right-0 w-1.5 h-1.5 rounded-full bg-[#ff4f4f]" />
               </div>
             </div>
 
-            {/* Net Worth card */}
-            <div className="mx-6 mb-5 rounded-[20px] bg-[#007bff] overflow-hidden relative">
-              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-                <div className="absolute -top-4 -left-8 w-[120%] h-[120%] rounded-full bg-white/10" />
-                <div className="absolute top-8 right-[-30%] w-[80%] h-[80%] rounded-full bg-white/10" />
-              </div>
-              <div className="relative px-5 pt-5 pb-4">
-                <p className="text-white text-xs font-normal leading-4 mb-2">Net Worth</p>
-                <p className="text-white text-[32px] font-bold leading-8 tracking-tight mb-1">
-                  {balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
+            <div className="mx-6 mb-6 rounded-[22px] bg-gradient-to-br from-[#0b84ff] to-[#2992ff] overflow-hidden relative">
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, #ffffff 0px, transparent 50%), radial-gradient(circle at 80% 40%, #ffffff 0px, transparent 60%)' }} />
+              <div className="relative px-5 pt-5 pb-6">
+                <p className="text-white/95 text-base leading-4 mb-2" style={{ zoom: 0.72 }}>Net Worth</p>
+                <p className="text-white text-[47px] leading-none font-bold mb-2" style={{ zoom: 0.72 }}>
+                  {balanceVisible ? '$6,247.50' : '••••••'}
                 </p>
-                <div className="flex items-center gap-1 mb-4">
-                  <span className="text-white text-[11px] font-semibold">Today's Earnings</span>
-                  <span className="text-[#32fc65] text-[11px] font-semibold">+$146.30 (+ 2.4%)</span>
+                <div className="flex items-center gap-1 mb-6">
+                  <span className="text-white text-sm" style={{ zoom: 0.72 }}>Today&apos;s Earnings</span>
+                  <span className="text-[#3dff71] text-sm font-semibold" style={{ zoom: 0.72 }}>+$146.30 (+ 2.4%)</span>
                 </div>
-                {/* Dots */}
-                <div className="flex items-center justify-center gap-1 mb-3">
-                  <div className="w-3 h-1 rounded-full bg-[#2c14dd]" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
+                <div className="flex items-center justify-center gap-1.5 mb-4">
+                  <div className="w-3 h-1 rounded-full bg-[#4520d9]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
                 </div>
-                {/* Actions */}
                 <div className="flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setOpenModal('swap')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
-                  >
+                  <button onClick={() => setOpenModal('swap')} className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#b9f2ff] text-white text-sm">
                     <Plus className="w-4 h-4" strokeWidth={2} /> Deposit
                   </button>
-                  <button
-                    onClick={() => setOpenModal('send')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
-                  >
+                  <button onClick={() => setOpenModal('send')} className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#b9f2ff] text-white text-sm">
                     <ArrowUpFromLine className="w-4 h-4" strokeWidth={2} /> Send
                   </button>
-                  <button
-                    onClick={() => setActiveTab('wallet')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
-                  >
+                  <button onClick={() => setActiveTab('wallet')} className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#b9f2ff] text-white text-sm">
                     <Send className="w-4 h-4" strokeWidth={2} /> Transfer
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Savings goal cards – horizontal scroll */}
-            <div className="mb-5">
-              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1">
-                {/* Create New Goal card */}
-                <div
-                  onClick={() => setActiveTab('save')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col justify-between gap-3 min-h-[134px] cursor-pointer"
-                >
-                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">Create New Goal</span>
-                    <span className="text-black text-[11px]">→</span>
+            <div className="mb-3">
+              <div className="flex gap-3 overflow-x-auto px-6 pb-2">
+                <button onClick={() => setActiveTab('save')} className="bg-[#1a2448] rounded-[20px] p-4 w-[164px] min-h-[136px] text-left shrink-0 flex flex-col">
+                  <span className="inline-flex items-center gap-1 bg-[#c8fbff] text-[#142437] text-xs px-2.5 py-1 rounded-full w-fit">Create New Goal <span>→</span></span>
+                  <p className="text-white text-[29px] leading-none mt-3" style={{ zoom: 0.48 }}>Goal-Based Savings</p>
+                  <p className="text-[#8ac7ff] text-xs mt-1.5">Create a savings goal and track your progress</p>
+                </button>
+
+                <button onClick={() => setActiveTab('save')} className="bg-[#1a2448] rounded-[20px] p-4 w-[164px] min-h-[136px] text-left shrink-0 flex flex-col">
+                  <span className="text-white text-sm">Rent</span>
+                  <p className="text-white text-[47px] leading-none font-bold mt-1" style={{ zoom: 0.5 }}>$1,200.00</p>
+                  <p className="text-[#00df5e] text-xs mt-1">+4.2% this month</p>
+                  <p className="text-[#8ac7ff] text-xs">On track and growing</p>
+                  <span className="inline-flex items-center gap-1 bg-[#c8fbff] text-[#142437] text-xs px-2.5 py-1 rounded-full w-fit mt-auto">View Goal <span>→</span></span>
+                </button>
+              </div>
+
+              <div className="flex gap-3 overflow-x-auto px-6 pb-2 mt-1">
+                <button onClick={() => setActiveTab('invest')} className="bg-[#1a2448] rounded-[20px] p-4 w-[254px] min-h-[132px] text-left shrink-0 flex flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-white text-[22px] leading-none" style={{ zoom: 0.65 }}>USDC Vault</p>
+                    <span className="inline-flex items-center gap-1 bg-[#c8fbff] text-[#142437] text-xs px-2.5 py-1 rounded-full">View Portfolio <span>→</span></span>
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-medium leading-[18px]">Goal-Based Savings</p>
-                    <p className="text-[#8ac7ff] text-xs font-normal leading-4 mt-1">Create a savings goal and track your progress</p>
-                  </div>
-                </div>
-                {/* Invest card */}
-                <div
-                  onClick={() => setActiveTab('invest')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
-                >
-                  <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
-                  <p className="text-white text-2xl font-bold leading-8 tracking-tight">
-                    ${formatCompactBalance(vaultBalance)}
-                  </p>
-                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
-                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Growing daily</p>
-                  <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">View Portfolio</span>
-                    <span className="text-black text-[11px]">→</span>
-                  </div>
-                </div>
+                  <p className="text-white text-[52px] leading-none font-bold mt-2" style={{ zoom: 0.5 }}>$4,847.50</p>
+                  <p className="text-[#00df5e] text-xs mt-1">+8.5% this month</p>
+                  <p className="text-[#8ac7ff] text-xs">Growing daily</p>
+                </button>
+
+                <button onClick={() => setActiveTab('invest')} className="bg-[#1a2448] rounded-[20px] p-4 w-[254px] min-h-[132px] text-left shrink-0 flex flex-col">
+                  <p className="text-white text-[22px] leading-none" style={{ zoom: 0.65 }}>Stablecoin LP</p>
+                  <p className="text-white text-[52px] leading-none font-bold mt-2" style={{ zoom: 0.5 }}>$4,847.50</p>
+                  <p className="text-[#00df5e] text-xs mt-1">+8.5% this month</p>
+                  <p className="text-[#8ac7ff] text-xs">Earning daily returns</p>
+                </button>
               </div>
             </div>
 
-            {/* Recent Activities */}
-            <div className="mx-6 mb-6">
-              <div className="bg-[rgba(30,41,59,0.4)] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)]">
+            <div className="mx-6 mb-6 mt-1">
+              <div className="bg-[#182445] rounded-[22px] px-5 py-5">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-white text-sm font-medium">Recent Activities</span>
-                  <button onClick={() => setActiveTab('wallet')} className="text-[#8ac7ff] text-sm font-medium">View All</button>
+                  <span className="text-white text-xl leading-none" style={{ zoom: 0.6 }}>Recent Activities</span>
+                  <button onClick={() => setActiveTab('wallet')} className="text-white text-xl leading-none" style={{ zoom: 0.6 }}>View All</button>
                 </div>
                 <div className="flex flex-col gap-4">
-                  {recentTransactions.slice(0, 4).map((tx, i) => {
-                    const isCredit = tx.amount >= 0;
+                  {[
+                    { id: 'a', title: 'Savings Deposit', amount: '$200.00', positive: true },
+                    { id: 'b', title: 'Withdrawal from Growth', amount: '$200.00', positive: false },
+                    { id: 'c', title: 'Deposit', amount: '$200.00', positive: true },
+                    { id: 'd', title: 'Savings Deposit', amount: '$200.00', positive: false },
+                  ].map((item, index) => {
+                    const isSave = index % 2 === 1;
                     return (
-                      <div key={tx.id} className={`flex items-center gap-4 ${i < 3 ? 'pb-4 border-b border-[#1a2540]' : ''}`}>
-                        <div className="w-10 h-10 rounded-[20px] shrink-0 flex items-center justify-center bg-[#1a3a6b]">
-                          {tx.icon && <tx.icon className="w-5 h-5 text-white" strokeWidth={1.5} />}
+                      <div key={item.id} className="flex items-center gap-3">
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center ${isSave ? 'bg-[#007bff]' : 'bg-[#80f7ff]'}`}>
+                          <PiggyBank className={`w-5 h-5 ${isSave ? 'text-[#a0cfff]' : 'text-[#128ff0]'}`} strokeWidth={1.8} />
                         </div>
-                        <div className="flex flex-1 items-center justify-between min-w-0">
-                          <div className="flex flex-col gap-0.5">
-                            <p className="text-white text-sm font-medium leading-[18px] truncate max-w-[160px]">{tx.merchant}</p>
-                            <p className="text-[#8ac7ff] text-xs leading-4">{tx.date}</p>
-                          </div>
-                          <p className={`text-sm font-medium leading-[18px] whitespace-nowrap ml-2 ${isCredit ? 'text-[#00e6ff]' : 'text-[#ff4444]'}`}>
-                            {isCredit ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm truncate">{item.title}</p>
+                          <p className="text-[#78b9ff] text-xs">9:41 AM, 03 March 2026</p>
                         </div>
+                        <p className={`text-[29px] leading-none whitespace-nowrap ${item.positive ? 'text-[#00ff66]' : 'text-white'}`} style={{ zoom: 0.52 }}>{item.amount}</p>
                       </div>
                     );
                   })}
