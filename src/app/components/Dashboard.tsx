@@ -748,37 +748,66 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Savings goal cards – horizontal scroll */}
-            <div className="mb-5">
-              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1">
-                {/* Create New Goal card */}
+            {/* Savings & growth cards – horizontal rows */}
+            <div className="mb-5 space-y-3">
+              <div className="flex gap-3 overflow-x-auto px-6 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div
                   onClick={() => setActiveTab('save')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col justify-between gap-3 min-h-[134px] cursor-pointer"
+                  className="bg-[#162040] rounded-[20px] p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[170px] flex flex-col justify-between gap-3 min-h-[132px] cursor-pointer"
                 >
-                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">Create New Goal</span>
-                    <span className="text-black text-[11px]">→</span>
+                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2.5 pr-2 py-1">
+                    <span className="text-black text-[11px] font-medium whitespace-nowrap">Create New Goal</span>
+                    <span className="text-black text-[12px]">→</span>
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium leading-[18px]">Goal-Based Savings</p>
-                    <p className="text-[#8ac7ff] text-xs font-normal leading-4 mt-1">Create a savings goal and track your progress</p>
+                    <p className="text-white text-base font-medium leading-6">Goal-Based Savings</p>
+                    <p className="text-[#8ac7ff] text-[13px] font-normal leading-[18px] mt-1">Create a savings goal and track your progress</p>
                   </div>
                 </div>
-                {/* Invest card */}
+
                 <div
-                  onClick={() => setActiveTab('invest')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                  onClick={() => setActiveTab('save')}
+                  className="bg-[#162040] rounded-[20px] p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[170px] flex flex-col gap-1 min-h-[132px] cursor-pointer"
                 >
-                  <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
-                  <p className="text-white text-2xl font-bold leading-8 tracking-tight">
-                    ${formatCompactBalance(vaultBalance)}
-                  </p>
-                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
-                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Growing daily</p>
-                  <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">View Portfolio</span>
-                    <span className="text-black text-[11px]">→</span>
+                  <p className="text-white text-xl font-medium leading-6">Rent</p>
+                  <p className="text-white text-4xl font-bold leading-10 tracking-tight">$1,200.00</p>
+                  <p className="text-[#02d128] text-sm font-normal leading-5">+4.2% this month</p>
+                  <p className="text-[#8ac7ff] text-[13px] font-medium leading-[18px]">On track and growing</p>
+                  <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2.5 pr-2 py-1">
+                    <span className="text-black text-[11px] font-medium whitespace-nowrap">View Goal</span>
+                    <span className="text-black text-[12px]">→</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0d1735] py-3">
+                <div className="flex gap-3 overflow-x-auto px-6 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div
+                    onClick={() => setActiveTab('invest')}
+                    className="bg-[#162040] rounded-[20px] p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[250px] flex flex-col gap-1 min-h-[126px] cursor-pointer"
+                  >
+                    <p className="text-white text-[22px] font-medium leading-6">USDC Vault</p>
+                    <p className="text-white text-4xl font-bold leading-10 tracking-tight">${formatCompactBalance(vaultBalance)}</p>
+                    <p className="text-[#02d128] text-sm font-normal leading-5">+8.5% this month</p>
+                    <p className="text-[#8ac7ff] text-[13px] font-medium leading-[18px]">Growing daily</p>
+                    <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2.5 pr-2 py-1">
+                      <span className="text-black text-[11px] font-medium whitespace-nowrap">View Portfolio</span>
+                      <span className="text-black text-[12px]">→</span>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveTab('invest')}
+                    className="bg-[#162040] rounded-[20px] p-4 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[250px] flex flex-col gap-1 min-h-[126px] cursor-pointer"
+                  >
+                    <p className="text-white text-[22px] font-medium leading-6">Stablecoin LP</p>
+                    <p className="text-white text-4xl font-bold leading-10 tracking-tight">$4,847.50</p>
+                    <p className="text-[#02d128] text-sm font-normal leading-5">+8.5% this month</p>
+                    <p className="text-[#8ac7ff] text-[13px] font-medium leading-[18px]">Earning daily returns</p>
+                    <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2.5 pr-2 py-1">
+                      <span className="text-black text-[11px] font-medium whitespace-nowrap">View Portfolio</span>
+                      <span className="text-black text-[12px]">→</span>
+                    </div>
                   </div>
                 </div>
               </div>
