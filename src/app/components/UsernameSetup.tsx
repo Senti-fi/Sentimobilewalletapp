@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AtSign, AlertCircle, CheckCircle, User, ArrowRight, Loader2, Gift } from 'lucide-react';
 import { userService } from '../../services/supabase';
+import AuthFlowHeader from './AuthFlowHeader';
 
 interface UsernameSetupProps {
   onComplete: (username: string, referralCode?: string) => void;
@@ -146,6 +147,12 @@ export default function UsernameSetup({ onComplete, userImage }: UsernameSetupPr
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 py-8 pb-16 max-w-md mx-auto w-full relative z-10">
+        <AuthFlowHeader
+          step={3}
+          totalSteps={3}
+          title="Set your identity"
+          subtitle="Pick a unique username for payments and referrals"
+        />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
