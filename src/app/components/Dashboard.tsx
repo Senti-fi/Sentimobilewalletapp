@@ -680,13 +680,9 @@ export default function Dashboard() {
         {/* HOME TAB */}
         {activeTab === 'home' && (
           <div className="flex flex-col h-full overflow-y-auto">
-            {/* Status bar row */}
-            <div className="flex items-center justify-between px-5 h-11 shrink-0">
-              <span className="text-white text-[15px] font-semibold tracking-tight">9:41</span>
-            </div>
 
             {/* Header: avatar + greeting + bell */}
-            <div className="flex items-center gap-3 px-6 pt-1 pb-3">
+            <div className="flex items-center gap-3 px-6 pt-4 pb-3">
               <div className="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center shrink-0">
                 <span className="text-[#007bff] text-xl font-bold leading-none">
                   {username.charAt(0).toUpperCase()}
@@ -704,9 +700,9 @@ export default function Dashboard() {
 
             {/* Net Worth card */}
             <div className="mx-6 mb-5 rounded-[20px] bg-[#007bff] overflow-hidden relative">
-              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-                <div className="absolute -top-4 -left-8 w-[120%] h-[120%] rounded-full bg-white/10" />
-                <div className="absolute top-8 right-[-30%] w-[80%] h-[80%] rounded-full bg-white/10" />
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[10%] left-0 w-[88%] h-[135%] rounded-[50%] bg-white/[0.09]" />
+                <div className="absolute -top-[10%] left-[87%] w-full h-[135%] rounded-[50%] bg-white/[0.09]" />
               </div>
               <div className="relative px-5 pt-5 pb-4">
                 <p className="text-white text-xs font-normal leading-4 mb-2">Net Worth</p>
@@ -749,8 +745,8 @@ export default function Dashboard() {
             </div>
 
             {/* Savings goal cards – horizontal scroll */}
-            <div className="mb-5">
-              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1">
+            <div className="mb-4">
+              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1 scrollbar-hide">
                 {/* Create New Goal card */}
                 <div
                   onClick={() => setActiveTab('save')}
@@ -765,53 +761,93 @@ export default function Dashboard() {
                     <p className="text-[#8ac7ff] text-xs font-normal leading-4 mt-1">Create a savings goal and track your progress</p>
                   </div>
                 </div>
-                {/* Invest card */}
+                {/* Savings goal example card (Rent) */}
                 <div
-                  onClick={() => setActiveTab('invest')}
+                  onClick={() => setActiveTab('save')}
                   className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
                 >
-                  <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
-                  <p className="text-white text-2xl font-bold leading-8 tracking-tight">
+                  <div className="flex items-center justify-between">
+                    <p className="text-white text-sm font-medium leading-[18px]">Rent</p>
+                    <div className="flex items-center gap-1 bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-0.5">
+                      <span className="text-black text-[10px] font-normal whitespace-nowrap">View Goal</span>
+                      <span className="text-black text-[10px]">→</span>
+                    </div>
+                  </div>
+                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
+                    $1,200.00
+                  </p>
+                  <p className="text-[#02d128] text-xs font-normal leading-4">+4.2% this month</p>
+                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">On track and growing</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Vault & Investment cards – horizontal scroll */}
+            <div className="mb-5">
+              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1 scrollbar-hide">
+                {/* USDC Vault card */}
+                <div
+                  onClick={() => setOpenModal('grow')}
+                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
+                  </div>
+                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-0.5 mb-1">
+                    <span className="text-black text-[10px] font-normal whitespace-nowrap">View Portfolio</span>
+                    <span className="text-black text-[10px]">→</span>
+                  </div>
+                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
                     ${formatCompactBalance(vaultBalance)}
                   </p>
                   <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
                   <p className="text-[#8ac7ff] text-xs font-medium leading-4">Growing daily</p>
-                  <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">View Portfolio</span>
-                    <span className="text-black text-[11px]">→</span>
-                  </div>
+                </div>
+                {/* Stablecoin LP card */}
+                <div
+                  onClick={() => setActiveTab('invest')}
+                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                >
+                  <p className="text-white text-sm font-medium leading-[18px]">Stablecoin LP</p>
+                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
+                    ${formatCompactBalance(vaultBalance)}
+                  </p>
+                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
+                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Earning daily returns</p>
                 </div>
               </div>
             </div>
 
             {/* Recent Activities */}
             <div className="mx-6 mb-6">
-              <div className="bg-[rgba(30,41,59,0.4)] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)]">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-white text-sm font-medium">Recent Activities</span>
-                  <button onClick={() => setActiveTab('wallet')} className="text-[#8ac7ff] text-sm font-medium">View All</button>
-                </div>
-                <div className="flex flex-col gap-4">
-                  {recentTransactions.slice(0, 4).map((tx, i) => {
-                    const isCredit = tx.amount >= 0;
-                    return (
-                      <div key={tx.id} className={`flex items-center gap-4 ${i < 3 ? 'pb-4 border-b border-[#1a2540]' : ''}`}>
-                        <div className="w-10 h-10 rounded-[20px] shrink-0 flex items-center justify-center bg-[#1a3a6b]">
-                          {tx.icon && <tx.icon className="w-5 h-5 text-white" strokeWidth={1.5} />}
-                        </div>
-                        <div className="flex flex-1 items-center justify-between min-w-0">
-                          <div className="flex flex-col gap-0.5">
-                            <p className="text-white text-sm font-medium leading-[18px] truncate max-w-[160px]">{tx.merchant}</p>
-                            <p className="text-[#8ac7ff] text-xs leading-4">{tx.date}</p>
-                          </div>
-                          <p className={`text-sm font-medium leading-[18px] whitespace-nowrap ml-2 ${isCredit ? 'text-[#00e6ff]' : 'text-[#ff4444]'}`}>
-                            {isCredit ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
-                          </p>
-                        </div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-white text-base font-semibold">Recent Activities</span>
+                <button onClick={() => setActiveTab('wallet')} className="text-[#8ac7ff] text-sm font-medium">View All</button>
+              </div>
+              <div className="flex flex-col gap-4">
+                {recentTransactions.slice(0, 4).map((tx, i) => {
+                  const isCredit = tx.amount >= 0;
+                  const isSavings = tx.type === 'savings' || tx.type === 'vault';
+                  return (
+                    <div key={tx.id} className={`flex items-center gap-4 ${i < 3 ? 'pb-4 border-b border-[#1a2540]' : ''}`}>
+                      <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center ${isSavings ? 'bg-[#162040]' : 'bg-[#1a3a6b]'}`}>
+                        {tx.icon && <tx.icon className="w-5 h-5 text-white" strokeWidth={1.5} />}
+                        {isSavings && (
+                          <span className="absolute -bottom-0.5 -left-0.5 text-[8px] text-[#02d128] font-bold">Save</span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex flex-1 items-center justify-between min-w-0">
+                        <div className="flex flex-col gap-0.5">
+                          <p className="text-white text-sm font-medium leading-[18px] truncate max-w-[180px]">{tx.merchant}</p>
+                          <p className="text-[#8ac7ff] text-xs leading-4">{tx.date}</p>
+                        </div>
+                        <p className={`text-sm font-medium leading-[18px] whitespace-nowrap ml-2 ${isCredit ? 'text-[#02d128]' : 'text-[#ff4444]'}`}>
+                          ${Math.abs(tx.amount).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
