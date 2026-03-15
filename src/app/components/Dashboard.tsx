@@ -30,7 +30,6 @@ import SavingsPage from './SavingsPage';
 import SpendPage from './SpendPage';
 import LinkPage from './LinkPage';
 import PortfolioAnalyticsPage from './PortfolioAnalyticsPage';
-import NetWorthCard from './ui/NetWorthCard';
 import { useWalletContext } from '../../hooks/useWalletContext';
 
 type ModalType = 'send' | 'receive' | 'swap' | 'grow' | 'settings' | null;
@@ -699,13 +698,42 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Net Worth card */}
-            <NetWorthCard
-              balance={balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
-              onDeposit={() => setOpenModal('swap')}
-              onSend={() => setOpenModal('send')}
-              onTransfer={() => setActiveTab('wallet')}
-            />
+            {/* Net Worth / Balance card */}
+            <div id="senti-balance-card" data-testid="balance-card" style={{ margin: '0 24px 20px', borderRadius: '20px', background: '#0096c7', padding: '20px', position: 'relative', overflow: 'hidden' }}>
+              {/* Wave decorations */}
+              <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: '90%', height: '140%', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', top: '-30%', right: '-20%', width: '80%', height: '140%', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
+              {/* Content */}
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <p style={{ color: 'white', fontSize: '13px', margin: '0 0 8px' }}>Net Worth</p>
+                <p style={{ color: 'white', fontSize: '34px', fontWeight: 700, lineHeight: '40px', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
+                  {balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '\u2022\u2022\u2022\u2022\u2022\u2022'}
+                </p>
+                <p style={{ margin: '0 0 16px', fontSize: '12px' }}>
+                  <span style={{ color: 'white', fontWeight: 600 }}>{"Today's Earnings "}</span>
+                  <span style={{ color: '#32fc65', fontWeight: 600 }}>+$146.30 (+ 2.4%)</span>
+                </p>
+                {/* Dots */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '5px', marginBottom: '16px' }}>
+                  <span style={{ display: 'block', width: '14px', height: '5px', borderRadius: '100px', background: '#1d4ed8' }} />
+                  <span style={{ display: 'block', width: '5px', height: '5px', borderRadius: '100px', background: 'white' }} />
+                  <span style={{ display: 'block', width: '5px', height: '5px', borderRadius: '100px', background: 'white' }} />
+                  <span style={{ display: 'block', width: '5px', height: '5px', borderRadius: '100px', background: 'rgba(255,255,255,0.5)' }} />
+                </div>
+                {/* Action buttons */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  <button onClick={() => setOpenModal('swap')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '100px', border: '1.5px solid rgba(179,251,255,0.5)', background: 'none', color: 'white', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Plus size={16} strokeWidth={2} /> Deposit
+                  </button>
+                  <button onClick={() => setOpenModal('send')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '100px', border: '1.5px solid rgba(179,251,255,0.5)', background: 'none', color: 'white', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <ArrowUpFromLine size={16} strokeWidth={2} /> Send
+                  </button>
+                  <button onClick={() => setActiveTab('wallet')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '100px', border: '1.5px solid rgba(179,251,255,0.5)', background: 'none', color: 'white', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Send size={16} strokeWidth={2} /> Transfer
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Savings goal cards – horizontal scroll */}
             <div style={{ marginBottom: '16px' }}>
