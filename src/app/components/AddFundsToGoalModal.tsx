@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Target, TrendingUp, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { X, CheckCircle, Loader, AlertTriangle } from 'lucide-react';
 
 interface Goal {
   id: string;
@@ -21,12 +21,7 @@ interface AddFundsToGoalModalProps {
   onAddFunds: (goalId: string, amount: number) => void;
 }
 
-export default function AddFundsToGoalModal({ 
-  onClose, 
-  goal, 
-  savingsBalance,
-  onAddFunds 
-}: AddFundsToGoalModalProps) {
+export default function AddFundsToGoalModal({ onClose, goal, savingsBalance, onAddFunds }: AddFundsToGoalModalProps) {
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -35,25 +30,17 @@ export default function AddFundsToGoalModal({
   const remainingToGoal = goal.targetAmount - goal.currentAmount;
   const isValid = amountNum > 0 && amountNum <= savingsBalance;
   const wouldComplete = goal.currentAmount + amountNum >= goal.targetAmount;
-
-  const handleQuickAmount = (value: number) => {
-    setAmount(value.toString());
-  };
+  const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+  const newProgress = Math.min(((goal.currentAmount + amountNum) / goal.targetAmount) * 100, 100);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
-
     setIsProcessing(true);
-
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);
-
-      setTimeout(() => {
-        onAddFunds(goal.id, amountNum);
-        onClose();
-      }, 2000);
+      setTimeout(() => { onAddFunds(goal.id, amountNum); onClose(); }, 2000);
     }, 1500);
   };
 
@@ -62,7 +49,8 @@ export default function AddFundsToGoalModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-[70] flex items-end justify-center"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
       onClick={onClose}
     >
       <motion.div
@@ -71,187 +59,139 @@ export default function AddFundsToGoalModal({
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="bg-[#0a142f] w-full max-w-md rounded-t-[24px] max-h-[90vh] flex flex-col overflow-hidden"
       >
+        {/* Handle */}
+        <div className="flex justify-center pt-4 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-[#8ac7ff]" />
+        </div>
+
         <AnimatePresence mode="wait">
           {isProcessing ? (
-            <motion.div
-              key="processing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-8 text-center min-h-[400px] flex flex-col items-center justify-center"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className={`w-20 h-20 rounded-full bg-gradient-to-r ${goal.color} mx-auto mb-6 flex items-center justify-center`}
-              >
-                <TrendingUp className="w-10 h-10 text-white" />
+            <motion.div key="processing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-16 px-6">
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="mb-6">
+                <Loader className="w-14 h-14 text-[#007bff]" />
               </motion.div>
-              <h3 className="text-gray-900 mb-2">Adding Funds</h3>
-              <p className="text-sm text-gray-600">Transferring to your goal...</p>
+              <p className="text-white text-lg font-semibold mb-1">Adding Funds</p>
+              <p className="text-[#8ac7ff] text-sm">Transferring to your goal...</p>
             </motion.div>
           ) : isSuccess ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-8 text-center min-h-[400px] flex flex-col items-center justify-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6"
-              >
-                <CheckCircle2 className="w-12 h-12 text-green-600" />
+            <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-16 px-6 gap-4">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', damping: 15 }}>
+                <CheckCircle className="w-14 h-14 text-[#00e6ff]" />
               </motion.div>
-              <h3 className="text-gray-900 mb-2">Funds Added!</h3>
-              <p className="text-sm text-gray-600 mb-6">
-                {wouldComplete ? '🎉 Goal completed!' : 'Keep it up!'}
-              </p>
-              <div className="bg-gray-50 rounded-2xl p-4 w-full">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Amount Added</span>
-                  <span className="text-gray-900">${amountNum.toFixed(2)}</span>
+              <p className="text-white text-xl font-bold">{wouldComplete ? '🎉 Goal Completed!' : 'Funds Added!'}</p>
+              <p className="text-[#8ac7ff] text-sm">{wouldComplete ? 'You reached your goal!' : 'Keep it up!'}</p>
+              <div className="bg-[#162040] border border-[rgba(0,123,255,0.2)] rounded-xl p-4 w-full flex flex-col gap-3 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#8ac7ff] text-xs">Amount Added</span>
+                  <span className="text-white text-xs font-medium">${amountNum.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Goal</span>
-                  <span className="text-gray-900">{goal.name}</span>
+                  <span className="text-[#8ac7ff] text-xs">Goal</span>
+                  <span className="text-white text-xs font-medium">{goal.name}</span>
                 </div>
               </div>
             </motion.div>
           ) : (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col overflow-hidden">
               {/* Header */}
-              <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-                <h2 className="text-gray-900">Add Funds to Goal</h2>
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
+              <div className="px-6 py-4 flex items-center justify-between shrink-0">
+                <p className="text-white text-xl font-bold">Add Funds to Goal</p>
+                <button onClick={onClose}><X className="w-5 h-5 text-[#8ac7ff]" /></button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6">
-                {/* Goal Info */}
-                <div className={`bg-gradient-to-br ${goal.color} rounded-2xl p-5 text-white mb-6`}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="text-3xl">{goal.emoji}</div>
+              <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 pb-8 flex flex-col gap-5">
+                {/* Goal card */}
+                <div className="bg-[#007bff] rounded-[20px] p-5 overflow-hidden relative">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">{goal.emoji}</span>
                     <div>
-                      <h3 className="text-white text-lg mb-1">{goal.name}</h3>
-                      <p className="text-sm text-white/80">
+                      <p className="text-white text-base font-semibold">{goal.name}</p>
+                      <p className="text-[rgba(255,255,255,0.7)] text-xs">
                         ${goal.currentAmount.toFixed(2)} / ${goal.targetAmount.toFixed(2)}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-                    <p className="text-xs text-white/80 mb-1">Remaining to Goal</p>
-                    <p className="text-2xl text-white">${remainingToGoal.toFixed(2)}</p>
+                  {/* Progress bar */}
+                  <div className="bg-[rgba(255,255,255,0.2)] rounded-full h-2 mb-2">
+                    <div
+                      className="bg-white rounded-full h-2 transition-all duration-500"
+                      style={{ width: `${amountNum > 0 ? newProgress : progress}%` }}
+                    />
                   </div>
-                </div>
-
-                {/* Available Balance */}
-                <div className="bg-blue-50 rounded-xl p-4 mb-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-600">Available in Wallet</p>
-                    <p className="text-lg text-gray-900">${savingsBalance.toFixed(2)}</p>
+                    <span className="text-[rgba(255,255,255,0.7)] text-xs">
+                      ${remainingToGoal.toFixed(2)} remaining
+                    </span>
+                    <span className="text-white text-xs font-semibold">
+                      {amountNum > 0 ? newProgress.toFixed(0) : progress.toFixed(0)}%
+                    </span>
                   </div>
                 </div>
 
-                {/* Amount Input */}
-                <div className="mb-6">
-                  <label className="block text-sm text-gray-600 mb-3">Amount to Add</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-gray-400">$</span>
+                {/* Available balance */}
+                <div className="bg-[#162040] border border-[rgba(0,123,255,0.2)] rounded-xl px-4 py-3 flex items-center justify-between">
+                  <span className="text-[#8ac7ff] text-xs">Available in Savings</span>
+                  <span className="text-white text-sm font-semibold">${savingsBalance.toFixed(2)}</span>
+                </div>
+
+                {/* Amount input */}
+                <div className="bg-[#1a2540] border border-[#3c5679] rounded-xl p-4">
+                  <label className="text-[#8ac7ff] text-xs block mb-3">Amount to Add</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#8ac7ff] text-2xl">$</span>
                     <input
                       type="number"
                       step="0.01"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-10 pr-4 py-4 text-2xl text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 transition-colors [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      className="flex-1 bg-transparent text-white text-2xl focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
-
-                  {/* Error Messages */}
                   {amountNum > savingsBalance && (
-                    <div className="flex items-center gap-2 mt-3 text-red-600">
-                      <AlertTriangle className="w-4 h-4" />
-                      <p className="text-sm">Insufficient wallet balance</p>
+                    <div className="flex items-center gap-2 mt-2 text-red-400">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span className="text-xs">Insufficient balance</span>
                     </div>
                   )}
                 </div>
 
-                {/* Quick Amount Buttons */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-600 mb-3">Quick Select</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <motion.button
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleQuickAmount(Math.min(50, remainingToGoal, savingsBalance))}
-                      className="px-4 py-3 bg-gray-100 text-gray-900 rounded-xl hover:bg-gray-200 transition-colors"
+                {/* Quick select */}
+                <div className="flex gap-3">
+                  {[50, 100].map((v) => (
+                    <button key={v} type="button"
+                      onClick={() => setAmount(Math.min(v, remainingToGoal, savingsBalance).toString())}
+                      className="flex-1 h-11 bg-[#1a2540] border border-[#3c5679] rounded-xl text-white text-sm"
                     >
-                      $50
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleQuickAmount(Math.min(100, remainingToGoal, savingsBalance))}
-                      className="px-4 py-3 bg-gray-100 text-gray-900 rounded-xl hover:bg-gray-200 transition-colors"
-                    >
-                      $100
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleQuickAmount(Math.min(remainingToGoal, savingsBalance))}
-                      className="px-4 py-3 bg-blue-100 text-blue-900 rounded-xl hover:bg-blue-200 transition-colors"
-                    >
-                      Complete
-                    </motion.button>
-                  </div>
+                      ${v}
+                    </button>
+                  ))}
+                  <button type="button"
+                    onClick={() => setAmount(Math.min(remainingToGoal, savingsBalance).toString())}
+                    className="flex-1 h-11 bg-[rgba(0,123,255,0.15)] border border-[rgba(0,123,255,0.3)] rounded-xl text-[#007bff] text-sm font-medium"
+                  >
+                    Complete
+                  </button>
                 </div>
 
-                {/* Completion Warning */}
                 {wouldComplete && amountNum > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6"
-                  >
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-green-900 mb-1">🎉 This will complete your goal!</p>
-                        <p className="text-xs text-green-700">You'll be able to withdraw the full amount</p>
-                      </div>
-                    </div>
-                  </motion.div>
+                  <div className="bg-[rgba(0,230,255,0.08)] border border-[rgba(0,230,255,0.2)] rounded-xl px-4 py-3 flex items-center gap-3">
+                    <CheckCircle className="w-4 h-4 text-[#00e6ff] shrink-0" />
+                    <p className="text-[#00e6ff] text-xs">This will complete your goal!</p>
+                  </div>
                 )}
 
-                {/* Action Button */}
-                <motion.button
+                <button
                   type="submit"
-                  whileTap={{ scale: 0.98 }}
                   disabled={!isValid}
-                  className={`w-full rounded-2xl py-4 shadow-lg transition-all ${
-                    isValid
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:shadow-xl'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                  className="w-full h-14 bg-[#007bff] rounded-xl text-white text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Add ${amountNum.toFixed(2)} to Goal
-                </motion.button>
+                </button>
               </form>
             </motion.div>
           )}

@@ -1,18 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import {
-  Target,
   Plus,
   Lock,
   AlertTriangle,
   ChevronRight,
-  Flame,
-  Users,
-  Trophy,
-  Gift,
-  TrendingUp,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
+import SectionHeader from './ui/SectionHeader';
 import CreateGoalModal from './CreateGoalModal';
 import LockedSavingsModal from './LockedSavingsModal';
 import SavingsTransferModal from './SavingsTransferModal';
@@ -319,435 +313,213 @@ export default function SavingsPage({
   const sortedGoals = getSortedGoals();
 
   return (
-    <div className="h-full overflow-y-auto pb-32 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* Header - Compact */}
-      <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 px-6 pt-6 pb-8 text-white">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Header with Streak Badge */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold mb-0.5">Savings</h1>
-              <p className="text-xs text-white/80">Build your future, one step at a time</p>
-            </div>
-            {saveStreak > 0 && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.2 }}
-                className="flex items-center gap-1.5 bg-gradient-to-br from-orange-400 to-pink-500 px-3 py-1.5 rounded-full shadow-lg"
-              >
-                <Flame className="w-4 h-4 text-white" />
-                <span className="font-bold text-white text-sm">{saveStreak}</span>
-              </motion.div>
-            )}
-          </div>
+    <div className="h-full overflow-y-auto bg-[#0a142f]">
 
-          {/* Total Savings - Compact */}
-          <div className="text-center mb-5">
-            <p className="text-xs text-white/70 mb-1">Total Savings</p>
-            <motion.h2
-              className="text-5xl font-bold mb-1.5"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              ${totalSavings >= 1e9 ? `${(totalSavings / 1e9).toFixed(2)}B` : totalSavings >= 1e6 ? `${(totalSavings / 1e6).toFixed(2)}M` : totalSavings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </motion.h2>
-            <div className="flex items-center justify-center gap-2 text-xs">
-              <span className="text-white/80">
-                {goals.length} {goals.length === 1 ? 'goal' : 'goals'} • {lockedSavings.length} locked
-              </span>
-            </div>
-          </div>
-
-        </motion.div>
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-center px-6 pt-5 pb-1">
+        <h1 className="text-white text-base font-semibold">My Savings</h1>
       </div>
+      <p className="text-[#8ac7ff] text-sm font-medium px-6 mb-4">Your financial safe corner</p>
 
-      <div className="px-6 py-6 space-y-8">
-        {/* Available Savings Card with Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-200 shadow-sm"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs text-gray-600 mb-1">💰 Available to Use</p>
-              <h3 className="text-3xl font-bold text-gray-900">
-                ${availableSavings.toFixed(2)}
-              </h3>
-            </div>
+      {/* ── Total Savings card ───────────────────────────────────────────── */}
+      <div className="mx-6 mb-5 rounded-[20px] bg-[#007bff] overflow-hidden relative">
+        {/* Wave decoration matching Figma */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[10%] left-0 w-[88%] h-[135%] rounded-[50%] bg-white/[0.09]" />
+          <div className="absolute -top-[10%] left-[87%] w-full h-[135%] rounded-[50%] bg-white/[0.09]" />
+        </div>
+        <div className="relative px-5 pt-5 pb-4">
+          {/* Growth badge */}
+          <div className="absolute top-5 right-5 bg-[rgba(0,230,255,0.4)] px-2.5 py-1 rounded-full">
+            <span className="text-[#00e6ff] text-[11px] font-semibold">+4.2% this month</span>
           </div>
-
-          <p className="text-xs text-gray-600 mb-4">
-            Funds ready to add to goals, lock for interest, or withdraw
+          <p className="text-white text-xs font-normal leading-4 mb-2">Total Savings</p>
+          <p className="text-white text-[32px] font-bold leading-8 tracking-tight mb-1">
+            ${totalSavings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
-
-          {/* Quick Actions - Lock & Earn and Withdraw */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setShowLockedSavings(true)}
-              className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Lock className="w-4 h-4" />
-                <p className="text-sm font-semibold">Lock & Earn</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setShowTransferModal(true)}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl p-3 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <ArrowRight className="w-4 h-4" />
-                <p className="text-sm font-semibold">Withdraw</p>
-              </div>
-            </button>
+          <p className="text-white text-[11px] font-semibold mb-4">
+            Across {goals.length} {goals.length === 1 ? 'goal' : 'goals'} · {lockedSavings.length} locked
+          </p>
+          {/* Dots */}
+          <div className="flex items-center justify-center gap-1 mb-3">
+            <div className="w-3 h-1 rounded-full bg-[#2c14dd]" />
+            <div className="w-1 h-1 rounded-full bg-white" />
           </div>
-        </motion.div>
-
-        
-        {/* Smart Priority Card */}
-        {goals.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100"
+          {/* Save Now CTA */}
+          <button
+            onClick={() => setShowLockedSavings(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#b3fbff] bg-[#0a142f] text-white text-xs font-normal"
           >
-            {sortedGoals.some(g => g.isBehind) ? (
-              <>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 font-semibold">⚠️ Goal At Risk</h3>
-                    <p className="text-xs text-gray-600">Action required this month</p>
-                  </div>
-                </div>
-                {(() => {
-                  const behindGoal = sortedGoals.find(g => g.isBehind);
-                  if (behindGoal) {
-                    const daysLeft = getDaysRemaining(behindGoal.deadline);
-                    const monthlyNeeded = behindGoal.monthlyTarget;
-                    const behindBy = behindGoal.targetAmount - behindGoal.currentAmount - (monthlyNeeded * Math.floor(daysLeft / 30));
-                    const monthsDelay = Math.ceil(behindBy / monthlyNeeded);
-
-                    return (
-                      <>
-                        <div className="bg-red-50 rounded-xl p-3 mb-4">
-                          <p className="text-sm text-gray-900 font-medium mb-1">
-                            {behindGoal.name}
-                          </p>
-                          <p className="text-xs text-red-700">
-                            At current rate, you'll miss your deadline by ~{monthsDelay} {monthsDelay === 1 ? 'month' : 'months'}
-                          </p>
-                        </div>
-                        <p className="text-sm text-gray-700 mb-4">
-                          Add <span className="font-bold text-gray-900">${monthlyNeeded}</span> this month to get back on track
-                        </p>
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            setGoalToAddFunds(behindGoal);
-                          }}
-                          className="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl py-3 font-semibold shadow-md"
-                        >
-                          Save My Goal
-                        </motion.button>
-                      </>
-                    );
-                  }
-                })()}
-              </>
-            ) : (
-              <>
-                <div className="mb-3">
-                  <h3 className="text-gray-900 font-semibold text-lg">🎉 You're on track!</h3>
-                </div>
-                <p className="text-gray-700 text-sm">
-                  All your goals are progressing well. Keep up the great work!
-                </p>
-              </>
-            )}
-          </motion.div>
-        )}
-
-        {/* Savings Goals Section */}
-        <div>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-gray-900 text-lg font-semibold">Savings Goals</h3>
-              <p className="text-xs text-gray-500">{goals.length} active goals</p>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowCreateGoal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">New Goal</span>
-            </motion.button>
-          </div>
-
-          {/* Goals List */}
-          <div className="space-y-3">
-            {goals.length === 0 ? (
-              <div className="bg-white rounded-2xl p-6 text-center border border-gray-100">
-                <Target className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h4 className="text-gray-900 mb-2">No Goals Yet</h4>
-                <p className="text-sm text-gray-600 mb-4">Create a savings goal and track your progress</p>
-                <button
-                  onClick={() => setShowCreateGoal(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  Create Your First Goal →
-                </button>
-              </div>
-            ) : (
-              <>
-                
-                {sortedGoals.slice(0, 1).map((goal, index) => (
-                  <motion.div
-                    key={goal.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm relative"
-                  >
-                    {/* Quick Add Button */}
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setGoalToAddFunds(goal);
-                      }}
-                      className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-shadow z-10"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </motion.button>
-
-                    <button
-                      onClick={() => {
-                        setCameFromAllGoals(false);
-                        setSelectedGoal(goal);
-                      }}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className={`w-12 h-12 bg-gradient-to-br ${goal.color} rounded-xl flex items-center justify-center text-2xl`}>
-                          {goal.emoji}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-1 pr-8">
-                            <div className="text-left">
-                              <h4 className="text-gray-900 font-semibold">{goal.name}</h4>
-                              <p className="text-xs text-gray-500">{getDaysRemaining(goal.deadline)} days left</p>
-                            </div>
-                            {goal.isBehind && (
-                              <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg">
-                                <AlertTriangle className="w-3 h-3 text-yellow-600" />
-                                <span className="text-xs text-yellow-700">Behind</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-600">${goal.currentAmount.toFixed(2)} saved</span>
-                          <span className="text-gray-900 font-semibold">${goal.targetAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${getProgress(goal.currentAmount, goal.targetAmount)}%` }}
-                            transition={{ duration: 1, delay: index * 0.1 }}
-                            className={`h-full bg-gradient-to-r ${goal.color}`}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Target Info */}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        <div className="text-xs text-gray-600 text-left">
-                          Monthly target: <span className="text-gray-900 font-medium">${goal.monthlyTarget}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                      </div>
-                    </button>
-                  </motion.div>
-                ))}
-
-                {/* View All Goals Button */}
-                {goals.length > 1 && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setShowAllGoals(true);
-                      setCameFromAllGoals(true);
-                    }}
-                    className="w-full bg-white rounded-2xl p-4 border-2 border-blue-200 hover:border-blue-400 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <Target className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-gray-900 text-sm font-medium">View All Goals</p>
-                          <p className="text-xs text-gray-600">{goals.length} active goals</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </motion.button>
-                )}
-              </>
-            )}
-          </div>
+            <Plus className="w-4 h-4" strokeWidth={2} />
+            Save Now
+          </button>
         </div>
-
-        {/* Locked Savings Section */}
-        <div>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-gray-900 text-lg font-semibold">Locked Savings</h3>
-              <p className="text-xs text-gray-500">Earn higher yields with time-locks</p>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowLockedSavings(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
-            >
-              <Lock className="w-4 h-4" />
-              <span className="text-sm font-medium">Lock Funds</span>
-            </motion.button>
-          </div>
-
-          {/* Locked Savings List */}
-          <div className="space-y-3">
-            {lockedSavings.length === 0 ? (
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 text-center border border-blue-100">
-                <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h4 className="text-gray-900 font-semibold mb-2">No Locked Savings Yet</h4>
-                <p className="text-sm text-gray-600 mb-4">Lock your funds for 30-365 days and earn up to 15% APY</p>
-                <button
-                  onClick={() => setShowLockedSavings(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Learn More →
-                </button>
-              </div>
-            ) : (
-              <>
-                {lockedSavings.slice(0, 1).map((saving, index) => (
-                  <motion.button
-                    key={saving.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedLockedSaving(saving)}
-                    className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:border-blue-200 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                          <Lock className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-left">
-                          <h4 className="text-gray-900 font-semibold">{saving.amount} {saving.asset}</h4>
-                          <p className="text-xs text-gray-600">{saving.duration} days lock</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-semibold">{saving.apy}% APY</p>
-                        <p className="text-xs text-gray-500">+${saving.earnings.toFixed(2)}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-gray-100">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">Unlocks on</span>
-                        <span className="text-gray-900 font-medium">{new Date(saving.unlockDate).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
-
-                {/* View All Button */}
-                {lockedSavings.length > 1 && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowAllLockedSavings(true)}
-                    className="w-full bg-white rounded-2xl p-4 border-2 border-blue-200 hover:border-blue-400 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <Lock className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-gray-900 text-sm font-medium">View All Locked Savings</p>
-                          <p className="text-xs text-gray-600">{lockedSavings.length} active locks</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </motion.button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Rewards Section - Simplified */}
-        {(saveStreak > 0 || completedGoals > 0) && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="w-5 h-5 text-gray-900" />
-              <h3 className="text-gray-900 text-lg font-semibold">Your Progress</h3>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-            >
-              <div className="grid grid-cols-2 gap-4">
-                {saveStreak > 0 && (
-                  <div className="text-center p-3 bg-orange-50 rounded-xl">
-                    <Flame className="w-6 h-6 text-orange-500 mx-auto mb-1" />
-                    <p className="text-2xl font-bold text-gray-900">{saveStreak}</p>
-                    <p className="text-xs text-gray-600">day streak</p>
-                  </div>
-                )}
-                {completedGoals > 0 && (
-                  <div className="text-center p-3 bg-green-50 rounded-xl">
-                    <Trophy className="w-6 h-6 text-green-500 mx-auto mb-1" />
-                    <p className="text-2xl font-bold text-gray-900">{completedGoals}</p>
-                    <p className="text-xs text-gray-600">goals completed</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-
       </div>
+
+      {/* ── Lucy insight card ────────────────────────────────────────────── */}
+      {goals.length > 0 && (() => {
+        const urgentGoal = sortedGoals[0];
+        const pct = Math.round(getProgress(urgentGoal.currentAmount, urgentGoal.targetAmount));
+        const remaining = urgentGoal.targetAmount - urgentGoal.currentAmount;
+        return (
+          <div className="mx-6 mb-5">
+            <div className="bg-[#162040] border border-[rgba(0,123,255,0.2)] rounded-[20px] p-5 flex gap-4 items-center shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)]">
+              <div className="w-8 h-8 bg-[#007bff] rounded-full flex items-center justify-center shrink-0">
+                <span className="text-white text-sm font-bold">L</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-normal leading-4">
+                  <span className="text-[#e2e8f0]">You're {pct}% toward your </span>
+                  <span className="text-white">{urgentGoal.name.toLowerCase()} goal</span>
+                  <span className="text-[#e2e8f0]">. Add ${remaining.toFixed(0)} more to hit it this month.</span>
+                </p>
+                <button
+                  onClick={() => setGoalToAddFunds(urgentGoal)}
+                  className="flex items-center gap-1 mt-1 text-[#007bff] text-sm font-medium"
+                >
+                  Add Funds <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── My Goals section ─────────────────────────────────────────────── */}
+      <div className="px-6 mb-5">
+        <SectionHeader
+          title="My Goals"
+          actionLabel="New Goal"
+          onAction={() => setShowCreateGoal(true)}
+        />
+        <div className="mt-4 flex flex-col gap-3">
+          {goals.length === 0 ? (
+            <div className="bg-[rgba(30,41,59,0.4)] border border-[rgba(51,65,85,0.5)] rounded-xl p-6 text-center">
+              <p className="text-[#8ac7ff] text-sm mb-3">No goals yet. Start saving towards something!</p>
+              <button
+                onClick={() => setShowCreateGoal(true)}
+                className="text-[#007bff] text-sm font-semibold"
+              >
+                Create Your First Goal →
+              </button>
+            </div>
+          ) : (
+            <>
+              {sortedGoals.map((goal) => {
+                const pct = getProgress(goal.currentAmount, goal.targetAmount);
+                const daysLeft = getDaysRemaining(goal.deadline);
+                const statusLabel = pct >= 100 ? 'Complete!' : goal.isBehind ? 'Behind' : daysLeft <= 0 ? 'Overdue' : 'On track';
+                const statusColor = pct >= 100 ? 'text-[#02d128]' : goal.isBehind ? 'text-[#ff4444]' : 'text-[#00e6ff]';
+                return (
+                  <button
+                    key={goal.id}
+                    onClick={() => { setCameFromAllGoals(false); setSelectedGoal(goal); }}
+                    className="bg-[rgba(30,41,59,0.4)] border border-[rgba(51,65,85,0.5)] rounded-xl p-[17px] text-left flex flex-col gap-3 w-full"
+                  >
+                    {/* Row 1: name + status */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[#f1f5f9] text-base font-semibold leading-6">{goal.name}</p>
+                        <p className="text-[#94a3b8] text-xs leading-4 mt-0.5">
+                          Saved: ${goal.currentAmount.toFixed(2)} of ${goal.targetAmount.toFixed(2)}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-bold leading-4 ${statusColor}`}>{statusLabel}</span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#007bff] rounded-full"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    {/* Row 3: deadline + chevron */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#94a3b8] text-xs leading-4">
+                        {daysLeft > 0 ? `Due in ${daysLeft} days` : goal.deadline ? `Due ${new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', d: 'numeric' })}` : 'No deadline'}
+                      </span>
+                      <ChevronRight className="w-[17px] h-[17px] text-[#94a3b8]" />
+                    </div>
+                  </button>
+                );
+              })}
+              {goals.length > 2 && (
+                <button
+                  onClick={() => { setShowAllGoals(true); setCameFromAllGoals(true); }}
+                  className="text-[#007bff] text-sm font-semibold text-center py-1"
+                >
+                  View All Goals →
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Locked Savings section ───────────────────────────────────────── */}
+      <div className="px-6 mb-8">
+        <SectionHeader
+          title="Locked Savings"
+          actionLabel="Lock Funds"
+          onAction={() => setShowLockedSavings(true)}
+        />
+        <div className="mt-4 flex flex-col gap-3">
+          {lockedSavings.length === 0 ? (
+            <div className="bg-[rgba(30,41,59,0.4)] border border-[rgba(51,65,85,0.5)] rounded-xl p-6 text-center">
+              <Lock className="w-8 h-8 text-[#8ac7ff] mx-auto mb-2" strokeWidth={1.5} />
+              <p className="text-[#8ac7ff] text-sm mb-2">No locked savings yet.</p>
+              <p className="text-[#94a3b8] text-xs">Lock funds for 30–365 days and earn up to 15% APY</p>
+            </div>
+          ) : (
+            <>
+              {lockedSavings.slice(0, 2).map((saving) => (
+                <button
+                  key={saving.id}
+                  onClick={() => setSelectedLockedSaving(saving)}
+                  className="bg-[rgba(30,41,59,0.4)] border-l-4 border-[#007bff] border-t border-r border-b border-[rgba(51,65,85,0.5)] rounded-xl pl-5 pr-[17px] py-[17px] text-left flex flex-col gap-2 w-full"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[#f1f5f9] text-base font-medium leading-6">
+                        {Math.floor(saving.duration / 30)}-Month Lock
+                      </p>
+                      <p className="text-white text-xl font-semibold leading-7">
+                        ${saving.amount.toFixed(2)}
+                      </p>
+                    </div>
+                    <span className="bg-[rgba(0,230,255,0.1)] text-[#00e6ff] text-xs font-medium px-2 py-1 rounded">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-[#94a3b8] text-xs leading-4">
+                    Unlocks {new Date(saving.unlockDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#cbd5e1] text-xs">Earning steadily until unlock</span>
+                  </div>
+                </button>
+              ))}
+              {lockedSavings.length > 2 && (
+                <button
+                  onClick={() => setShowAllLockedSavings(true)}
+                  className="text-[#007bff] text-sm font-semibold text-center py-1"
+                >
+                  View All Locked Savings →
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Floating Save button ─────────────────────────────────────────── */}
+      <button
+        onClick={() => setShowLockedSavings(true)}
+        className="fixed bottom-24 right-4 w-14 h-14 bg-[#007bff] rounded-full flex items-center justify-center shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] z-30"
+      >
+        <Plus className="w-6 h-6 text-white" strokeWidth={2} />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#00e6ff] border-2 border-[#007bff] rounded-full" />
+      </button>
 
       {/* Modals */}
       {showCreateGoal && (

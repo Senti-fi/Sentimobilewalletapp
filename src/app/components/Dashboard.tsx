@@ -1,25 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform } from 'motion/react';
+import { motion } from 'motion/react';
 import {
-  Home,
   TrendingUp,
-  ArrowLeftRight,
-  Wallet as WalletIcon,
   Send,
   Download,
   ShoppingBag,
   LockKeyhole,
-  Eye,
-  EyeOff,
   Bell,
-  Settings,
   PiggyBank,
-  CreditCard,
-  Smile,
-  User,
+  Plus,
+  ArrowUpFromLine,
   Activity,
-  MessageCircle
+  ArrowLeftRight,
+  LayoutGrid,
 } from 'lucide-react';
+import BottomNav, { NavTab } from './ui/BottomNav';
+import WalletPage from './WalletPage';
+import InvestPage from './InvestPage';
 import SendModal from './SendModal';
 import ReceiveModal from './ReceiveModal';
 import SwapModal from './SwapModal';
@@ -140,7 +137,7 @@ export default function Dashboard() {
     return iconMap[iconName] || Send;
   };
 
-  const [activeTab, setActiveTab] = useState<'home' | 'savings' | 'lucy' | 'spend' | 'link' | 'analytics' | 'settings'>('home');
+  const [activeTab, setActiveTab] = useState<NavTab | 'lucy' | 'analytics' | 'settings'>('home');
   const [openModal, setOpenModal] = useState<ModalType>(null);
   const [totalBalance, setTotalBalance] = useState(() => loadFromStorage('senti_totalBalance', 6298.55));
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -669,187 +666,159 @@ export default function Dashboard() {
     setActiveTab('lucy');
   };
 
+  // ── helpers ───────────────────────────────────────────────────────────────
+  const navTab = (activeTab === 'lucy' || activeTab === 'analytics' || activeTab === 'settings')
+    ? null
+    : activeTab as NavTab;
+
   return (
-    <div className="absolute inset-0 flex flex-col bg-gradient-to-br from-gray-50 to-blue-50/30 max-w-md mx-auto overflow-x-hidden">
-      {/* Minimalist Header - FIXED at top for all tabs except link/settings/lucy/analytics */}
-      {activeTab !== 'link' && activeTab !== 'settings' && activeTab !== 'lucy' && activeTab !== 'analytics' && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex-none px-6 pt-6 pb-4 flex items-center justify-between bg-gradient-to-br from-gray-50 to-blue-50/30 z-10"
-        >
-        <div className="flex items-center gap-3">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-11 h-11 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center border border-gray-200"
-          >
-            <User className="w-6 h-6 text-gray-600" strokeWidth={1.5} />
-          </motion.div>
-          <div>
-            <p className="text-xs text-gray-500">Welcome back</p>
-            <p className="text-gray-900">{username}<span className="text-blue-600">Senti</span></p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
-          >
-            <Bell className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setActiveTab('settings')}
-            className="p-2.5 hover:bg-white/80 rounded-xl transition-all"
-          >
-            <Settings className="w-5 h-5 text-gray-600" strokeWidth={1.5} />
-          </motion.button>
-        </div>
-      </motion.div>
-      )}
+    <div className="absolute inset-0 flex flex-col bg-[#0a142f] max-w-md mx-auto overflow-hidden font-[Urbanist,sans-serif]">
 
-      {/* Main Content */}
-      <div className={`flex-1 min-h-0 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
-        activeTab === 'link' || activeTab === 'settings' || activeTab === 'lucy' || activeTab === 'analytics'
-          ? 'overflow-hidden' // Prevent parent scrolling, let child pages manage their own scrolling
-          : 'overflow-y-auto overflow-x-hidden pb-32 px-6 space-y-5' // Full scrolling for regular tabs with extra padding for nav
-      }`}>
+      {/* ── Main content area ─────────────────────────────────────────────── */}
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+
+        {/* HOME TAB */}
         {activeTab === 'home' && (
-          <>
-            {/* Total Balance Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="pt-2 pb-4"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm text-gray-500">Total Balance</p>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setBalanceVisible(!balanceVisible)}
-                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  {balanceVisible ? (
-                    <Eye className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-gray-400" />
-                  )}
-                </motion.button>
+          <div className="flex flex-col h-full overflow-y-auto">
+            {/* Status bar row */}
+            <div className="flex items-center justify-between px-5 h-11 shrink-0">
+              <span className="text-white text-[15px] font-semibold tracking-tight">9:41</span>
+            </div>
+
+            {/* Header: avatar + greeting + bell */}
+            <div className="flex items-center gap-3 px-6 pt-1 pb-3">
+              <div className="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center shrink-0">
+                <span className="text-[#007bff] text-xl font-bold leading-none">
+                  {username.charAt(0).toUpperCase()}
+                </span>
               </div>
-              {balanceVisible ? (
-                <h1 className="text-5xl text-gray-900 tracking-tight mb-2 truncate">
-                  ${formatCompactBalance(totalBalance)}
-                </h1>
-              ) : (
-                <h1 className="text-5xl text-gray-900 tracking-tight mb-2">••••••</h1>
-              )}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-green-100 rounded-full">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                  <span className="text-xs text-green-700">+2.4%</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-base font-semibold leading-5">Gm, {username}</p>
+                <p className="text-[#8ac7ff] text-sm font-medium leading-[18px]">Your money is working for you.</p>
+              </div>
+              <div className="relative shrink-0">
+                <Bell className="w-6 h-6 text-white" strokeWidth={1.5} />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#ff4444]" />
+              </div>
+            </div>
+
+            {/* Net Worth card */}
+            <div className="mx-6 mb-5 rounded-[20px] bg-[#007bff] overflow-hidden relative">
+              <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+                <div className="absolute -top-4 -left-8 w-[120%] h-[120%] rounded-full bg-white/10" />
+                <div className="absolute top-8 right-[-30%] w-[80%] h-[80%] rounded-full bg-white/10" />
+              </div>
+              <div className="relative px-5 pt-5 pb-4">
+                <p className="text-white text-xs font-normal leading-4 mb-2">Net Worth</p>
+                <p className="text-white text-[32px] font-bold leading-8 tracking-tight mb-1">
+                  {balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
+                </p>
+                <div className="flex items-center gap-1 mb-4">
+                  <span className="text-white text-[11px] font-semibold">Today's Earnings</span>
+                  <span className="text-[#32fc65] text-[11px] font-semibold">+$146.30 (+ 2.4%)</span>
                 </div>
-                <span className="text-sm text-gray-500">+$197.50 today</span>
-              </div>
-            </motion.div>
-
-            {/* Action Buttons - Compact horizontal layout for mobile */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex justify-between gap-2"
-            >
-              {quickActions.map((action, index) => (
-                <motion.button
-                  key={action.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.05 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    if (action.action) {
-                      action.action();
-                    } else if (action.modal) {
-                      setOpenModal(action.modal);
-                    }
-                  }}
-                  className="flex flex-col items-center gap-1.5 flex-1"
-                >
-                  <div className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-2xl flex items-center justify-center shadow-sm`}>
-                    <action.icon className="w-5 h-5 text-white" strokeWidth={2} />
-                  </div>
-                  <span className="text-xs text-gray-600 font-medium">{action.label}</span>
-                </motion.button>
-              ))}
-            </motion.div>
-
-            {/* Assets List */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-gray-900">Your Assets</h2>
-              </div>
-              
-              {/* Single unified assets card */}
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-              >
-                {assets.map((asset, index) => (
-                  <motion.div
-                    key={asset.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + index * 0.05 }}
-                    whileHover={{ backgroundColor: 'rgba(249, 250, 251, 0.5)' }}
-                    className={`p-4 flex items-center gap-4 cursor-pointer transition-colors ${
-                      index !== assets.length - 1 ? 'border-b border-gray-100' : ''
-                    }`}
+                {/* Dots */}
+                <div className="flex items-center justify-center gap-1 mb-3">
+                  <div className="w-3 h-1 rounded-full bg-[#2c14dd]" />
+                  <div className="w-1 h-1 rounded-full bg-white" />
+                  <div className="w-1 h-1 rounded-full bg-white" />
+                  <div className="w-1 h-1 rounded-full bg-white" />
+                </div>
+                {/* Actions */}
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setOpenModal('swap')}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
                   >
-                    <div className={`w-12 h-12 ${asset.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                      <img src={asset.icon} alt={asset.symbol} className="w-7 h-7 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 mb-0.5">{asset.symbol}</p>
-                      <p className="text-xs text-gray-500 truncate">{formatCompactBalance(asset.balance)} {asset.symbol}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-gray-900 mb-0.5">${formatCompactBalance(asset.value)}</p>
-                      {asset.change !== 0 && (
-                        <div className="flex items-center justify-end gap-1">
-                          <TrendingUp className="w-3 h-3 text-green-600" />
-                          <span className="text-xs text-green-600">+{asset.changePercent}%</span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
+                    <Plus className="w-4 h-4" strokeWidth={2} /> Deposit
+                  </button>
+                  <button
+                    onClick={() => setOpenModal('send')}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
+                  >
+                    <ArrowUpFromLine className="w-4 h-4" strokeWidth={2} /> Send
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('wallet')}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
+                  >
+                    <Send className="w-4 h-4" strokeWidth={2} /> Transfer
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            {/* Activity Preview */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-            >
-              <TransactionHistory transactions={recentTransactions} />
-            </motion.div>
-          </>
+            {/* Savings goal cards – horizontal scroll */}
+            <div className="mb-5">
+              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1">
+                {/* Create New Goal card */}
+                <div
+                  onClick={() => setActiveTab('save')}
+                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col justify-between gap-3 min-h-[134px] cursor-pointer"
+                >
+                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-1">
+                    <span className="text-black text-[11px] font-normal whitespace-nowrap">Create New Goal</span>
+                    <span className="text-black text-[11px]">→</span>
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium leading-[18px]">Goal-Based Savings</p>
+                    <p className="text-[#8ac7ff] text-xs font-normal leading-4 mt-1">Create a savings goal and track your progress</p>
+                  </div>
+                </div>
+                {/* Invest card */}
+                <div
+                  onClick={() => setActiveTab('invest')}
+                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                >
+                  <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
+                  <p className="text-white text-2xl font-bold leading-8 tracking-tight">
+                    ${formatCompactBalance(vaultBalance)}
+                  </p>
+                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
+                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Growing daily</p>
+                  <div className="flex items-center gap-1 self-start mt-auto bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-1">
+                    <span className="text-black text-[11px] font-normal whitespace-nowrap">View Portfolio</span>
+                    <span className="text-black text-[11px]">→</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activities */}
+            <div className="mx-6 mb-6">
+              <div className="bg-[rgba(30,41,59,0.4)] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)]">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-white text-sm font-medium">Recent Activities</span>
+                  <button onClick={() => setActiveTab('wallet')} className="text-[#8ac7ff] text-sm font-medium">View All</button>
+                </div>
+                <div className="flex flex-col gap-4">
+                  {recentTransactions.slice(0, 4).map((tx, i) => {
+                    const isCredit = tx.amount >= 0;
+                    return (
+                      <div key={tx.id} className={`flex items-center gap-4 ${i < 3 ? 'pb-4 border-b border-[#1a2540]' : ''}`}>
+                        <div className="w-10 h-10 rounded-[20px] shrink-0 flex items-center justify-center bg-[#1a3a6b]">
+                          {tx.icon && <tx.icon className="w-5 h-5 text-white" strokeWidth={1.5} />}
+                        </div>
+                        <div className="flex flex-1 items-center justify-between min-w-0">
+                          <div className="flex flex-col gap-0.5">
+                            <p className="text-white text-sm font-medium leading-[18px] truncate max-w-[160px]">{tx.merchant}</p>
+                            <p className="text-[#8ac7ff] text-xs leading-4">{tx.date}</p>
+                          </div>
+                          <p className={`text-sm font-medium leading-[18px] whitespace-nowrap ml-2 ${isCredit ? 'text-[#00e6ff]' : 'text-[#ff4444]'}`}>
+                            {isCredit ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        {activeTab === 'savings' && (
+        {/* SAVE TAB */}
+        {activeTab === 'save' && (
           <SavingsPage
             onOpenLucy={handleOpenLucy}
             walletBalance={totalBalance}
@@ -861,6 +830,42 @@ export default function Dashboard() {
           />
         )}
 
+        {/* WALLET TAB */}
+        {activeTab === 'wallet' && (
+          <WalletPage
+            totalBalance={totalBalance}
+            assets={assets}
+            recentTransactions={recentTransactions}
+            onDeposit={() => setOpenModal('swap')}
+            onSend={() => setOpenModal('send')}
+            onTransfer={() => setOpenModal('send')}
+            onViewAll={() => setActiveTab('wallet')}
+          />
+        )}
+
+        {/* INVEST TAB */}
+        {activeTab === 'invest' && (
+          <InvestPage
+            vaultBalance={vaultBalance}
+            vaultEarned={vaultEarned}
+            activeInvestments={activeInvestments}
+            onAddMore={() => setOpenModal('grow')}
+            onWithdraw={() => setOpenModal('grow')}
+            onOpenGrow={() => setOpenModal('grow')}
+          />
+        )}
+
+        {/* ACCOUNT TAB */}
+        {activeTab === 'account' && (
+          <SettingsPage
+            onClose={() => setActiveTab('home')}
+            totalBalance={totalBalance}
+            activeGoals={4}
+            totalRewards={2300}
+          />
+        )}
+
+        {/* Hidden / modal-triggered pages */}
         {activeTab === 'lucy' && (
           <LucyPage
             walletContext={walletContext}
@@ -872,33 +877,6 @@ export default function Dashboard() {
             onVaultWithdraw={handleVaultWithdraw}
           />
         )}
-
-        {activeTab === 'spend' && (
-          <SpendPage
-            onOpenLucy={handleOpenLucy}
-            recentTransactions={recentTransactions.filter(t => t.type === 'send')}
-            onAddTransaction={addTransaction}
-          />
-        )}
-
-        {activeTab === 'link' && (
-          <LinkPage
-            assets={assets}
-            onSend={handleSend}
-            onReceive={handleReceive}
-            onUnreadCountChange={setLinkUnreadCount}
-          />
-        )}
-
-        {activeTab === 'settings' && (
-          <SettingsPage
-            onClose={() => setActiveTab('home')}
-            totalBalance={totalBalance}
-            activeGoals={4}
-            totalRewards={2300}
-          />
-        )}
-
         {activeTab === 'analytics' && (
           <PortfolioAnalyticsPage
             assets={assets}
@@ -909,57 +887,15 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Floating Bottom Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-40"
-      >
-        <div className="bg-white/80 backdrop-blur-2xl border border-gray-200 rounded-3xl px-4 py-2 shadow-2xl shadow-gray-300/50">
-          <div className="flex items-center justify-around">
-            {[
-              { id: 'home', label: 'Home', icon: Home },
-              { id: 'savings', label: 'Savings', icon: PiggyBank },
-              { id: 'lucy', label: 'Lucy', icon: Smile },
-              { id: 'spend', label: 'Spend', icon: CreditCard },
-              { id: 'link', label: 'Link', icon: MessageCircle },
-            ].map((tab) => {
-              const isActive = activeTab === tab.id;
-              const badge = tab.id === 'link' && linkUnreadCount > 0 ? linkUnreadCount : 0;
-              return (
-                <motion.button
-                  key={tab.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className="flex items-center justify-center p-3 transition-all relative"
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-blue-50 rounded-2xl"
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )}
-                  <tab.icon
-                    className={`w-5 h-5 relative z-10 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-gray-500'
-                    }`}
-                    strokeWidth={isActive ? 2.5 : 1.5}
-                  />
-                  {badge > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 z-20 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shadow-sm">
-                      {badge > 99 ? '99+' : badge}
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      </motion.div>
+      {/* ── Bottom Navigation ─────────────────────────────────────────────── */}
+      {navTab !== null && (
+        <BottomNav
+          active={navTab}
+          onChange={(tab) => setActiveTab(tab)}
+        />
+      )}
 
-      {/* Modals */}
+      {/* ── Modals ────────────────────────────────────────────────────────── */}
       {openModal === 'send' && (
         <SendModal
           onClose={handleModalClose}
