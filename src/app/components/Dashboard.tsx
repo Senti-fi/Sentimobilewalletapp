@@ -699,44 +699,57 @@ export default function Dashboard() {
             </div>
 
             {/* Net Worth card */}
-            <div className="mx-6 mb-5 rounded-[20px] bg-[#007bff] overflow-hidden relative">
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-[10%] left-0 w-[88%] h-[135%] rounded-[50%] bg-white/[0.09]" />
-                <div className="absolute -top-[10%] left-[87%] w-full h-[135%] rounded-[50%] bg-white/[0.09]" />
+            <div
+              className="mx-6 mb-5 overflow-hidden relative"
+              style={{ backgroundColor: '#007bff', borderRadius: '20px' }}
+            >
+              {/* Wave decoration */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ borderRadius: '20px' }}>
+                <div
+                  className="absolute"
+                  style={{ top: '-10%', left: 0, width: '88%', height: '135%', borderRadius: '50%', background: 'rgba(255,255,255,0.09)' }}
+                />
+                <div
+                  className="absolute"
+                  style={{ top: '-10%', left: '87%', width: '100%', height: '135%', borderRadius: '50%', background: 'rgba(255,255,255,0.09)' }}
+                />
               </div>
-              <div className="relative px-5 pt-5 pb-4">
+              <div className="relative" style={{ padding: '20px 20px 16px' }}>
                 <p className="text-white text-xs font-normal leading-4 mb-2">Net Worth</p>
-                <p className="text-white text-[32px] font-bold leading-8 tracking-tight mb-1">
+                <p className="text-white font-bold tracking-tight mb-1" style={{ fontSize: '32px', lineHeight: '36px' }}>
                   {balanceVisible ? `$${formatCompactBalance(totalBalance)}` : '••••••'}
                 </p>
                 <div className="flex items-center gap-1 mb-4">
-                  <span className="text-white text-[11px] font-semibold">Today's Earnings</span>
-                  <span className="text-[#32fc65] text-[11px] font-semibold">+$146.30 (+ 2.4%)</span>
+                  <span className="text-white font-semibold" style={{ fontSize: '11px' }}>Today's Earnings</span>
+                  <span className="font-semibold" style={{ fontSize: '11px', color: '#32fc65' }}>+$146.30 (+ 2.4%)</span>
                 </div>
                 {/* Dots */}
                 <div className="flex items-center justify-center gap-1 mb-3">
-                  <div className="w-3 h-1 rounded-full bg-[#2c14dd]" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
-                  <div className="w-1 h-1 rounded-full bg-white" />
+                  <div style={{ width: '12px', height: '4px', borderRadius: '9999px', background: '#2c14dd' }} />
+                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
+                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
+                  <div style={{ width: '4px', height: '4px', borderRadius: '9999px', background: 'white' }} />
                 </div>
                 {/* Actions */}
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => setOpenModal('swap')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
+                    className="flex items-center gap-1.5 text-white text-xs"
+                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
                   >
                     <Plus className="w-4 h-4" strokeWidth={2} /> Deposit
                   </button>
                   <button
                     onClick={() => setOpenModal('send')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
+                    className="flex items-center gap-1.5 text-white text-xs"
+                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
                   >
                     <ArrowUpFromLine className="w-4 h-4" strokeWidth={2} /> Send
                   </button>
                   <button
                     onClick={() => setActiveTab('wallet')}
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-full border border-[#b3fbff] bg-[#007bff] text-white text-xs"
+                    className="flex items-center gap-1.5 text-white text-xs"
+                    style={{ padding: '10px 12px', borderRadius: '9999px', border: '1px solid #b3fbff', background: '#007bff' }}
                   >
                     <Send className="w-4 h-4" strokeWidth={2} /> Transfer
                   </button>
@@ -746,74 +759,78 @@ export default function Dashboard() {
 
             {/* Savings goal cards – horizontal scroll */}
             <div className="mb-4">
-              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto px-6 pb-1 scrollbar-hide">
                 {/* Create New Goal card */}
                 <div
                   onClick={() => setActiveTab('save')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col justify-between gap-3 min-h-[134px] cursor-pointer"
+                  className="shrink-0 flex flex-col justify-between cursor-pointer"
+                  style={{ width: '200px', minHeight: '150px', background: '#162040', borderRadius: '20px', padding: '20px', boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.06)' }}
                 >
-                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-1">
-                    <span className="text-black text-[11px] font-normal whitespace-nowrap">Create New Goal</span>
-                    <span className="text-black text-[11px]">→</span>
+                  <div className="flex items-center gap-1 self-start" style={{ background: '#d9fbff', border: '1px solid #00e6ff', borderRadius: '9999px', padding: '4px 6px 4px 8px' }}>
+                    <span className="text-black whitespace-nowrap" style={{ fontSize: '11px' }}>Create New Goal</span>
+                    <span className="text-black" style={{ fontSize: '11px' }}>→</span>
                   </div>
-                  <div>
+                  <div className="mt-3">
                     <p className="text-white text-sm font-medium leading-[18px]">Goal-Based Savings</p>
-                    <p className="text-[#8ac7ff] text-xs font-normal leading-4 mt-1">Create a savings goal and track your progress</p>
+                    <p style={{ color: '#8ac7ff', fontSize: '12px', lineHeight: '16px', marginTop: '4px' }}>Create a savings goal and track your progress</p>
                   </div>
                 </div>
                 {/* Savings goal example card (Rent) */}
                 <div
                   onClick={() => setActiveTab('save')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                  className="shrink-0 flex flex-col gap-1.5 cursor-pointer"
+                  style={{ width: '200px', minHeight: '150px', background: '#162040', borderRadius: '20px', padding: '20px', boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.06)' }}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-white text-sm font-medium leading-[18px]">Rent</p>
-                    <div className="flex items-center gap-1 bg-[#d9fbff] border border-[#00e6ff] rounded-full pl-2 pr-1.5 py-0.5">
-                      <span className="text-black text-[10px] font-normal whitespace-nowrap">View Goal</span>
-                      <span className="text-black text-[10px]">→</span>
+                    <div className="flex items-center gap-1" style={{ background: '#d9fbff', border: '1px solid #00e6ff', borderRadius: '9999px', padding: '2px 6px 2px 8px' }}>
+                      <span className="text-black whitespace-nowrap" style={{ fontSize: '10px' }}>View Goal</span>
+                      <span className="text-black" style={{ fontSize: '10px' }}>→</span>
                     </div>
                   </div>
-                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
+                  <p className="text-white font-bold tracking-tight" style={{ fontSize: '22px', lineHeight: '28px' }}>
                     $1,200.00
                   </p>
-                  <p className="text-[#02d128] text-xs font-normal leading-4">+4.2% this month</p>
-                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">On track and growing</p>
+                  <p style={{ color: '#02d128', fontSize: '12px', lineHeight: '16px' }}>+4.2% this month</p>
+                  <p style={{ color: '#8ac7ff', fontSize: '12px', lineHeight: '16px' }}>On track and growing</p>
                 </div>
               </div>
             </div>
 
             {/* Vault & Investment cards – horizontal scroll */}
             <div className="mb-5">
-              <div className="flex gap-2.5 overflow-x-auto px-6 pb-1 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto px-6 pb-1 scrollbar-hide">
                 {/* USDC Vault card */}
                 <div
                   onClick={() => setOpenModal('grow')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                  className="shrink-0 flex flex-col gap-1.5 cursor-pointer"
+                  style={{ width: '200px', minHeight: '150px', background: '#162040', borderRadius: '20px', padding: '20px', boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.06)' }}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-white text-sm font-medium leading-[18px]">USDC Vault</p>
+                    <div className="flex items-center gap-1" style={{ background: '#d9fbff', border: '1px solid #000', borderRadius: '9999px', padding: '2px 6px 2px 8px' }}>
+                      <span className="text-black whitespace-nowrap" style={{ fontSize: '10px' }}>View Portfolio</span>
+                      <span className="text-black" style={{ fontSize: '10px' }}>→</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 self-start bg-[#d9fbff] border border-black rounded-full pl-2 pr-1.5 py-0.5 mb-1">
-                    <span className="text-black text-[10px] font-normal whitespace-nowrap">View Portfolio</span>
-                    <span className="text-black text-[10px]">→</span>
-                  </div>
-                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
+                  <p className="text-white font-bold tracking-tight" style={{ fontSize: '22px', lineHeight: '28px' }}>
                     ${formatCompactBalance(vaultBalance)}
                   </p>
-                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
-                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Growing daily</p>
+                  <p style={{ color: '#02d128', fontSize: '12px', lineHeight: '16px' }}>+8.5% this month</p>
+                  <p style={{ color: '#8ac7ff', fontSize: '12px', lineHeight: '16px' }}>Growing daily</p>
                 </div>
                 {/* Stablecoin LP card */}
                 <div
                   onClick={() => setActiveTab('invest')}
-                  className="bg-[#162040] rounded-[20px] p-5 shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)] shrink-0 w-[160px] flex flex-col gap-1 min-h-[134px] cursor-pointer"
+                  className="shrink-0 flex flex-col gap-1.5 cursor-pointer"
+                  style={{ width: '200px', minHeight: '150px', background: '#162040', borderRadius: '20px', padding: '20px', boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.06)' }}
                 >
                   <p className="text-white text-sm font-medium leading-[18px]">Stablecoin LP</p>
-                  <p className="text-white text-xl font-bold leading-7 tracking-tight">
+                  <p className="text-white font-bold tracking-tight" style={{ fontSize: '22px', lineHeight: '28px' }}>
                     ${formatCompactBalance(vaultBalance)}
                   </p>
-                  <p className="text-[#02d128] text-xs font-normal leading-4">+8.5% this month</p>
-                  <p className="text-[#8ac7ff] text-xs font-medium leading-4">Earning daily returns</p>
+                  <p style={{ color: '#02d128', fontSize: '12px', lineHeight: '16px' }}>+8.5% this month</p>
+                  <p style={{ color: '#8ac7ff', fontSize: '12px', lineHeight: '16px' }}>Earning daily returns</p>
                 </div>
               </div>
             </div>
