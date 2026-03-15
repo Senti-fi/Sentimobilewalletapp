@@ -10,7 +10,7 @@ interface BottomNavProps {
 const TABS: { id: NavTab; label: string; Icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }[] = [
   { id: 'home',    label: 'Home',    Icon: Home },
   { id: 'save',    label: 'Save',    Icon: PiggyBank },
-  { id: 'wallet',  label: 'Move',    Icon: ArrowLeftRight },
+  { id: 'wallet',  label: 'Wallet',  Icon: ArrowLeftRight },
   { id: 'invest',  label: 'Invest',  Icon: BarChart2 },
   { id: 'account', label: 'Account', Icon: UserCircle },
 ];
