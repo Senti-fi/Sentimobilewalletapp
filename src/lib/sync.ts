@@ -22,21 +22,27 @@ export type FinancialState = Omit<AppState, 'userProfile'>;
 
 /**
  * Upsert the user profile into the existing `users` table.
- * Maps our UserProfile fields to the existing column names.
- * Conflicts on auth_user_id (the Supabase auth UUID).
+ * Conflicts on auth_user_id (the Supabase auth UUID) — never creates duplicates.
+ * Returns { error } so callers can surface DB constraint violations (e.g. username taken).
  */
-export async function saveUserProfile(profile: UserProfile): Promise<void> {
-  if (!supabase) return;
+export async function saveUserProfile(
+  profile: UserProfile,
+): Promise<{ error: string | null }> {
+  if (!supabase) return { error: null };
   const { error } = await supabase.from('users').upsert(
     {
-      auth_user_id: profile.id,                    // Supabase auth.users.id (UUID)
-      username:     profile.username,
+      auth_user_id: profile.id,       // Supabase auth.users.id (UUID)
+      username:     profile.username, // stored lowercase, enforced unique by DB index
       handle:       `@${profile.username}`,
       email:        profile.email,
     },
     { onConflict: 'auth_user_id' },
   );
-  if (error) console.error('[sync] saveUserProfile:', error.message);
+  if (error) {
+    console.error('[sync] saveUserProfile:', error.message);
+    return { error: error.message };
+  }
+  return { error: null };
 }
 
 /** Upsert the full financial state. Call after every successful store action. */

@@ -10,12 +10,14 @@
  * Auth:
  *   The CTA screen presents Google sign-in via Supabase OAuth.
  *   Apple is shown as disabled (coming soon).
- *   After the OAuth redirect back to the app, the loading step checks for an
- *   active Supabase session:
- *     - Returning user with a username → AuthListener (App.tsx) restores the
- *       profile and RequireGuest redirects them to /home before they reach here.
- *     - New user (no username yet) → jump straight to the username step.
- *   On username completion the real Supabase user ID is persisted.
+ *   After the OAuth redirect the loading step checks for an active session:
+ *     - Returning user with username → AuthListener restores profile,
+ *       RequireGuest redirects to /home before this page is reached.
+ *     - New user (no username) → jump straight to the username step.
+ *   Username availability is checked against the real users table (case-insensitive).
+ *   On completion the username is normalised to lowercase and written to the DB
+ *   before the local profile is set, so a DB constraint violation (race condition
+ *   on uniqueness) is surfaced to the user rather than silently accepted.
  *
  * Completion is tracked via localStorage key 'senti-onboarding-done'.
  */
@@ -27,21 +29,37 @@ import { useAppStore } from '../../store';
 import type { UserProfile } from '../../store';
 import { track, identifyUser } from '../../lib/analytics';
 import { supabase } from '../../lib/supabase';
+import { saveUserProfile } from '../../lib/sync';
 
 export const ONBOARDING_KEY = 'senti-onboarding-done';
 
 // ── Username uniqueness ─────────────────────────────────────────────
-// Simulates a backend uniqueness check with realistic latency.
+// Reserved names are checked instantly; the real DB is checked for all others.
 
-const TAKEN_USERNAMES = new Set([
+const RESERVED_USERNAMES = new Set([
   'senti', 'admin', 'wallet', 'user', 'finance', 'help', 'support',
   'pay', 'invest', 'save', 'magnifico', 'test', 'demo', 'money', 'bank',
   'root', 'api', 'null', 'undefined', 'system', 'official',
 ]);
 
+/**
+ * Returns true when the username is available.
+ * Checks reserved names first (no network), then the real users table.
+ * The DB index `unique_username` on LOWER(username) makes this O(log n).
+ */
 async function checkUsernameAvailable(username: string): Promise<boolean> {
-  await new Promise<void>(r => setTimeout(r, 450));
-  return !TAKEN_USERNAMES.has(username.toLowerCase());
+  const lower = username.trim().toLowerCase();
+
+  if (RESERVED_USERNAMES.has(lower)) return false;
+  if (!supabase) return true; // no DB configured — reserved-name check is the safety net
+
+  const { data } = await supabase
+    .from('users')
+    .select('username')
+    .ilike('username', lower)  // ILIKE with no wildcards = exact case-insensitive match
+    .maybeSingle();
+
+  return data === null; // null → no existing row → available
 }
 
 // ── Senti "S" logo — Figma 2101:362 (Screen 2 illustration) ────────
@@ -89,15 +107,15 @@ export default function OnboardingPage() {
   const [slideIdx,   setSlideIdx]   = useState(0);
   const [username,   setUsername]   = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [saveError,  setSaveError]  = useState<string | null>(null);
 
   const setUserProfile = useAppStore(s => s.setUserProfile);
 
   /**
    * On mount: check for an existing Supabase session (e.g. after an OAuth
-   * redirect). If the user already has a username, AuthListener in App.tsx
-   * will have set userProfile, and RequireGuest will redirect them to /home
-   * before this effect runs. So reaching this branch means the user is mid-
-   * onboarding: they authenticated with Google but haven't chosen a username.
+   * redirect). Returning users with a username are handled by AuthListener
+   * in App.tsx — they never reach this page. Reaching this branch means the
+   * user authenticated but hasn't chosen a username yet.
    */
   useEffect(() => {
     track('onboarding_started');
@@ -108,18 +126,24 @@ export default function OnboardingPage() {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Authenticated but no username yet — skip straight to username step.
-        setStep('username');
-      } else {
-        setStep('splash');
-      }
+      setStep(session ? 'username' : 'splash');
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Called when the user submits a username after OAuth sign-in. */
+  /**
+   * Persist the username and complete onboarding.
+   *
+   * Order of operations:
+   *  1. Normalise username (trim + lowercase).
+   *  2. Write to DB via saveUserProfile — check for errors (e.g. unique violation).
+   *  3. Only on success: set local profile in the store and navigate.
+   *
+   * The store's setUserProfile also fires saveUserProfile internally (upsert,
+   * idempotent) — the second write is a no-op and harmless.
+   */
   async function complete() {
     if (!supabase) return;
+    setSaveError(null);
     setSubmitting(true);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -128,11 +152,27 @@ export default function OnboardingPage() {
       return;
     }
 
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const { error } = await saveUserProfile({
+      id:           user.id,
+      email:        user.email ?? '',
+      authProvider: 'google',
+      username:     normalizedUsername,
+      createdAt:    user.created_at,
+    });
+
+    if (error) {
+      setSaveError('Username already taken. Please choose another.');
+      setSubmitting(false);
+      return;
+    }
+
     const profile: UserProfile = {
       id:           user.id,
       email:        user.email ?? '',
       authProvider: 'google',
-      username:     username.trim(),
+      username:     normalizedUsername,
       createdAt:    user.created_at,
     };
 
@@ -140,7 +180,7 @@ export default function OnboardingPage() {
     identifyUser(user.id, {
       email:        user.email ?? '',
       authProvider: 'google',
-      username:     username.trim(),
+      username:     normalizedUsername,
     });
     track('onboarding_completed', { authProvider: 'google', hasUsername: true });
     localStorage.setItem(ONBOARDING_KEY, '1');
@@ -195,9 +235,10 @@ export default function OnboardingPage() {
           <UsernameScreen
             key="username"
             value={username}
-            onChange={setUsername}
+            onChange={(v) => { setUsername(v); setSaveError(null); }}
             onContinue={complete}
             submitting={submitting}
+            saveError={saveError}
           />
         )}
       </AnimatePresence>
@@ -795,16 +836,18 @@ function UsernameScreen({
   onChange,
   onContinue,
   submitting,
+  saveError,
 }: {
   value: string;
   onChange: (v: string) => void;
   onContinue: () => void;
   submitting: boolean;
+  saveError: string | null;
 }) {
   const [checking,     setChecking]     = useState(false);
   const [availability, setAvailability] = useState<'available' | 'taken' | null>(null);
 
-  // Debounced uniqueness check
+  // Debounced real-DB uniqueness check
   useEffect(() => {
     setAvailability(null);
     if (value.trim().length < 3) return;
@@ -819,6 +862,31 @@ function UsernameScreen({
 
   const canContinue =
     value.trim().length >= 3 && availability === 'available' && !checking && !submitting;
+
+  // Derive the status message shown below the underline
+  const statusLine: { icon: React.ReactNode; text: string; color: string } | null = (() => {
+    if (saveError) return {
+      icon: <XCircle size={13} style={{ color: '#ff3b30' }} />,
+      text: saveError,
+      color: '#ff3b30',
+    };
+    if (checking) return {
+      icon: <Loader2 size={13} className="text-[#8ac7ff] animate-spin" />,
+      text: 'Checking availability…',
+      color: '#8ac7ff',
+    };
+    if (availability === 'available') return {
+      icon: <CheckCircle2 size={13} style={{ color: '#02d128' }} />,
+      text: `@${value} is available`,
+      color: '#02d128',
+    };
+    if (availability === 'taken') return {
+      icon: <XCircle size={13} style={{ color: '#ff3b30' }} />,
+      text: 'Username taken, try another',
+      color: '#ff3b30',
+    };
+    return null;
+  })();
 
   return (
     <motion.div
@@ -874,7 +942,9 @@ function UsernameScreen({
           style={{
             height: 3,
             borderRadius: 9999,
-            background: availability === 'available'
+            background: saveError
+              ? 'linear-gradient(90deg, #ff3b30 0%, #ef4444 100%)'
+              : availability === 'available'
               ? 'linear-gradient(90deg, #02d128 0%, #22c55e 100%)'
               : availability === 'taken'
               ? 'linear-gradient(90deg, #ff3b30 0%, #ef4444 100%)'
@@ -885,29 +955,13 @@ function UsernameScreen({
           }}
         />
 
-        {/* Availability status */}
+        {/* Status line */}
         <div style={{ marginTop: 10, height: 18 }}>
-          {checking && (
+          {statusLine && (
             <div className="flex items-center gap-[6px]">
-              <Loader2 size={13} className="text-[#8ac7ff] animate-spin" />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#8ac7ff' }}>
-                Checking availability…
-              </span>
-            </div>
-          )}
-          {!checking && availability === 'available' && (
-            <div className="flex items-center gap-[6px]">
-              <CheckCircle2 size={13} style={{ color: '#02d128' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#02d128' }}>
-                @{value} is available
-              </span>
-            </div>
-          )}
-          {!checking && availability === 'taken' && (
-            <div className="flex items-center gap-[6px]">
-              <XCircle size={13} style={{ color: '#ff3b30' }} />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#ff3b30' }}>
-                Username taken, try another
+              {statusLine.icon}
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: statusLine.color }}>
+                {statusLine.text}
               </span>
             </div>
           )}
