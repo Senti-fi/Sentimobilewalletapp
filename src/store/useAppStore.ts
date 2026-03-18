@@ -32,6 +32,8 @@ import {
   computeUnlockSavings,
 } from './engine';
 import { logNetWorthBreakdown } from './selectors';
+import { saveUserProfile, saveUserState } from '../lib/sync';
+import type { FinancialState } from '../lib/sync';
 
 // ── Seed state ───────────────────────────────────────────────────────
 //
@@ -289,6 +291,9 @@ interface AppStore extends AppState {
   setUserProfile:     (profile: UserProfile)               => void;
   clearUserProfile:   ()                                   => void;
 
+  // Supabase hydration — called on startup to load remote state
+  hydrateState:       (state: FinancialState)              => void;
+
   // Utility
   resetToSeed: () => void;
 }
@@ -297,7 +302,15 @@ interface AppStore extends AppState {
 
 export const useAppStore = create<AppStore>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      /** Fire-and-forget Supabase sync after any successful state mutation. */
+      function sync() {
+        const s = get();
+        if (!s.userProfile?.id) return;
+        void saveUserState(s.userProfile.id, s);
+      }
+
+      return {
       ...INITIAL_STATE,
 
       sendFunds(payload) {
@@ -307,7 +320,7 @@ export const useAppStore = create<AppStore>()(
           balances:     result.data.updatedBalances,
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -318,7 +331,7 @@ export const useAppStore = create<AppStore>()(
           balances:     result.data.updatedBalances,
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -329,7 +342,7 @@ export const useAppStore = create<AppStore>()(
           balances:     result.data.updatedBalances,
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -341,7 +354,7 @@ export const useAppStore = create<AppStore>()(
           investments:  [...state.investments, result.data.newPosition],
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -355,7 +368,7 @@ export const useAppStore = create<AppStore>()(
           ),
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -366,7 +379,7 @@ export const useAppStore = create<AppStore>()(
           goals:        [...state.goals, result.data.newGoal],
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -380,7 +393,7 @@ export const useAppStore = create<AppStore>()(
           ),
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -394,7 +407,7 @@ export const useAppStore = create<AppStore>()(
           ),
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -406,7 +419,7 @@ export const useAppStore = create<AppStore>()(
           flexibleSavings: result.data.updatedFlexible,
           transactions:    [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -418,7 +431,7 @@ export const useAppStore = create<AppStore>()(
           flexibleSavings: result.data.updatedFlexible,
           transactions:    [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -430,7 +443,7 @@ export const useAppStore = create<AppStore>()(
           lockedSavings: [...state.lockedSavings, result.data.newPosition],
           transactions:  [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
@@ -444,22 +457,28 @@ export const useAppStore = create<AppStore>()(
           ),
           transactions: [result.data.transaction, ...state.transactions],
         }));
-        logNetWorthBreakdown(get());
+        logNetWorthBreakdown(get()); sync();
         return result;
       },
 
       setUserProfile(profile: UserProfile) {
         set({ userProfile: profile });
+        void saveUserProfile(profile);
       },
 
       clearUserProfile() {
         set({ userProfile: null });
       },
 
+      hydrateState(state: FinancialState) {
+        set(state);
+      },
+
       resetToSeed() {
         set(INITIAL_STATE);
       },
-    }),
+    };
+  },
     {
       name:    'senti-app-state',
       version: 2,               // bump to discard pre-v2 persisted state
