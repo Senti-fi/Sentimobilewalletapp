@@ -1,5 +1,5 @@
 import type { StepProps } from '../../savings/types';
-import type { Asset } from '../../../../store/types';
+import type { Asset } from '../../../store/types';
 
 export interface VaultConfig {
   name: string;         // "USDC Vault" | "USDT Vault" | "Stablecoin LP"
