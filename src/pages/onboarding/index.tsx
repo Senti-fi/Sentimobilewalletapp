@@ -45,21 +45,31 @@ const RESERVED_USERNAMES = new Set([
 /**
  * Returns true when the username is available.
  * Checks reserved names first (no network), then the real users table.
- * The DB index `unique_username` on LOWER(username) makes this O(log n).
+ * Races the DB query against a 3 s timeout so a hanging query never
+ * freezes the UI — if the DB can't answer in time we assume available
+ * and let the unique index catch any actual duplicate at save time.
  */
 async function checkUsernameAvailable(username: string): Promise<boolean> {
   const lower = username.trim().toLowerCase();
 
   if (RESERVED_USERNAMES.has(lower)) return false;
-  if (!supabase) return true; // no DB configured — reserved-name check is the safety net
+  if (!supabase) return true;
 
-  const { data } = await supabase
+  const queryPromise = supabase
     .from('users')
     .select('username')
-    .ilike('username', lower)  // ILIKE with no wildcards = exact case-insensitive match
-    .maybeSingle();
+    .ilike('username', lower)
+    .maybeSingle()
+    .then(({ data, error }) => {
+      if (error) return true; // DB error → assume available
+      return data === null;
+    });
 
-  return data === null; // null → no existing row → available
+  const timeoutPromise = new Promise<boolean>(resolve =>
+    setTimeout(() => resolve(true), 3000),
+  );
+
+  return Promise.race([queryPromise, timeoutPromise]);
 }
 
 // ── Senti "S" logo — Figma 2101:362 (Screen 2 illustration) ────────
@@ -1018,9 +1028,14 @@ function UsernameScreen({
     if (value.trim().length < 3) return;
     setChecking(true);
     const timer = setTimeout(async () => {
-      const ok = await checkUsernameAvailable(value.trim());
-      setAvailability(ok ? 'available' : 'taken');
-      setChecking(false);
+      try {
+        const ok = await checkUsernameAvailable(value.trim());
+        setAvailability(ok ? 'available' : 'taken');
+      } catch {
+        setAvailability('available'); // fallback — unique index catches duplicates at save
+      } finally {
+        setChecking(false);
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [value]);
