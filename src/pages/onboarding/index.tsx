@@ -22,6 +22,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { UserProfile } from '../../store';
+import { track, identifyUser } from '../../lib/analytics';
 
 export const ONBOARDING_KEY = 'senti-onboarding-done';
 
@@ -99,6 +100,8 @@ export default function OnboardingPage() {
 
   const setUserProfile = useAppStore(s => s.setUserProfile);
 
+  useEffect(() => { track('onboarding_started'); }, []);
+
   function complete() {
     if (pendingAuth && username.trim()) {
       const profile: UserProfile = {
@@ -109,7 +112,16 @@ export default function OnboardingPage() {
         createdAt:    new Date().toISOString(),
       };
       setUserProfile(profile);
+      identifyUser(pendingAuth.id, {
+        email:        pendingAuth.email,
+        authProvider: pendingAuth.authProvider,
+        username:     username.trim(),
+      });
     }
+    track('onboarding_completed', {
+      authProvider: pendingAuth?.authProvider ?? null,
+      hasUsername:  !!username.trim(),
+    });
     localStorage.setItem(ONBOARDING_KEY, '1');
     navigate('/home', { replace: true });
   }
@@ -587,9 +599,11 @@ function CtaScreen({
   const [authLoading, setAuthLoading] = useState<'apple' | 'google' | null>(null);
 
   async function handleAuth(provider: 'apple' | 'google') {
+    track('auth_initiated', { provider });
     setAuthLoading(provider);
     await new Promise<void>(r => setTimeout(r, 900));
     setAuthLoading(null);
+    track('auth_completed', { provider });
     onAuth({
       id:           generateUserId(),
       email:        provider === 'apple' ? 'private@privaterelay.appleid.com' : 'user@gmail.com',

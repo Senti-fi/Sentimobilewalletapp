@@ -8,9 +8,11 @@
  * background so the bottom-sheet overlay has the correct blurred context
  * behind it, matching Figma composite frame 218:961.
  */
+import { useEffect } from 'react';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { LockedSavingsData } from '../types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import IntroStep         from './steps/IntroStep';
 import LockSelectionStep from './steps/LockSelectionStep';
 import SetupStep         from './steps/SetupStep';
@@ -37,6 +39,8 @@ export default function LockedSavingsFlow({ onExit }: LockedSavingsFlowProps) {
   const { stepIndex, totalSteps, data, next, back } =
     useFlowStepper<LockedSavingsData>(STEPS, INITIAL, onExit);
   const { lockFunds } = useAppStore();
+
+  useEffect(() => { track('locked_savings_flow_started'); }, []);
 
   const stepProps = { data, onNext: next, onBack: back, onExit, stepIndex, totalSteps };
 
@@ -76,7 +80,10 @@ export default function LockedSavingsFlow({ onExit }: LockedSavingsFlowProps) {
             lockPeriodDays: data.lockPeriodDays ?? 90,
             apy:            parseFloat(String(data.apy ?? '7.6').replace('%', '')),
           });
-          if (result.ok) next({});
+          if (result.ok) {
+            track('savings_locked', { asset: data.asset, amount: data.amount, lockPeriodDays: data.lockPeriodDays, apy: data.apy });
+            next({});
+          }
         }}
       />
     );

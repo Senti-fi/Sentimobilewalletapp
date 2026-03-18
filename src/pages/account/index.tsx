@@ -31,6 +31,7 @@ import {
 import { useAppStore } from '../../store';
 import { getNetWorth } from '../../store/selectors';
 import { ONBOARDING_KEY } from '../onboarding';
+import { track, resetIdentity } from '../../lib/analytics';
 
 // ── Static data (not user-specific) ──────────────────────────────────
 const WALLET_ADDRESS       = '7A3FkPqR8sT2nJ5dVxYzC4bW1eM6hKLNpQrSuTvWxYz';
@@ -210,6 +211,8 @@ export default function AccountPage() {
   };
 
   function handleSignOut() {
+    track('signed_out');
+    resetIdentity();
     clearUserProfile();
     localStorage.removeItem(ONBOARDING_KEY);
     navigate('/onboarding', { replace: true });

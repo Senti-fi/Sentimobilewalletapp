@@ -8,10 +8,12 @@
  * Portalling to #root means the overlay covers everything (including the
  * bottom nav), matching the Figma design exactly.
  */
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { DepositFlowData, VaultConfig } from './types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import DepositAmountStep  from './steps/DepositAmountStep';
 import DepositConfirmStep from './steps/DepositConfirmStep';
 import DepositSuccessStep from './steps/DepositSuccessStep';
@@ -28,6 +30,8 @@ export default function DepositFlow({ vault, onExit }: DepositFlowProps) {
   const { stepIndex, data, next, back, reset } =
     useFlowStepper<DepositFlowData>(STEPS, INITIAL, onExit);
   const { investFunds } = useAppStore();
+
+  useEffect(() => { track('invest_flow_started', { vault: vault.name, asset: vault.asset }); }, []);
 
   const stepProps = {
     data,
@@ -72,7 +76,10 @@ export default function DepositFlow({ vault, onExit }: DepositFlowProps) {
               apy:        vault.apy,
               minDeposit: vault.minDeposit,
             });
-            if (result.ok) next({});
+            if (result.ok) {
+              track('invest_completed', { vault: vault.name, asset: vault.asset, amount: data.amount, apy: vault.apy });
+              next({});
+            }
           }}
         />
       )}

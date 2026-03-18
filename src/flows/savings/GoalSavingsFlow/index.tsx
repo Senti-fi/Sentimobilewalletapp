@@ -8,9 +8,11 @@
  * background layer so the bottom-sheet overlay has the correct blurred
  * context behind it, matching Figma composite frame 141:1932.
  */
+import { useEffect } from 'react';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { GoalSavingsData } from '../types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import IntroStep      from './steps/IntroStep';
 import GoalSetupStep  from './steps/GoalSetupStep';
 import SuccessStep    from './steps/SuccessStep';
@@ -36,6 +38,8 @@ export default function GoalSavingsFlow({ onExit }: GoalSavingsFlowProps) {
   const { stepIndex, totalSteps, data, next, back } =
     useFlowStepper<GoalSavingsData>(STEPS, INITIAL, onExit);
   const { createGoal } = useAppStore();
+
+  useEffect(() => { track('goal_savings_flow_started'); }, []);
 
   const stepProps = { data, onNext: next, onBack: back, onExit, stepIndex, totalSteps };
 
@@ -65,7 +69,10 @@ export default function GoalSavingsFlow({ onExit }: GoalSavingsFlowProps) {
             asset:        'USDC',
             dueDate:      merged.deadline    ?? '',
           });
-          if (result.ok) next(update);
+          if (result.ok) {
+            track('goal_created', { goalName: merged.goalName, targetAmount: merged.targetAmount, deadline: merged.deadline });
+            next(update);
+          }
         }}
       />
     );

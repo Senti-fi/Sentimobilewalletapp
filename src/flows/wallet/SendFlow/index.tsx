@@ -7,9 +7,11 @@
  * Step 3 — ConfirmSendStep
  * Step 4 — TransferSuccessfulStep ("Send More" resets to step 0)
  */
+import { useEffect } from 'react';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { SendFlowData } from './types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import WalletPage from '../../../pages/wallet';
 import SendOptionsStep        from './steps/SendOptionsStep';
 import EnterRecipientStep     from './steps/EnterRecipientStep';
@@ -38,6 +40,8 @@ export default function SendFlow({ onExit, background }: SendFlowProps) {
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<SendFlowData>(STEPS, INITIAL, onExit);
   const { sendFunds } = useAppStore();
+
+  useEffect(() => { track('send_flow_started'); }, []);
 
   const stepProps = { data, onNext: next, onBack: back, onExit, stepIndex, totalSteps };
 
@@ -77,7 +81,10 @@ export default function SendFlow({ onExit, background }: SendFlowProps) {
             recipient: data.recipient ?? '',
             note:      data.note,
           });
-          if (result.ok) next({});
+          if (result.ok) {
+            track('send_completed', { asset: data.asset, amount: data.amount, recipient: data.recipient });
+            next({});
+          }
         }}
       />
     );

@@ -19,9 +19,11 @@
  *   Step 3 — ConfirmLinkStep         ("Confirm Transfer")
  *   Step 4 — LinkSuccessStep         ("Sent Successfully")
  */
+import { useEffect } from 'react';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { WithdrawFlowData } from './types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import WalletPage              from '../../../pages/wallet';
 import WithdrawOptionsStep     from './steps/WithdrawOptionsStep';
 import OnchainWithdrawalStep   from './steps/OnchainWithdrawalStep';
@@ -61,6 +63,8 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
     useFlowStepper<WithdrawFlowData>(STEPS, INITIAL, onExit);
   const { withdrawFunds, sendFunds } = useAppStore();
 
+  useEffect(() => { track('withdraw_flow_started'); }, []);
+
   const stepProps = { data, onNext: next, onBack: back, onExit, stepIndex, totalSteps };
 
   // ── Step 0: Options bottom sheet over frozen background ───────────────
@@ -91,7 +95,10 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
               destination: data.address  ?? 'External Wallet',
               network:     data.network  ?? 'Solana',
             });
-            if (result.ok) next({});
+            if (result.ok) {
+              track('withdraw_completed', { asset: data.asset, amount: data.amount, method: 'onchain' });
+              next({});
+            }
           }}
         />
       );
@@ -113,7 +120,10 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
               destination: 'Bank Transfer',
               note:        'First Bank ••••7823',
             });
-            if (result.ok) next({});
+            if (result.ok) {
+              track('withdraw_completed', { asset: data.asset, amount: data.amount, method: 'fiat' });
+              next({});
+            }
           }}
         />
       );
@@ -147,7 +157,10 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
               recipient: data.recipient  ?? '',
               note:      data.note,
             });
-            if (result.ok) next({});
+            if (result.ok) {
+              track('withdraw_completed', { asset: data.asset, amount: data.amount, method: 'link', recipient: data.recipient });
+              next({});
+            }
           }}
         />
       );

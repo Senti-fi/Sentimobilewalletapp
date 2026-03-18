@@ -7,9 +7,11 @@
  * Step 2 — ConfirmPurchaseStep  (fiat path only)
  * Step 3 — PurchaseSuccessfulStep (fiat path only; "Deposit More" resets to step 0)
  */
+import { useEffect } from 'react';
 import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { DepositFlowData } from '../types';
 import { useAppStore } from '../../../store';
+import { track } from '../../../lib/analytics';
 import WalletPage from '../../../pages/wallet';
 import AddMoneyStep          from './steps/AddMoneyStep';
 import DepositCryptoStep     from './steps/DepositCryptoStep';
@@ -43,6 +45,8 @@ export default function DepositFlow({ onExit, background }: DepositFlowProps) {
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<DepositFlowData>(STEPS, INITIAL, onExit);
   const { depositFunds } = useAppStore();
+
+  useEffect(() => { track('deposit_flow_started'); }, []);
 
   const stepProps = { data, onNext: next, onBack: back, onExit, stepIndex, totalSteps };
 
@@ -84,7 +88,10 @@ export default function DepositFlow({ onExit, background }: DepositFlowProps) {
             source:  PAYMENT_SOURCE[data.paymentMethod ?? 'bank'] ?? 'Bank Transfer',
             txType:  'fiat_purchase',
           });
-          if (result.ok) next({});
+          if (result.ok) {
+            track('deposit_completed', { asset: 'USDC', amount: data.amount, method: data.paymentMethod });
+            next({});
+          }
         }}
       />
     );
