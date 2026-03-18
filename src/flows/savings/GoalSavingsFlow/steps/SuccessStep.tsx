@@ -115,7 +115,7 @@ export default function SuccessStep({ data, onNext, onExit }: StepProps<GoalSavi
 
         {/* View Goal CTA: bg #007bff rounded-12 h-56 p-20 gap-10 w-345 */}
         <button
-          onClick={() => onNext()}
+          onClick={onNext}
           className="bg-[#007bff] rounded-[12px] flex items-center justify-center gap-2 shrink-0"
           style={{ width: 345, height: 56, padding: 20, marginTop: 8 }}
         >

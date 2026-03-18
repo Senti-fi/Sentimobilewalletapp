@@ -19,7 +19,7 @@ const LOCK_PERIODS = [
   { days: 365, label: '1 Year',   sublabel: 'Maximum Returns', earnings: '≈ $180', apy: '12%',  badge: 'Best Value'  },
 ] as const;
 
-export default function LockSelectionStep({ onNext }: StepProps<LockedSavingsData>) {
+export default function LockSelectionStep({ onNext, onBack }: StepProps<LockedSavingsData>) {
   return (
     <div className="absolute inset-0 flex flex-col justify-end">
 

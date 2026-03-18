@@ -3,5 +3,4 @@ export interface SendFlowData {
   recipient: string;                    // @handle or crypto address
   asset: 'USDC' | 'USDT' | 'SOL';
   amount: string;
-  note?: string;
 }

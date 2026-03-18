@@ -44,7 +44,7 @@ function getDaysRemaining(days: number): string {
   return `${days - 1} days remaining`;
 }
 
-export default function LockDetailsStep({ data, onBack }: StepProps<LockedSavingsData>) {
+export default function LockDetailsStep({ data, onBack, onExit }: StepProps<LockedSavingsData>) {
   const amount     = data.amount    || '500';
   const days       = data.lockPeriodDays || 90;
   const baseEst    = EST_EARNINGS[days] ?? 38;

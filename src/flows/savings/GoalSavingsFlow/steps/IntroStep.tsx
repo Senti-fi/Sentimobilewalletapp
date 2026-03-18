@@ -60,7 +60,7 @@ export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>
           <div className="absolute left-5 top-[100px] flex gap-4 items-center h-9">
             {/* New Goal → advances to setup */}
             <button
-              onClick={() => onNext()}
+              onClick={onNext}
               className="border border-[#b3fbff] rounded-[22px] flex items-center gap-2 pl-2 pr-3 py-2.5"
             >
               <div className="size-4 relative shrink-0">
@@ -256,7 +256,7 @@ export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>
 
       {/* ── FAB ─────────────────────────────────────────────────────── */}
       <button
-        onClick={() => onNext()}
+        onClick={onNext}
         className="absolute bottom-6 right-4 bg-[#007bff] rounded-full size-14 flex items-center justify-center shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)]"
       >
         <div className="h-[19px] w-[22px] relative">

@@ -12,6 +12,14 @@ function computeFullTermEarnings(position: LockedSavingsPosition): number {
   return round2(position.principal * (position.apy / 100) * (position.lockPeriodDays / 365));
 }
 
+/** Prorated earnings based on actual elapsed time (capped at lock period). */
+function computeProratedEarnings(position: LockedSavingsPosition, now: Date): number {
+  const lockedMs   = new Date(position.lockedAt).getTime();
+  const elapsedMs  = now.getTime() - lockedMs;
+  const elapsedDays = Math.max(0, elapsedMs / (1000 * 60 * 60 * 24));
+  const effectiveDays = Math.min(elapsedDays, position.lockPeriodDays);
+  return round2(position.principal * (position.apy / 100) * (effectiveDays / 365));
+}
 
 interface UnlockSavingsResult {
   updatedBalances: Balances;
