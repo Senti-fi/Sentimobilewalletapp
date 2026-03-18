@@ -55,6 +55,8 @@ async function checkUsernameAvailable(username: string): Promise<boolean> {
   if (RESERVED_USERNAMES.has(lower)) return false;
   if (!supabase) return true;
 
+  let timeoutId: ReturnType<typeof setTimeout>;
+
   const queryPromise = supabase
     .from('users')
     .select('username')
@@ -65,11 +67,13 @@ async function checkUsernameAvailable(username: string): Promise<boolean> {
       return data === null;
     });
 
-  const timeoutPromise = new Promise<boolean>(resolve =>
-    setTimeout(() => resolve(true), 3000),
-  );
+  const timeoutPromise = new Promise<boolean>(resolve => {
+    timeoutId = setTimeout(() => resolve(true), 3000);
+  });
 
-  return Promise.race([queryPromise, timeoutPromise]);
+  return Promise.race([queryPromise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId); // prevent the timeout timer leaking after query resolves
+  });
 }
 
 // ── Senti "S" logo — Figma 2101:362 (Screen 2 illustration) ────────
@@ -1032,20 +1036,35 @@ function UsernameScreen({
 
   // Debounced real-DB uniqueness check
   useEffect(() => {
+    // Reset on every keystroke so stale state never bleeds through.
     setAvailability(null);
-    if (value.trim().length < 3) return;
+    setChecking(false);
+
+    const trimmed = value.trim();
+    if (trimmed.length < 3) return;
+
+    // `cancelled` guards against stale async callbacks updating state after
+    // the effect has been cleaned up (user typed again, component unmounted).
+    let cancelled = false;
     setChecking(true);
+
     const timer = setTimeout(async () => {
+      if (cancelled) return;
       try {
-        const ok = await checkUsernameAvailable(value.trim());
-        setAvailability(ok ? 'available' : 'taken');
+        const ok = await checkUsernameAvailable(trimmed);
+        if (!cancelled) setAvailability(ok ? 'available' : 'taken');
       } catch {
-        setAvailability('available'); // fallback — unique index catches duplicates at save
+        if (!cancelled) setAvailability('available');
       } finally {
-        setChecking(false);
+        if (!cancelled) setChecking(false);
       }
     }, 500);
-    return () => clearTimeout(timer);
+
+    return () => {
+      cancelled = true;      // kills any in-flight async callback
+      clearTimeout(timer);   // cancels the debounce if it hasn't fired
+      setChecking(false);    // always clear the spinner on cleanup
+    };
   }, [value]);
 
   const canContinue =
