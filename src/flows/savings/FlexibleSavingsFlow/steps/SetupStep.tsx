@@ -29,7 +29,6 @@ export default function SetupStep({ data, onNext, onBack }: StepProps<FlexibleSa
 
   const asset   = (data.asset || 'USDC') as Asset;
   const numVal  = parseFloat(raw) || 0;
-  const display = raw ? `$${numVal.toFixed(2)}` : '$0.00';
   const available = balances[asset];
 
   return (

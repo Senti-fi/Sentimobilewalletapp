@@ -266,24 +266,28 @@ const INITIAL_STATE: AppState = {
 
 interface AppStore extends AppState {
   // Wallet actions
-  sendFunds:          (payload: SendFundsPayload)          => ActionResult;
-  depositFunds:       (payload: DepositFundsPayload)       => ActionResult;
-  withdrawFunds:      (payload: WithdrawFundsPayload)      => ActionResult;
+  sendFunds:          (payload: SendFundsPayload)          => ActionResult<any>;
+  depositFunds:       (payload: DepositFundsPayload)       => ActionResult<any>;
+  withdrawFunds:      (payload: WithdrawFundsPayload)      => ActionResult<any>;
 
   // Investment actions
-  investFunds:        (payload: InvestFundsPayload)        => ActionResult;
-  redeemInvestment:   (payload: RedeemInvestmentPayload)   => ActionResult;
+  investFunds:        (payload: InvestFundsPayload)        => ActionResult<any>;
+  redeemInvestment:   (payload: RedeemInvestmentPayload)   => ActionResult<any>;
 
   // Goal actions
-  createGoal:         (payload: CreateGoalPayload)         => ActionResult;
-  fundGoal:           (payload: FundGoalPayload)           => ActionResult;
-  withdrawGoal:       (payload: WithdrawGoalPayload)       => ActionResult;
+  createGoal:         (payload: CreateGoalPayload)         => ActionResult<any>;
+  fundGoal:           (payload: FundGoalPayload)           => ActionResult<any>;
+  withdrawGoal:       (payload: WithdrawGoalPayload)       => ActionResult<any>;
 
   // Savings actions
-  depositFlexible:    (payload: DepositFlexiblePayload)    => ActionResult;
-  withdrawFlexible:   (payload: WithdrawFlexiblePayload)   => ActionResult;
-  lockFunds:          (payload: LockFundsPayload)          => ActionResult;
-  unlockSavings:      (payload: UnlockSavingsPayload)      => ActionResult;
+  depositFlexible:    (payload: DepositFlexiblePayload)    => ActionResult<any>;
+  withdrawFlexible:   (payload: WithdrawFlexiblePayload)   => ActionResult<any>;
+  lockFunds:          (payload: LockFundsPayload)          => ActionResult<any>;
+  unlockSavings:      (payload: UnlockSavingsPayload)      => ActionResult<any>;
+
+  // Profile actions
+  setUserProfile:     (profile: UserProfile) => void;
+  clearUserProfile:   () => void;
 
   // Utility
   resetToSeed: () => void;

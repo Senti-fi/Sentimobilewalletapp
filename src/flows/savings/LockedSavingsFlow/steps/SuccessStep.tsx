@@ -118,7 +118,7 @@ export default function SuccessStep({ data, onNext, onExit }: StepProps<LockedSa
       <div
         className="absolute bottom-0 left-0 right-0 backdrop-blur-[2px] bg-[rgba(10,20,47,0.95)] px-6 pb-8 pt-4 flex flex-col gap-4 items-center"
       >
-        <button onClick={onNext}>
+        <button onClick={() => onNext()}>
           <span className="text-[#8ac7ff] font-medium text-[14px] leading-[18px]">View Lock Details</span>
         </button>
         <button
