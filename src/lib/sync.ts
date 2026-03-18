@@ -1,9 +1,14 @@
 /**
  * Supabase sync helpers
  *
- * Contracts:
- *   users      — one row per user account (profile data)
- *   user_state — one row per user (full financial state as JSONB)
+ * Existing tables (do not modify schema):
+ *   users      — existing table, 150+ rows from previous deployment
+ *                clerk_user_id is the external auth identifier (TEXT UNIQUE)
+ *                We store our USR-XXXXXXXX id there.
+ *
+ * New table (created by 001_initial_schema.sql migration):
+ *   user_state — one row per user, full financial state as JSONB
+ *                user_id = users.clerk_user_id (TEXT join, no FK)
  *
  * All functions are safe to call when supabase is null (no-op).
  * Errors are logged but never thrown — sync is best-effort.
@@ -15,16 +20,22 @@ export type FinancialState = Omit<AppState, 'userProfile'>;
 
 // ── Write ────────────────────────────────────────────────────────────
 
-/** Upsert the user's profile row. Call once on onboarding completion. */
+/**
+ * Upsert the user profile into the existing `users` table.
+ * Maps our UserProfile fields to the existing column names.
+ * Conflicts on clerk_user_id (our app's auth identifier).
+ */
 export async function saveUserProfile(profile: UserProfile): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from('users').upsert({
-    id:            profile.id,
-    email:         profile.email,
-    auth_provider: profile.authProvider,
-    username:      profile.username,
-    created_at:    profile.createdAt,
-  });
+  const { error } = await supabase.from('users').upsert(
+    {
+      clerk_user_id: profile.id,                    // USR-XXXXXXXX
+      username:      profile.username,
+      handle:        `@${profile.username}`,
+      email:         profile.email,
+    },
+    { onConflict: 'clerk_user_id' },
+  );
   if (error) console.error('[sync] saveUserProfile:', error.message);
 }
 
@@ -32,14 +43,13 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 export async function saveUserState(userId: string, state: FinancialState): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.from('user_state').upsert({
-    user_id:          userId,
+    user_id:          userId,           // matches users.clerk_user_id
     balances:         state.balances,
     transactions:     state.transactions,
     goals:            state.goals,
     flexible_savings: state.flexibleSavings,
     locked_savings:   state.lockedSavings,
     investments:      state.investments,
-    updated_at:       new Date().toISOString(),
   });
   if (error) console.error('[sync] saveUserState:', error.message);
 }
@@ -48,7 +58,7 @@ export async function saveUserState(userId: string, state: FinancialState): Prom
 
 /**
  * Fetch the user's financial state from Supabase.
- * Returns null if no row exists yet or on error.
+ * Returns null if no row exists yet (new user) or on error.
  */
 export async function loadUserState(userId: string): Promise<FinancialState | null> {
   if (!supabase) return null;
