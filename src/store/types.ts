@@ -102,7 +102,7 @@ export interface InvestmentPosition {
 
 // ── User Profile ──────────────────────────────────────────────────────
 
-export type AuthProvider = 'apple' | 'google';
+export type AuthProvider = 'apple' | 'google' | 'email';
 
 export interface UserProfile {
   /** Opaque ID generated at registration time — e.g. 'USR-A4B8C2D1'. */

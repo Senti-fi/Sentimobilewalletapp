@@ -11,7 +11,7 @@ import type { AuthProvider } from './store/types';
  *
  * INITIAL_SESSION — fires on startup; restores the profile for users who
  *   already have a valid session (browser reload, returning visit).
- * SIGNED_IN — fires after a successful OAuth redirect; same restoration logic.
+ * SIGNED_IN — fires after a successful OTP verification; same restoration logic.
  * SIGNED_OUT — clears the local profile so RequireAuth redirects to /onboarding.
  *
  * Only sets userProfile when the user already has a username in the `users`
@@ -42,7 +42,8 @@ function AuthListener() {
 
           if (data?.username) {
             const raw = session.user.app_metadata?.provider as string | undefined;
-            const authProvider: AuthProvider = raw === 'apple' ? 'apple' : 'google';
+            const authProvider: AuthProvider =
+              raw === 'apple' ? 'apple' : raw === 'google' ? 'google' : 'email';
 
             setUserProfile({
               id:           session.user.id,

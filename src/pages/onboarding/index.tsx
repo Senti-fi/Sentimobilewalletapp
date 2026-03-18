@@ -8,9 +8,9 @@
  *   Splash → 3 feature slides (Spend / Save / Invest) → CTA → Username → /home
  *
  * Auth:
- *   The CTA screen presents Google sign-in via Supabase OAuth.
- *   Apple is shown as disabled (coming soon).
- *   After the OAuth redirect the loading step checks for an active session:
+ *   The CTA screen collects the user's email and sends a 6-digit OTP via Supabase.
+ *   No OAuth redirects — the entire flow stays inside the app.
+ *   After OTP verification the session is established and onAuthStateChange fires:
  *     - Returning user with username → AuthListener restores profile,
  *       RequireGuest redirects to /home before this page is reached.
  *     - New user (no username) → jump straight to the username step.
@@ -112,10 +112,10 @@ export default function OnboardingPage() {
   const setUserProfile = useAppStore(s => s.setUserProfile);
 
   /**
-   * On mount: check for an existing Supabase session (e.g. after an OAuth
-   * redirect). Returning users with a username are handled by AuthListener
-   * in App.tsx — they never reach this page. Reaching this branch means the
-   * user authenticated but hasn't chosen a username yet.
+   * On mount: check for an existing Supabase session.
+   * Returning users with a username are handled by AuthListener in App.tsx —
+   * they never reach this page. Reaching this branch means the user has a
+   * session but hasn't chosen a username yet.
    */
   useEffect(() => {
     track('onboarding_started');
@@ -131,15 +131,46 @@ export default function OnboardingPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
+   * Called by CtaScreen after OTP is verified and a Supabase session exists.
+   * Checks whether this user already has a username (returning user) or needs
+   * to create one (new user).
+   */
+  async function handleVerified() {
+    if (!supabase) return;
+    const client = supabase;
+
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return;
+
+    const { data } = await client
+      .from('users')
+      .select('username')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    if (data?.username) {
+      // Returning user — set profile directly and navigate home.
+      setUserProfile({
+        id:           user.id,
+        email:        user.email ?? '',
+        authProvider: 'email',
+        username:     data.username,
+        createdAt:    user.created_at,
+      });
+      localStorage.setItem(ONBOARDING_KEY, '1');
+      navigate('/home', { replace: true });
+    } else {
+      setStep('username');
+    }
+  }
+
+  /**
    * Persist the username and complete onboarding.
    *
    * Order of operations:
    *  1. Normalise username (trim + lowercase).
    *  2. Write to DB via saveUserProfile — check for errors (e.g. unique violation).
    *  3. Only on success: set local profile in the store and navigate.
-   *
-   * The store's setUserProfile also fires saveUserProfile internally (upsert,
-   * idempotent) — the second write is a no-op and harmless.
    */
   async function complete() {
     if (!supabase) return;
@@ -157,7 +188,7 @@ export default function OnboardingPage() {
     const { error } = await saveUserProfile({
       id:           user.id,
       email:        user.email ?? '',
-      authProvider: 'google',
+      authProvider: 'email',
       username:     normalizedUsername,
       createdAt:    user.created_at,
     });
@@ -171,7 +202,7 @@ export default function OnboardingPage() {
     const profile: UserProfile = {
       id:           user.id,
       email:        user.email ?? '',
-      authProvider: 'google',
+      authProvider: 'email',
       username:     normalizedUsername,
       createdAt:    user.created_at,
     };
@@ -179,10 +210,10 @@ export default function OnboardingPage() {
     setUserProfile(profile);
     identifyUser(user.id, {
       email:        user.email ?? '',
-      authProvider: 'google',
+      authProvider: 'email',
       username:     normalizedUsername,
     });
-    track('onboarding_completed', { authProvider: 'google', hasUsername: true });
+    track('onboarding_completed', { authProvider: 'email', hasUsername: true });
     localStorage.setItem(ONBOARDING_KEY, '1');
     navigate('/home', { replace: true });
   }
@@ -229,7 +260,7 @@ export default function OnboardingPage() {
           />
         )}
         {step === 'cta' && (
-          <CtaScreen key="cta" />
+          <CtaScreen key="cta" onVerified={handleVerified} />
         )}
         {step === 'username' && (
           <UsernameScreen
@@ -659,21 +690,59 @@ const ctaIconSave   = 'https://www.figma.com/api/mcp/asset/658e9525-4b71-421a-8f
 const ctaIconInvest = 'https://www.figma.com/api/mcp/asset/b8fea292-cfb1-4596-9f11-2cdf66d534b2';
 
 /**
- * CTA screen — self-contained. Initiates real Supabase OAuth.
- * After signInWithOAuth the browser redirects away; no local state to manage.
+ * CTA screen — email OTP flow. No redirects; everything happens in-app.
+ *
+ * Phase 1 (email): user enters email → signInWithOtp sends a 6-digit code.
+ * Phase 2 (verify): user enters the code → verifyOtp establishes a session
+ *   → onVerified() callback lets the parent decide next step (home vs username).
  */
-function CtaScreen() {
-  const [loading, setLoading] = useState(false);
+function CtaScreen({ onVerified }: { onVerified: () => void }) {
+  const [phase,    setPhase]    = useState<'email' | 'verify'>('email');
+  const [email,    setEmail]    = useState('');
+  const [code,     setCode]     = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+  const [resent,   setResent]   = useState(false);
 
-  async function handleGoogleAuth() {
-    if (!supabase) return;
+  async function handleSendCode() {
+    if (!supabase || !email.trim()) return;
     setLoading(true);
-    track('auth_initiated', { provider: 'google' });
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
+    setError(null);
+    track('auth_initiated', { provider: 'email' });
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: true },
     });
-    // Browser navigates away — no cleanup needed.
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    setPhase('verify');
+  }
+
+  async function handleVerifyCode() {
+    if (!supabase || code.trim().length !== 6) return;
+    setLoading(true);
+    setError(null);
+    const { error: err } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      type:  'email',
+    });
+    setLoading(false);
+    if (err) { setError('Invalid or expired code. Try again.'); return; }
+    track('auth_completed', { provider: 'email' });
+    onVerified();
+  }
+
+  async function handleResend() {
+    if (!supabase) return;
+    setResent(false);
+    setError(null);
+    await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: true },
+    });
+    setResent(true);
+    setCode('');
   }
 
   return (
@@ -776,54 +845,150 @@ function CtaScreen() {
         </h2>
       </div>
 
-      {/* Auth buttons */}
+      {/* Auth section — phases animate between email entry and code verify */}
       <div className="shrink-0 flex flex-col" style={{ paddingLeft: 32, paddingRight: 32, paddingBottom: 40, gap: 12 }}>
+        <AnimatePresence mode="wait">
 
-        {/* Continue with Apple — disabled until Apple OAuth is configured */}
-        <button
-          disabled
-          className="w-full flex items-center justify-center rounded-[16px] gap-[10px]"
-          style={{ height: 57, background: '#000', opacity: 0.35, cursor: 'not-allowed' }}
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
-            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-          </svg>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>
-            Continue with Apple
-          </span>
-        </button>
-
-        {/* Continue with Google */}
-        <button
-          onClick={handleGoogleAuth}
-          disabled={loading}
-          className="w-full flex items-center justify-center rounded-[16px] gap-[10px]"
-          style={{
-            height: 57,
-            background: '#fff',
-            border: '1px solid rgba(0,0,0,0.10)',
-            boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
-            opacity: loading ? 0.6 : 1,
-            transition: 'opacity 0.2s',
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {loading ? (
-            <Loader2 size={20} className="animate-spin" style={{ color: '#3c4043' }} />
-          ) : (
-            <>
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#3c4043' }}>
-                Continue with Google
-              </span>
-            </>
+          {phase === 'email' && (
+            <motion.div
+              key="email-phase"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+            >
+              <input
+                type="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError(null); }}
+                onKeyDown={e => e.key === 'Enter' && handleSendCode()}
+                placeholder="Enter your email"
+                autoFocus
+                className="w-full rounded-[16px] outline-none"
+                style={{
+                  height: 57,
+                  background: '#fff',
+                  border: '1px solid rgba(0,0,0,0.10)',
+                  boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
+                  paddingLeft: 20,
+                  paddingRight: 20,
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 400,
+                  fontSize: 16,
+                  color: '#1e3a5f',
+                }}
+              />
+              {error && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ff3b30', marginTop: -4 }}>
+                  {error}
+                </p>
+              )}
+              <button
+                onClick={handleSendCode}
+                disabled={loading || !email.trim()}
+                className="w-full flex items-center justify-center rounded-[16px]"
+                style={{
+                  height: 57,
+                  background: email.trim()
+                    ? 'linear-gradient(170.08deg, #5a9de8 0%, #3b7dd8 100%)'
+                    : 'linear-gradient(170.08deg, rgb(197,208,219) 0%, rgb(184,196,208) 100%)',
+                  opacity: loading ? 0.6 : 1,
+                  transition: 'opacity 0.2s, background 0.2s',
+                  cursor: loading || !email.trim() ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {loading
+                  ? <Loader2 size={20} className="animate-spin text-white" />
+                  : <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>Continue</span>
+                }
+              </button>
+            </motion.div>
           )}
-        </button>
+
+          {phase === 'verify' && (
+            <motion.div
+              key="verify-phase"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+            >
+              <div style={{ marginBottom: 4 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 15, color: '#1e3a5f' }}>
+                  Check your inbox
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 13, color: '#7b92b0', marginTop: 2 }}>
+                  We sent a 6-digit code to {email}
+                </p>
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={code}
+                onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null); }}
+                onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
+                placeholder="123456"
+                autoFocus
+                className="w-full rounded-[16px] outline-none text-center"
+                style={{
+                  height: 57,
+                  background: '#fff',
+                  border: '1px solid rgba(0,0,0,0.10)',
+                  boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 600,
+                  fontSize: 24,
+                  letterSpacing: 8,
+                  color: '#1e3a5f',
+                }}
+              />
+              {error && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ff3b30', marginTop: -4 }}>
+                  {error}
+                </p>
+              )}
+              {resent && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#02d128', marginTop: -4 }}>
+                  New code sent.
+                </p>
+              )}
+              <button
+                onClick={handleVerifyCode}
+                disabled={loading || code.length !== 6}
+                className="w-full flex items-center justify-center rounded-[16px]"
+                style={{
+                  height: 57,
+                  background: code.length === 6
+                    ? 'linear-gradient(170.08deg, #5a9de8 0%, #3b7dd8 100%)'
+                    : 'linear-gradient(170.08deg, rgb(197,208,219) 0%, rgb(184,196,208) 100%)',
+                  opacity: loading ? 0.6 : 1,
+                  transition: 'opacity 0.2s, background 0.2s',
+                  cursor: loading || code.length !== 6 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {loading
+                  ? <Loader2 size={20} className="animate-spin text-white" />
+                  : <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>Verify</span>
+                }
+              </button>
+              <button
+                onClick={handleResend}
+                className="w-full flex items-center justify-center"
+                style={{ height: 36 }}
+              >
+                <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
+                  Didn't get a code?{' '}
+                  <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Resend</span>
+                </span>
+              </button>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
       </div>
     </motion.div>
   );
