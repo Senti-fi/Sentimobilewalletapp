@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* ── Senti v2 Design Tokens ─────────────────────────────────────────── */
+@theme {
+  /* Brand colors */
+  --color-navy:         #0a142f;
+  --color-navy-mid:     #0f172a;
+  --color-card:         #162040;
+  --color-input:        #1a2540;
+  --color-border:       #3c5679;
+
+  --color-blue:         #007bff;
+  --color-cyan:         #00e6ff;
+  --color-light-blue:   #8ac7ff;
+
+  --color-green:        #32fc65;
+  --color-red:          #ff4444;
+  --color-yellow:       #ffb020;
+
+  /* Typography — Urbanist (primary) · Manrope (wallet data rows) */
+  --font-sans:   'Urbanist', ui-sans-serif, system-ui, sans-serif;
+  --font-manrope: 'Manrope',  ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Base reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background-color: #0a142f;
+  color: #ffffff;
+  font-family: 'Urbanist', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Mobile-first viewport lock ─────────────────────────────────────── */
+#root {
+  height: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background-color: #0a142f;
+}
+
+/* ── Scrollbar hide utility ─────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Number input spinners ──────────────────────────────────────────── */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* ── Date input color scheme ────────────────────────────────────────── */
+input[type='date'] { color-scheme: dark; }
