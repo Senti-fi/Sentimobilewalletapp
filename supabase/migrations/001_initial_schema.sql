@@ -11,8 +11,8 @@
 -- user_state
 -- One row per Senti user. Stores the full financial state as JSONB.
 -- Upserted after every successful wallet / savings / investment action.
--- user_id = users.clerk_user_id  (TEXT — joins on the unique external ID,
---           not the UUID pk, to avoid storing an extra field client-side)
+-- user_id = users.auth_user_id  (TEXT — joins on the Supabase auth UUID,
+--           not the table pk, to avoid storing an extra field client-side)
 
 CREATE TABLE IF NOT EXISTS user_state (
   user_id          TEXT        PRIMARY KEY,

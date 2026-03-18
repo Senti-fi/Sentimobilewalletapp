@@ -6,13 +6,16 @@
  *
  * Flow:
  *   Splash → 3 feature slides (Spend / Save / Invest) → CTA → Username → /home
- *   "Sign in" on the CTA screen skips username and goes straight to /home.
  *
  * Auth:
- *   The CTA screen presents Apple and Google sign-in.
- *   Auth is simulated (no real OAuth) — generates a mock user record.
- *   Username uniqueness is validated against a known-taken set with debounce.
- *   On completion the UserProfile is written to the Zustand store (persisted).
+ *   The CTA screen presents Google sign-in via Supabase OAuth.
+ *   Apple is shown as disabled (coming soon).
+ *   After the OAuth redirect back to the app, the loading step checks for an
+ *   active Supabase session:
+ *     - Returning user with a username → AuthListener (App.tsx) restores the
+ *       profile and RequireGuest redirects them to /home before they reach here.
+ *     - New user (no username yet) → jump straight to the username step.
+ *   On username completion the real Supabase user ID is persisted.
  *
  * Completion is tracked via localStorage key 'senti-onboarding-done'.
  */
@@ -23,20 +26,9 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { UserProfile } from '../../store';
 import { track, identifyUser } from '../../lib/analytics';
+import { supabase } from '../../lib/supabase';
 
 export const ONBOARDING_KEY = 'senti-onboarding-done';
-
-// ── Auth simulation ─────────────────────────────────────────────────
-
-interface PendingAuth {
-  id: string;
-  email: string;
-  authProvider: 'apple' | 'google';
-}
-
-function generateUserId(): string {
-  return 'USR-' + Math.random().toString(36).slice(2, 10).toUpperCase();
-}
 
 // ── Username uniqueness ─────────────────────────────────────────────
 // Simulates a backend uniqueness check with realistic latency.
@@ -89,39 +81,68 @@ const transition = { duration: 0.26, ease: 'easeInOut' as const };
 
 // ── Root ───────────────────────────────────────────────────────────────
 
-type Step = 'splash' | 'slides' | 'cta' | 'username';
+type Step = 'loading' | 'splash' | 'slides' | 'cta' | 'username';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const [step,        setStep]        = useState<Step>('splash');
-  const [slideIdx,    setSlideIdx]    = useState(0);
-  const [username,    setUsername]    = useState('');
-  const [pendingAuth, setPendingAuth] = useState<PendingAuth | null>(null);
+  const [step,       setStep]       = useState<Step>('loading');
+  const [slideIdx,   setSlideIdx]   = useState(0);
+  const [username,   setUsername]   = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const setUserProfile = useAppStore(s => s.setUserProfile);
 
-  useEffect(() => { track('onboarding_started'); }, []);
+  /**
+   * On mount: check for an existing Supabase session (e.g. after an OAuth
+   * redirect). If the user already has a username, AuthListener in App.tsx
+   * will have set userProfile, and RequireGuest will redirect them to /home
+   * before this effect runs. So reaching this branch means the user is mid-
+   * onboarding: they authenticated with Google but haven't chosen a username.
+   */
+  useEffect(() => {
+    track('onboarding_started');
 
-  function complete() {
-    if (pendingAuth && username.trim()) {
-      const profile: UserProfile = {
-        id:           pendingAuth.id,
-        email:        pendingAuth.email,
-        authProvider: pendingAuth.authProvider,
-        username:     username.trim(),
-        createdAt:    new Date().toISOString(),
-      };
-      setUserProfile(profile);
-      identifyUser(pendingAuth.id, {
-        email:        pendingAuth.email,
-        authProvider: pendingAuth.authProvider,
-        username:     username.trim(),
-      });
+    if (!supabase) {
+      setStep('splash');
+      return;
     }
-    track('onboarding_completed', {
-      authProvider: pendingAuth?.authProvider ?? null,
-      hasUsername:  !!username.trim(),
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        // Authenticated but no username yet — skip straight to username step.
+        setStep('username');
+      } else {
+        setStep('splash');
+      }
     });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Called when the user submits a username after OAuth sign-in. */
+  async function complete() {
+    if (!supabase) return;
+    setSubmitting(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setSubmitting(false);
+      return;
+    }
+
+    const profile: UserProfile = {
+      id:           user.id,
+      email:        user.email ?? '',
+      authProvider: 'google',
+      username:     username.trim(),
+      createdAt:    user.created_at,
+    };
+
+    setUserProfile(profile);
+    identifyUser(user.id, {
+      email:        user.email ?? '',
+      authProvider: 'google',
+      username:     username.trim(),
+    });
+    track('onboarding_completed', { authProvider: 'google', hasUsername: true });
     localStorage.setItem(ONBOARDING_KEY, '1');
     navigate('/home', { replace: true });
   }
@@ -137,6 +158,20 @@ export default function OnboardingPage() {
   return (
     <div className="relative h-full bg-black overflow-hidden">
       <AnimatePresence mode="wait">
+        {step === 'loading' && (
+          <motion.div
+            key="loading"
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: '#0a1628' }}
+            variants={variants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={transition}
+          >
+            <Loader2 size={32} className="animate-spin" style={{ color: '#5a9de8' }} />
+          </motion.div>
+        )}
         {step === 'splash' && (
           <SplashScreen
             key="splash"
@@ -154,22 +189,15 @@ export default function OnboardingPage() {
           />
         )}
         {step === 'cta' && (
-          <CtaScreen
-            key="cta"
-            onAuth={(auth) => {
-              setPendingAuth(auth);
-              setStep('username');
-            }}
-            onSignIn={complete}
-          />
+          <CtaScreen key="cta" />
         )}
         {step === 'username' && (
           <UsernameScreen
             key="username"
             value={username}
             onChange={setUsername}
-            pendingAuth={pendingAuth}
             onContinue={complete}
+            submitting={submitting}
           />
         )}
       </AnimatePresence>
@@ -589,26 +617,22 @@ const ctaIconSpend  = 'https://www.figma.com/api/mcp/asset/898910e7-d8e3-42d7-98
 const ctaIconSave   = 'https://www.figma.com/api/mcp/asset/658e9525-4b71-421a-8f3a-b5b5d7b39c7b';
 const ctaIconInvest = 'https://www.figma.com/api/mcp/asset/b8fea292-cfb1-4596-9f11-2cdf66d534b2';
 
-function CtaScreen({
-  onAuth,
-  onSignIn,
-}: {
-  onAuth: (auth: PendingAuth) => void;
-  onSignIn: () => void;
-}) {
-  const [authLoading, setAuthLoading] = useState<'apple' | 'google' | null>(null);
+/**
+ * CTA screen — self-contained. Initiates real Supabase OAuth.
+ * After signInWithOAuth the browser redirects away; no local state to manage.
+ */
+function CtaScreen() {
+  const [loading, setLoading] = useState(false);
 
-  async function handleAuth(provider: 'apple' | 'google') {
-    track('auth_initiated', { provider });
-    setAuthLoading(provider);
-    await new Promise<void>(r => setTimeout(r, 900));
-    setAuthLoading(null);
-    track('auth_completed', { provider });
-    onAuth({
-      id:           generateUserId(),
-      email:        provider === 'apple' ? 'private@privaterelay.appleid.com' : 'user@gmail.com',
-      authProvider: provider,
+  async function handleGoogleAuth() {
+    if (!supabase) return;
+    setLoading(true);
+    track('auth_initiated', { provider: 'google' });
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
     });
+    // Browser navigates away — no cleanup needed.
   }
 
   return (
@@ -714,47 +738,36 @@ function CtaScreen({
       {/* Auth buttons */}
       <div className="shrink-0 flex flex-col" style={{ paddingLeft: 32, paddingRight: 32, paddingBottom: 40, gap: 12 }}>
 
-        {/* Continue with Apple */}
+        {/* Continue with Apple — disabled until Apple OAuth is configured */}
         <button
-          onClick={() => handleAuth('apple')}
-          disabled={authLoading !== null}
+          disabled
           className="w-full flex items-center justify-center rounded-[16px] gap-[10px]"
-          style={{
-            height: 57,
-            background: '#000',
-            opacity: authLoading !== null && authLoading !== 'apple' ? 0.45 : 1,
-            transition: 'opacity 0.2s',
-          }}
+          style={{ height: 57, background: '#000', opacity: 0.35, cursor: 'not-allowed' }}
         >
-          {authLoading === 'apple' ? (
-            <Loader2 size={20} className="text-white animate-spin" />
-          ) : (
-            <>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>
-                Continue with Apple
-              </span>
-            </>
-          )}
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+          </svg>
+          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>
+            Continue with Apple
+          </span>
         </button>
 
         {/* Continue with Google */}
         <button
-          onClick={() => handleAuth('google')}
-          disabled={authLoading !== null}
+          onClick={handleGoogleAuth}
+          disabled={loading}
           className="w-full flex items-center justify-center rounded-[16px] gap-[10px]"
           style={{
             height: 57,
             background: '#fff',
             border: '1px solid rgba(0,0,0,0.10)',
             boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
-            opacity: authLoading !== null && authLoading !== 'google' ? 0.45 : 1,
+            opacity: loading ? 0.6 : 1,
             transition: 'opacity 0.2s',
+            cursor: loading ? 'not-allowed' : 'pointer',
           }}
         >
-          {authLoading === 'google' ? (
+          {loading ? (
             <Loader2 size={20} className="animate-spin" style={{ color: '#3c4043' }} />
           ) : (
             <>
@@ -770,14 +783,6 @@ function CtaScreen({
             </>
           )}
         </button>
-
-        {/* Sign in link for returning users */}
-        <button onClick={onSignIn} className="w-full flex items-center justify-center" style={{ height: 36 }}>
-          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
-            Already have an account?{' '}
-            <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Sign in</span>
-          </span>
-        </button>
       </div>
     </motion.div>
   );
@@ -788,13 +793,13 @@ function CtaScreen({
 function UsernameScreen({
   value,
   onChange,
-  pendingAuth,
   onContinue,
+  submitting,
 }: {
   value: string;
   onChange: (v: string) => void;
-  pendingAuth: PendingAuth | null;
   onContinue: () => void;
+  submitting: boolean;
 }) {
   const [checking,     setChecking]     = useState(false);
   const [availability, setAvailability] = useState<'available' | 'taken' | null>(null);
@@ -813,7 +818,7 @@ function UsernameScreen({
   }, [value]);
 
   const canContinue =
-    value.trim().length >= 3 && availability === 'available' && !checking;
+    value.trim().length >= 3 && availability === 'available' && !checking && !submitting;
 
   return (
     <motion.div
@@ -839,24 +844,6 @@ function UsernameScreen({
         <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 500, fontSize: 17, lineHeight: '25.5px', color: '#7b92b0', maxWidth: 311 }}>
           Choose a unique username for your Senti account
         </p>
-
-        {/* Auth provider context badge */}
-        {pendingAuth && (
-          <div className="flex items-center gap-[8px] mt-1">
-            <div
-              className="size-[22px] rounded-[6px] flex items-center justify-center shrink-0"
-              style={{ background: pendingAuth.authProvider === 'apple' ? '#1c1c1e' : '#4285f4' }}
-            >
-              <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1 }}>
-                {pendingAuth.authProvider === 'apple' ? 'A' : 'G'}
-              </span>
-            </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#7b92b0' }}>
-              Signed in as{' '}
-              <span style={{ fontWeight: 500, color: '#4a6a8a' }}>{pendingAuth.email}</span>
-            </p>
-          </div>
-        )}
       </div>
 
       {/* @ input row */}
@@ -941,11 +928,16 @@ function UsernameScreen({
             boxShadow: canContinue ? '0px 2px 8px rgba(0,0,0,0.04)' : 'none',
             opacity: canContinue ? 1 : 0.6,
             transition: 'opacity 0.2s, background 0.2s',
+            cursor: canContinue ? 'pointer' : 'not-allowed',
           }}
         >
-          <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 17, color: '#fff' }}>
-            Continue
-          </span>
+          {submitting ? (
+            <Loader2 size={20} className="animate-spin text-white" />
+          ) : (
+            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 17, color: '#fff' }}>
+              Continue
+            </span>
+          )}
         </button>
       </div>
     </motion.div>
