@@ -14,8 +14,9 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
-import { supabase } from '../../../../lib/supabase';
 import { useAppStore } from '../../../../store';
+import { searchUsers } from '../../../../lib/userSearch';
+import type { UserResult } from '../../../../lib/userSearch';
 
 const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
 const imgClock     = 'https://www.figma.com/api/mcp/asset/08448048-fa2b-4a63-9b69-f5a75e435974';
@@ -23,28 +24,12 @@ const imgCopyIcon  = 'https://www.figma.com/api/mcp/asset/f1431496-c072-4b93-b8b
 
 type Network = 'solana' | 'ethereum';
 
-interface UserResult {
-  username: string;
-  handle:   string;
-}
-
 // Deterministic avatar colour from username
 const AVATAR_COLORS = ['#1a3a6b', '#0d2a4a', '#0a2040', '#1a2a5a', '#0d3050'];
 function avatarColor(username: string): string {
   let h = 0;
   for (const c of username) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-async function searchUsers(term: string, excludeId: string): Promise<UserResult[]> {
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from('users')
-    .select('username, handle')
-    .ilike('username', term ? `%${term}%` : '%')
-    .neq('auth_user_id', excludeId)
-    .limit(8);
-  return (data ?? []) as UserResult[];
 }
 
 export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<SendFlowData>) {

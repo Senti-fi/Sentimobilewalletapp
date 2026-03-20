@@ -13,13 +13,9 @@ import { useState, useEffect } from 'react';
 import { X, Search, ChevronRight, Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-import { supabase } from '../../../../lib/supabase';
 import { useAppStore } from '../../../../store';
-
-interface UserResult {
-  username: string;
-  handle:   string;
-}
+import { searchUsers } from '../../../../lib/userSearch';
+import type { UserResult } from '../../../../lib/userSearch';
 
 // Deterministic avatar colour from username
 const AVATAR_COLORS = ['#1a3a6b', '#0d2a4a', '#0a2040', '#1a2a5a', '#0d3050'];
@@ -27,17 +23,6 @@ function avatarColor(username: string): string {
   let h = 0;
   for (const c of username) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-async function searchUsers(term: string, excludeId: string): Promise<UserResult[]> {
-  if (!supabase) return [];
-  const { data } = await supabase
-    .from('users')
-    .select('username, handle')
-    .ilike('username', term ? `%${term}%` : '%')
-    .neq('auth_user_id', excludeId)
-    .limit(8);
-  return (data ?? []) as UserResult[];
 }
 
 export default function LinkRecipientStep({ onNext, onExit }: StepProps<WithdrawFlowData>) {
