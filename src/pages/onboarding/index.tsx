@@ -59,7 +59,7 @@ async function checkUsernameAvailable(username: string): Promise<boolean> {
   try {
     const { data, error } = await withTimeout(
       supabase.from('users').select('username').ilike('username', lower).maybeSingle(),
-      4000,
+      10000,
       'checkUsernameAvailable',
     );
     if (error) return true; // DB error → assume available, unique index enforces at save
@@ -230,7 +230,7 @@ export default function OnboardingPage() {
     try {
       const { data: { user } } = await withTimeout(
         supabase.auth.getUser(),
-        8000,
+        15000,
         'getUser',
       );
       if (!user) return;

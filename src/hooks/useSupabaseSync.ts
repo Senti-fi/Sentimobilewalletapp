@@ -116,14 +116,24 @@ export function useSupabaseSync() {
   }, [userId, username]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Re-check on tab focus — no reload required ───────────────────────
+  // Delay 1 500 ms after becoming visible: Android suspends background tabs
+  // and drops network connections; firing Supabase queries immediately on
+  // resume burns the timeout budget before the connection is ready.
   useEffect(() => {
     if (!userId || !username) return;
 
+    let resumeTimer: ReturnType<typeof setTimeout>;
+
     const onVisible = () => {
-      if (document.visibilityState === 'visible') apply();
+      if (document.visibilityState !== 'visible') return;
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(apply, 1500);
     };
 
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      clearTimeout(resumeTimer);
+    };
   }, [userId, username, apply]);
 }

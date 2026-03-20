@@ -41,7 +41,7 @@ export async function saveUserProfile(
         },
         { onConflict: 'auth_user_id' },
       ),
-      8000,
+      15000,
       'saveUserProfile',
     );
     if (error) {
@@ -59,16 +59,24 @@ export async function saveUserProfile(
 /** Upsert the full financial state. Call after every successful store action. */
 export async function saveUserState(userId: string, state: FinancialState): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from('user_state').upsert({
-    user_id:          userId,           // matches users.auth_user_id
-    balances:         state.balances,
-    transactions:     state.transactions,
-    goals:            state.goals,
-    flexible_savings: state.flexibleSavings,
-    locked_savings:   state.lockedSavings,
-    investments:      state.investments,
-  });
-  if (error) console.error('[sync] saveUserState:', error.message);
+  try {
+    const { error } = await withTimeout(
+      supabase.from('user_state').upsert({
+        user_id:          userId,
+        balances:         state.balances,
+        transactions:     state.transactions,
+        goals:            state.goals,
+        flexible_savings: state.flexibleSavings,
+        locked_savings:   state.lockedSavings,
+        investments:      state.investments,
+      }),
+      15000,
+      'saveUserState',
+    );
+    if (error) console.error('[sync] saveUserState:', error.message);
+  } catch (err) {
+    console.error('[sync] saveUserState failed:', err);
+  }
 }
 
 // ── Peer-to-peer transfers ────────────────────────────────────────────
@@ -93,7 +101,7 @@ export async function recordTransfer(payload: {
         amount:             payload.amount,
         note:               payload.note ?? null,
       }),
-      6000,
+      12000,
       'recordTransfer',
     );
     if (error) console.error('[sync] recordTransfer:', error.message);
@@ -126,7 +134,7 @@ export async function applyIncomingTransfers(username: string): Promise<Incoming
         .select('id, sender_auth_id, sender_username, asset, amount, note, created_at')
         .eq('recipient_username', username.replace(/^@/, ''))
         .is('applied_at', null),
-      6000,
+      12000,
       'applyIncomingTransfers',
     );
     if (error || !data || data.length === 0) return [];
@@ -135,7 +143,7 @@ export async function applyIncomingTransfers(username: string): Promise<Incoming
     const ids = (data as { id: string }[]).map(t => t.id);
     await withTimeout(
       supabase.from('transfers').update({ applied_at: new Date().toISOString() }).in('id', ids),
-      6000,
+      12000,
       'markTransfersApplied',
     );
 
@@ -165,18 +173,27 @@ export async function applyIncomingTransfers(username: string): Promise<Incoming
  */
 export async function loadUserState(userId: string): Promise<FinancialState | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('user_state')
-    .select('balances, transactions, goals, flexible_savings, locked_savings, investments')
-    .eq('user_id', userId)
-    .single();
-  if (error || !data) return null;
-  return {
-    balances:        data.balances,
-    transactions:    data.transactions,
-    goals:           data.goals,
-    flexibleSavings: data.flexible_savings,
-    lockedSavings:   data.locked_savings,
-    investments:     data.investments,
-  };
+  try {
+    const { data, error } = await withTimeout(
+      supabase
+        .from('user_state')
+        .select('balances, transactions, goals, flexible_savings, locked_savings, investments')
+        .eq('user_id', userId)
+        .single(),
+      15000,
+      'loadUserState',
+    );
+    if (error || !data) return null;
+    return {
+      balances:        data.balances,
+      transactions:    data.transactions,
+      goals:           data.goals,
+      flexibleSavings: data.flexible_savings,
+      lockedSavings:   data.locked_savings,
+      investments:     data.investments,
+    };
+  } catch (err) {
+    console.error('[sync] loadUserState failed:', err);
+    return null;
+  }
 }

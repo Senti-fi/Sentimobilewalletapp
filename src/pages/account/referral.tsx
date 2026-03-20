@@ -52,7 +52,7 @@ async function fetchReferralStats(authUserId: string): Promise<ReferralStats> {
         .eq('referred_id', authUserId)
         .maybeSingle(),
     ]),
-    8000,
+    15000,
     'fetchReferralStats',
   );
 
@@ -68,7 +68,7 @@ async function fetchReferralStats(authUserId: string): Promise<ReferralStats> {
         .select('username')
         .eq('auth_user_id', inboundResult.data.referrer_id)
         .maybeSingle(),
-      4000,
+      10000,
       'lookupReferrer',
     );
     referredByUsername = referrer?.username ?? null;
@@ -92,7 +92,7 @@ async function applyReferralCode(
 
   const { data: referrer } = await withTimeout(
     supabase.from('users').select('auth_user_id').ilike('username', normalized).maybeSingle(),
-    6000,
+    12000,
     'lookupReferrer',
   );
 
@@ -101,7 +101,7 @@ async function applyReferralCode(
   // Pre-check: has this user already been referred?
   const { data: existing } = await withTimeout(
     supabase.from('referrals').select('id').eq('referred_id', authUserId).maybeSingle(),
-    6000,
+    12000,
     'checkExistingReferral',
   );
   if (existing) return { error: 'You have already used a referral code.' };
@@ -112,7 +112,7 @@ async function applyReferralCode(
       .insert({ referrer_id: referrer.auth_user_id, referred_id: authUserId, referral_code: normalized, status: 'completed' })
       .select('id')
       .single(),
-    6000,
+    12000,
     'createReferral',
   );
 
@@ -130,7 +130,7 @@ async function applyReferralCode(
       { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
       { auth_user_id: authUserId,            referral_id: referralId, points: 50,  reason: 'Joined via referral'  },
     ]),
-    6000,
+    12000,
     'awardPoints',
   );
 

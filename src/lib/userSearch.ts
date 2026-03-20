@@ -43,7 +43,7 @@ export async function searchUsers(
         .ilike('username', `%${term}%`)
         .neq('auth_user_id', excludeId)
         .limit(8),
-      6000,
+      12000,
       'searchUsers',
     );
     if (error) {
