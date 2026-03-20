@@ -40,8 +40,9 @@ const NOOP = () => {};
 export default function SendFlow({ onExit, background }: SendFlowProps) {
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<SendFlowData>(STEPS, INITIAL, onExit);
-  const { sendFunds }  = useAppStore();
-  const selfId         = useAppStore(s => s.userProfile?.id) ?? '';
+  const { sendFunds }    = useAppStore();
+  const selfId           = useAppStore(s => s.userProfile?.id)       ?? '';
+  const selfUsername     = useAppStore(s => s.userProfile?.username)  ?? '';
 
   useEffect(() => { track('send_flow_started'); }, []);
 
@@ -88,6 +89,7 @@ export default function SendFlow({ onExit, background }: SendFlowProps) {
             if (data.method === 'link') {
               void recordTransfer({
                 senderAuthId:      selfId,
+                senderUsername:    selfUsername,
                 recipientUsername: (data.recipient ?? '').replace(/^@/, ''),
                 asset:             data.asset    ?? 'USDC',
                 amount:            parseFloat(data.amount || '0'),

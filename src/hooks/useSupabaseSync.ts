@@ -94,13 +94,13 @@ export function useSupabaseSync() {
         updatedBalances[asset] = round2((updatedBalances[asset] ?? 0) + transfer.amount);
         newTransactions.unshift({
           id:          transfer.id,
-          type:        'deposit'   as const,
+          type:        'received'  as const,
           status:      'completed' as const,
           asset,
           amount:      transfer.amount,
-          source:      'Senti Link',
+          source:      `@${transfer.senderUsername}`,
           destination: 'Wallet',
-          description: `Received ${transfer.asset} via Senti Link`,
+          description: `Received ${transfer.asset} from @${transfer.senderUsername}`,
           timestamp:   transfer.createdAt,
           context:     'home' as const,
           ...(transfer.note ? { metadata: { note: transfer.note } } : {}),

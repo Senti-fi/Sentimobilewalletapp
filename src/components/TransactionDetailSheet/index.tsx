@@ -174,7 +174,10 @@ export default function TransactionDetailSheet({ transaction, onClose }: Props) 
                     <DetailRow label="Destination" value={destination} />
 
                     {/* Supplementary metadata rows */}
-                    {meta.recipient !== undefined && <DetailRow label="Recipient" value={String(meta.recipient)} />}
+                    {/* Skip recipient for transfer — destination already shows it */}
+                    {meta.recipient !== undefined && transaction.type !== 'transfer' && (
+                      <DetailRow label="Recipient" value={String(meta.recipient)} />
+                    )}
                     {meta.vaultName !== undefined && <DetailRow label="Vault"     value={String(meta.vaultName)} />}
                     {meta.goalName  !== undefined && <DetailRow label="Goal"      value={String(meta.goalName)} />}
                     {meta.apy       !== undefined && <DetailRow label="APY"       value={`${meta.apy}%`} accent />}

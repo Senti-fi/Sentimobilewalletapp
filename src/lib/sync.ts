@@ -76,6 +76,7 @@ export async function saveUserState(userId: string, state: FinancialState): Prom
 /** Write a pending transfer record so the recipient can claim it on next load. */
 export async function recordTransfer(payload: {
   senderAuthId:       string;
+  senderUsername:     string;   // stored so recipient can display the sender's name
   recipientUsername:  string;   // raw username, no @
   asset:              string;
   amount:             number;
@@ -86,6 +87,7 @@ export async function recordTransfer(payload: {
     const { error } = await withTimeout(
       supabase.from('transfers').insert({
         sender_auth_id:     payload.senderAuthId,
+        sender_username:    payload.senderUsername,
         recipient_username: payload.recipientUsername.replace(/^@/, ''),
         asset:              payload.asset,
         amount:             payload.amount,
@@ -101,12 +103,13 @@ export async function recordTransfer(payload: {
 }
 
 export interface IncomingTransfer {
-  id:           string;
-  asset:        string;
-  amount:       number;
-  senderAuthId: string;
-  note?:        string;
-  createdAt:    string;
+  id:             string;
+  asset:          string;
+  amount:         number;
+  senderAuthId:   string;
+  senderUsername: string;
+  note?:          string;
+  createdAt:      string;
 }
 
 /**
@@ -120,7 +123,7 @@ export async function applyIncomingTransfers(username: string): Promise<Incoming
     const { data, error } = await withTimeout(
       supabase
         .from('transfers')
-        .select('id, sender_auth_id, asset, amount, note, created_at')
+        .select('id, sender_auth_id, sender_username, asset, amount, note, created_at')
         .eq('recipient_username', username.replace(/^@/, ''))
         .is('applied_at', null),
       6000,
@@ -137,15 +140,16 @@ export async function applyIncomingTransfers(username: string): Promise<Incoming
     );
 
     return (data as {
-      id: string; sender_auth_id: string; asset: string;
-      amount: number; note: string | null; created_at: string;
+      id: string; sender_auth_id: string; sender_username: string | null;
+      asset: string; amount: number; note: string | null; created_at: string;
     }[]).map(t => ({
-      id:           t.id,
-      asset:        t.asset,
-      amount:       t.amount,
-      senderAuthId: t.sender_auth_id,
-      note:         t.note ?? undefined,
-      createdAt:    t.created_at,
+      id:             t.id,
+      asset:          t.asset,
+      amount:         t.amount,
+      senderAuthId:   t.sender_auth_id,
+      senderUsername: t.sender_username ?? 'unknown',
+      note:           t.note ?? undefined,
+      createdAt:      t.created_at,
     }));
   } catch (err) {
     console.error('[sync] applyIncomingTransfers failed:', err);

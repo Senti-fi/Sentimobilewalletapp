@@ -96,6 +96,16 @@ export function getTxDisplay(tx: Transaction): TxDisplay {
         iconKey:     'send',
       };
 
+    case 'received':
+      return {
+        label:       'Received',
+        sublabel:    `From ${tx.source}`,
+        sign:        '+',
+        amountColor: 'text-[#02d128]',
+        iconBg:      '#0a3040',
+        iconKey:     'download',
+      };
+
     case 'invest':
       return {
         label:       'Invested',

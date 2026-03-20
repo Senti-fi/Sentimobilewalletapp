@@ -63,7 +63,8 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<WithdrawFlowData>(STEPS, INITIAL, onExit);
   const { withdrawFunds, sendFunds } = useAppStore();
-  const selfId = useAppStore(s => s.userProfile?.id) ?? '';
+  const selfId       = useAppStore(s => s.userProfile?.id)       ?? '';
+  const selfUsername = useAppStore(s => s.userProfile?.username)  ?? '';
 
   useEffect(() => { track('withdraw_flow_started'); }, []);
 
@@ -163,6 +164,7 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
               // Write transfer record so recipient receives the funds on their next load
               void recordTransfer({
                 senderAuthId:      selfId,
+                senderUsername:    selfUsername,
                 recipientUsername: (data.recipient ?? '').replace(/^@/, ''),
                 asset:             data.asset    ?? 'USDC',
                 amount:            parseFloat(data.amount || '0'),

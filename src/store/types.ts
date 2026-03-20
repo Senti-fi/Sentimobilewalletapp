@@ -11,7 +11,8 @@ export type TransactionType =
   | 'deposit'        // external → wallet
   | 'fiat_purchase'  // fiat currency → wallet (bank / card)
   | 'withdrawal'     // wallet → external address or bank
-  | 'transfer'       // wallet → another Senti user
+  | 'transfer'       // wallet → another Senti user (outgoing)
+  | 'received'       // another Senti user → wallet (incoming peer transfer)
   | 'save'           // wallet → savings (flexible | goal | locked)
   | 'invest'         // wallet → vault
   | 'goal_create'    // meta event: goal created (no balance change)
