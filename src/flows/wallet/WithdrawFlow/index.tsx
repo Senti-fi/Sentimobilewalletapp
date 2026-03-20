@@ -24,6 +24,7 @@ import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { WithdrawFlowData } from './types';
 import { useAppStore } from '../../../store';
 import { track } from '../../../lib/analytics';
+import { recordTransfer } from '../../../lib/sync';
 import WalletPage              from '../../../pages/wallet';
 import WithdrawOptionsStep     from './steps/WithdrawOptionsStep';
 import OnchainWithdrawalStep   from './steps/OnchainWithdrawalStep';
@@ -62,6 +63,7 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<WithdrawFlowData>(STEPS, INITIAL, onExit);
   const { withdrawFunds, sendFunds } = useAppStore();
+  const selfId = useAppStore(s => s.userProfile?.id) ?? '';
 
   useEffect(() => { track('withdraw_flow_started'); }, []);
 
@@ -158,6 +160,14 @@ export default function WithdrawFlow({ onExit, background }: WithdrawFlowProps) 
               note:      data.note,
             });
             if (result.ok) {
+              // Write transfer record so recipient receives the funds on their next load
+              void recordTransfer({
+                senderAuthId:      selfId,
+                recipientUsername: (data.recipient ?? '').replace(/^@/, ''),
+                asset:             data.asset    ?? 'USDC',
+                amount:            parseFloat(data.amount || '0'),
+                note:              data.note,
+              });
               track('withdraw_completed', { asset: data.asset, amount: data.amount, method: 'link', recipient: data.recipient });
               next({});
             }

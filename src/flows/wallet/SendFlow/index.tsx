@@ -12,6 +12,7 @@ import { useFlowStepper } from '../../../hooks/useFlowStepper';
 import type { SendFlowData } from './types';
 import { useAppStore } from '../../../store';
 import { track } from '../../../lib/analytics';
+import { recordTransfer } from '../../../lib/sync';
 import WalletPage from '../../../pages/wallet';
 import SendOptionsStep        from './steps/SendOptionsStep';
 import EnterRecipientStep     from './steps/EnterRecipientStep';
@@ -39,7 +40,8 @@ const NOOP = () => {};
 export default function SendFlow({ onExit, background }: SendFlowProps) {
   const { stepIndex, totalSteps, data, next, back, reset } =
     useFlowStepper<SendFlowData>(STEPS, INITIAL, onExit);
-  const { sendFunds } = useAppStore();
+  const { sendFunds }  = useAppStore();
+  const selfId         = useAppStore(s => s.userProfile?.id) ?? '';
 
   useEffect(() => { track('send_flow_started'); }, []);
 
@@ -82,6 +84,16 @@ export default function SendFlow({ onExit, background }: SendFlowProps) {
             note:      data.note,
           });
           if (result.ok) {
+            // Write transfer record so recipient receives the funds on their next load
+            if (data.method === 'link') {
+              void recordTransfer({
+                senderAuthId:      selfId,
+                recipientUsername: (data.recipient ?? '').replace(/^@/, ''),
+                asset:             data.asset    ?? 'USDC',
+                amount:            parseFloat(data.amount || '0'),
+                note:              data.note,
+              });
+            }
             track('send_completed', { asset: data.asset, amount: data.amount, recipient: data.recipient });
             next({});
           }

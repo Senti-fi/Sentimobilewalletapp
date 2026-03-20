@@ -71,6 +71,88 @@ export async function saveUserState(userId: string, state: FinancialState): Prom
   if (error) console.error('[sync] saveUserState:', error.message);
 }
 
+// ── Peer-to-peer transfers ────────────────────────────────────────────
+
+/** Write a pending transfer record so the recipient can claim it on next load. */
+export async function recordTransfer(payload: {
+  senderAuthId:       string;
+  recipientUsername:  string;   // raw username, no @
+  asset:              string;
+  amount:             number;
+  note?:              string;
+}): Promise<void> {
+  if (!supabase) return;
+  try {
+    const { error } = await withTimeout(
+      supabase.from('transfers').insert({
+        sender_auth_id:     payload.senderAuthId,
+        recipient_username: payload.recipientUsername.replace(/^@/, ''),
+        asset:              payload.asset,
+        amount:             payload.amount,
+        note:               payload.note ?? null,
+      }),
+      6000,
+      'recordTransfer',
+    );
+    if (error) console.error('[sync] recordTransfer:', error.message);
+  } catch (err) {
+    console.error('[sync] recordTransfer failed:', err);
+  }
+}
+
+export interface IncomingTransfer {
+  id:           string;
+  asset:        string;
+  amount:       number;
+  senderAuthId: string;
+  note?:        string;
+  createdAt:    string;
+}
+
+/**
+ * Fetch unapplied incoming transfers for this user and immediately mark them
+ * applied so they are not double-credited on subsequent loads.
+ * Returns the transfers so the caller can credit the local balance.
+ */
+export async function applyIncomingTransfers(username: string): Promise<IncomingTransfer[]> {
+  if (!supabase || !username) return [];
+  try {
+    const { data, error } = await withTimeout(
+      supabase
+        .from('transfers')
+        .select('id, sender_auth_id, asset, amount, note, created_at')
+        .eq('recipient_username', username.replace(/^@/, ''))
+        .is('applied_at', null),
+      6000,
+      'applyIncomingTransfers',
+    );
+    if (error || !data || data.length === 0) return [];
+
+    // Mark all as applied atomically before crediting — prevents double-credit
+    const ids = (data as { id: string }[]).map(t => t.id);
+    await withTimeout(
+      supabase.from('transfers').update({ applied_at: new Date().toISOString() }).in('id', ids),
+      6000,
+      'markTransfersApplied',
+    );
+
+    return (data as {
+      id: string; sender_auth_id: string; asset: string;
+      amount: number; note: string | null; created_at: string;
+    }[]).map(t => ({
+      id:           t.id,
+      asset:        t.asset,
+      amount:       t.amount,
+      senderAuthId: t.sender_auth_id,
+      note:         t.note ?? undefined,
+      createdAt:    t.created_at,
+    }));
+  } catch (err) {
+    console.error('[sync] applyIncomingTransfers failed:', err);
+    return [];
+  }
+}
+
 // ── Read ─────────────────────────────────────────────────────────────
 
 /**
