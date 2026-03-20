@@ -98,6 +98,14 @@ async function applyReferralCode(
 
   if (!referrer) return { error: 'Code not found. Check the username and try again.' };
 
+  // Pre-check: has this user already been referred?
+  const { data: existing } = await withTimeout(
+    supabase.from('referrals').select('id').eq('referred_id', authUserId).maybeSingle(),
+    6000,
+    'checkExistingReferral',
+  );
+  if (existing) return { error: 'You have already used a referral code.' };
+
   const { data: referral, error: insertErr } = await withTimeout(
     supabase
       .from('referrals')
@@ -108,7 +116,13 @@ async function applyReferralCode(
     'createReferral',
   );
 
-  if (insertErr) return { error: 'Code already applied or invalid.' };
+  if (insertErr) {
+    console.error('[referral] insert error — code:', insertErr.code, '— message:', insertErr.message);
+    // 23505 = unique_violation (already referred), 42501 = RLS/permission block
+    if (insertErr.code === '23505') return { error: 'You have already used a referral code.' };
+    if (insertErr.code === '42501') return { error: 'Permission error — please contact support.' };
+    return { error: `Could not apply code (${insertErr.code ?? 'unknown'}). Please try again.` };
+  }
 
   const referralId = referral?.id ?? null;
   await withTimeout(
