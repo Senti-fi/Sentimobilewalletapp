@@ -200,7 +200,7 @@ export default function OnboardingPage() {
 
       const { data: referral } = await client
         .from('referrals')
-        .insert({ referrer_id: referrer.auth_user_id, referred_id: referredUserId, status: 'completed' })
+        .insert({ referrer_id: referrer.auth_user_id, referred_id: referredUserId, referral_code: normalizedCode, status: 'completed' })
         .select('id')
         .single();
 

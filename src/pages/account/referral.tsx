@@ -109,7 +109,7 @@ async function applyReferralCode(
   const { data: referral, error: insertErr } = await withTimeout(
     supabase
       .from('referrals')
-      .insert({ referrer_id: referrer.auth_user_id, referred_id: authUserId, status: 'completed' })
+      .insert({ referrer_id: referrer.auth_user_id, referred_id: authUserId, referral_code: normalized, status: 'completed' })
       .select('id')
       .single(),
     6000,
