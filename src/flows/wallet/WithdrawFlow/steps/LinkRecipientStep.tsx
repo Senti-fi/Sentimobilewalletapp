@@ -14,7 +14,7 @@ import { X, Search, ChevronRight, Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
 import { useAppStore } from '../../../../store';
-import { searchUsers } from '../../../../lib/userSearch';
+import { searchUsers, getRecentRecipients } from '../../../../lib/userSearch';
 import type { UserResult } from '../../../../lib/userSearch';
 
 // Deterministic avatar colour from username
@@ -26,18 +26,26 @@ function avatarColor(username: string): string {
 }
 
 export default function LinkRecipientStep({ onNext, onExit }: StepProps<WithdrawFlowData>) {
-  const selfId = useAppStore(s => s.userProfile?.id) ?? '';
+  const selfId       = useAppStore(s => s.userProfile?.id)    ?? '';
+  const transactions = useAppStore(s => s.transactions);
 
   const [query,     setQuery]     = useState('');
   const [results,   setResults]   = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Debounced live search — fires on every query change and on mount
+  // Suggested (empty query) — pull from local send history, no network call
+  // Live search (non-empty query) — debounced DB query
   useEffect(() => {
+    const term = query.trim().replace(/^@/, '');
+
+    if (!term) {
+      setResults(getRecentRecipients(transactions));
+      setSearching(false);
+      return;
+    }
+
     let cancelled = false;
     setSearching(true);
-
-    const term = query.trim().replace(/^@/, '');
 
     const timer = setTimeout(async () => {
       if (cancelled) return;
@@ -52,7 +60,7 @@ export default function LinkRecipientStep({ onNext, onExit }: StepProps<Withdraw
     }, 300);
 
     return () => { cancelled = true; clearTimeout(timer); setSearching(false); };
-  }, [query, selfId]);
+  }, [query, selfId, transactions]);
 
   const handleSelect = (u: UserResult) => {
     onNext({ recipient: u.handle ?? `@${u.username}` });
@@ -131,7 +139,7 @@ export default function LinkRecipientStep({ onNext, onExit }: StepProps<Withdraw
 
             {!searching && results.length === 0 && (
               <p className="text-[#3c5679] font-normal text-[13px] leading-[18px] pb-2">
-                {query.trim() ? 'No users found.' : 'No users to show.'}
+                {query.trim() ? 'No users found.' : 'No recent recipients.'}
               </p>
             )}
 

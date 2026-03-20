@@ -16,6 +16,7 @@
  */
 import { supabase } from './supabase';
 import { withTimeout } from './withTimeout';
+import type { Transaction } from '../store/types';
 
 export interface UserResult {
   username: string;
@@ -24,8 +25,8 @@ export interface UserResult {
 
 /**
  * Search users by username (case-insensitive substring match).
- * Pass an empty `term` to load a suggested list (matches all usernames).
- * The calling user is excluded via `excludeId`.
+ * Only call this when `term` is non-empty — use getRecentRecipients for
+ * the empty/suggested state so we don't dump the entire user table.
  *
  * Always resolves — returns [] on timeout, network error, or RLS block.
  */
@@ -33,13 +34,13 @@ export async function searchUsers(
   term:      string,
   excludeId: string,
 ): Promise<UserResult[]> {
-  if (!supabase) return [];
+  if (!supabase || !term.trim()) return [];
   try {
     const { data, error } = await withTimeout(
       supabase
         .from('users')
         .select('username, handle')
-        .ilike('username', term ? `%${term}%` : '%')
+        .ilike('username', `%${term}%`)
         .neq('auth_user_id', excludeId)
         .limit(8),
       6000,
@@ -54,4 +55,29 @@ export async function searchUsers(
     console.warn('[userSearch] timed out or failed:', err);
     return [];
   }
+}
+
+/**
+ * Derive suggested recipients from the user's own send history.
+ * Scans transactions newest-first, picks unique @handle destinations
+ * from outgoing 'transfer' entries (skips crypto addresses).
+ *
+ * Synchronous — no network call needed.
+ */
+export function getRecentRecipients(transactions: Transaction[]): UserResult[] {
+  const seen    = new Set<string>();
+  const results: UserResult[] = [];
+
+  for (const tx of transactions) {
+    if (tx.type !== 'transfer') continue;
+    const dest = (tx.destination ?? '').trim();
+    if (!dest.startsWith('@'))  continue;  // skip onchain addresses
+    if (seen.has(dest))         continue;
+    seen.add(dest);
+
+    results.push({ username: dest.replace(/^@/, ''), handle: dest });
+    if (results.length >= 8) break;
+  }
+
+  return results;
 }

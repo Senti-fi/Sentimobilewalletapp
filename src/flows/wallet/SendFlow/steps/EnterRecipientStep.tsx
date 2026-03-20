@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
 import { useAppStore } from '../../../../store';
-import { searchUsers } from '../../../../lib/userSearch';
+import { searchUsers, getRecentRecipients } from '../../../../lib/userSearch';
 import type { UserResult } from '../../../../lib/userSearch';
 
 const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
@@ -33,22 +33,30 @@ function avatarColor(username: string): string {
 }
 
 export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<SendFlowData>) {
-  const isLink    = data.method === 'link';
-  const selfId    = useAppStore(s => s.userProfile?.id) ?? '';
+  const isLink       = data.method === 'link';
+  const selfId       = useAppStore(s => s.userProfile?.id)    ?? '';
+  const transactions = useAppStore(s => s.transactions);
 
   const [input,     setInput]     = useState('');
   const [network,   setNetwork]   = useState<Network>('solana');
   const [results,   setResults]   = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Debounced live search
+  // Suggested (empty query) — pull from local send history, no network call
+  // Live search (non-empty query) — debounced DB query
   useEffect(() => {
     if (!isLink) return;
+
+    const term = input.trim().replace(/^@/, '');
+
+    if (!term) {
+      setResults(getRecentRecipients(transactions));
+      setSearching(false);
+      return;
+    }
+
     let cancelled = false;
     setSearching(true);
-
-    // Strip leading @ so we always search by bare username
-    const term = input.trim().replace(/^@/, '');
 
     const timer = setTimeout(async () => {
       if (cancelled) return;
@@ -63,7 +71,7 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
     }, 300);
 
     return () => { cancelled = true; clearTimeout(timer); setSearching(false); };
-  }, [input, isLink, selfId]);
+  }, [input, isLink, selfId, transactions]);
 
   const canContinue = isLink
     ? input.trim().startsWith('@') && input.trim().length > 1
@@ -154,7 +162,7 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
 
             {!searching && results.length === 0 && (
               <p className="text-[#3c5679] font-normal text-[13px] leading-[18px]">
-                {input.trim() ? 'No users found.' : 'No users to show.'}
+                {input.trim() ? 'No users found.' : 'No recent recipients. Search by @username to find someone.'}
               </p>
             )}
 
