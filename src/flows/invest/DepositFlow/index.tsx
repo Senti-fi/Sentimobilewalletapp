@@ -53,7 +53,7 @@ export default function DepositFlow({ vault, onExit }: DepositFlowProps) {
         {/* Dark blur overlay — tapping dismisses the sheet */}
         <div
           className="absolute inset-0 bg-[rgba(10,20,47,0.6)]"
-          style={{ backdropFilter: 'blur(2px)' }}
+          style={{ backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
           onClick={onExit}
         />
         <DepositAmountStep {...stepProps} />

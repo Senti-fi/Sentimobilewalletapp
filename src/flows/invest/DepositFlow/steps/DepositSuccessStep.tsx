@@ -107,7 +107,7 @@ export default function DepositSuccessStep({
       {/* ── Pinned footer ────────────────────────────────────────────── */}
       <div
         className="shrink-0 px-[24px] pb-[20px] pt-[12px] flex flex-col gap-[16px] items-center"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button onClick={onDepositMore}>
           <p className="font-medium text-[14px] leading-[18px] text-[#8ac7ff] text-center">

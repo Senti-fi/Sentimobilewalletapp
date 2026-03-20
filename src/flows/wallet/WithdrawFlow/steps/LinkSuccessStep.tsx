@@ -93,7 +93,7 @@ export default function LinkSuccessStep({ data, onExit, onSendMore }: LinkSucces
       {/* ── Pinned footer ─────────────────────────────────────── */}
       <div
         className="px-6 pb-8 pt-4 flex flex-col gap-[16px] shrink-0"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button
           onClick={onSendMore}

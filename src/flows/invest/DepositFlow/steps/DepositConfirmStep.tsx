@@ -121,7 +121,7 @@ export default function DepositConfirmStep({
       {/* ── Pinned footer ────────────────────────────────────────────── */}
       <div
         className="shrink-0 px-[24px] pb-[20px] pt-[12px] flex flex-col gap-[12px]"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button onClick={onBack} className="py-[8px]">
           <p className="font-semibold text-[14px] leading-[20px] text-[#8ac7ff] text-center">

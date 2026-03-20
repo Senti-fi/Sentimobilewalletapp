@@ -107,7 +107,7 @@ export default function SaleInitiatedStep({ data, onExit }: StepProps<WithdrawFl
       {/* ── Pinned footer ─────────────────────────────────────── */}
       <div
         className="px-6 pb-8 pt-4 shrink-0"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button
           onClick={onExit}

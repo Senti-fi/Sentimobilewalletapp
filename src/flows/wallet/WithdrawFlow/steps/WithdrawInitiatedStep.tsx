@@ -91,7 +91,7 @@ export default function WithdrawInitiatedStep({ data, onExit }: StepProps<Withdr
       {/* ── Pinned footer ─────────────────────────────────────── */}
       <div
         className="px-6 pb-8 pt-4 flex flex-col gap-[16px] shrink-0"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button className="flex items-center justify-center py-[4px]">
           <p className="font-medium text-[14px] leading-[18px] text-[#8ac7ff] text-center">

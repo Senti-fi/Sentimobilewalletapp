@@ -392,7 +392,7 @@ export default function VaultDetailsPage() {
       {/* ── 8. Sticky footer ──────────────────────────────────────────── */}
       <div
         className="sticky bottom-0 px-6 py-[16px] flex flex-col gap-[8px]"
-        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(10,20,47,0.95)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
       >
         <button
           onClick={() => setShowDeposit(true)}

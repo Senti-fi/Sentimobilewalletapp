@@ -20,10 +20,11 @@ const ASSETS:    Asset[]   = ['USDC', 'USDT', 'SOL'];
 const NETWORKS:  Network[] = ['Solana', 'Ethereum', 'BNB Chain'];
 
 export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProps<WithdrawFlowData>) {
-  const [asset,   setAsset]   = useState<Asset>(data.asset ?? 'USDC');
-  const [address, setAddress] = useState(data.address ?? '');
-  const [network, setNetwork] = useState<Network>(data.network ?? 'Solana');
-  const [amount,  setAmount]  = useState(data.amount === '0' ? '' : (data.amount ?? ''));
+  const [asset,      setAsset]      = useState<Asset>(data.asset ?? 'USDC');
+  const [address,    setAddress]    = useState(data.address ?? '');
+  const [network,    setNetwork]    = useState<Network>(data.network ?? 'Solana');
+  const [amount,     setAmount]     = useState(data.amount === '0' ? '' : (data.amount ?? ''));
+  const [pasteError, setPasteError] = useState(false);
 
   const balances         = useAppStore(s => s.balances);
   const availableBalance = balances[asset];
@@ -31,12 +32,14 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
   const canContinue = address.trim().length > 10 && amount.trim().length > 0 && parseFloat(amount) > 0;
 
   const handlePaste = async () => {
+    setPasteError(false);
     try {
       const text = await navigator.clipboard.readText();
-      setAddress(text);
-    } catch {
-      // clipboard denied
-    }
+      if (text) { setAddress(text); return; }
+    } catch { /* permission denied or API unavailable */ }
+    // Clipboard read failed (common on Android without explicit permission)
+    setPasteError(true);
+    setTimeout(() => setPasteError(false), 3000);
   };
 
   const handlePreview = () => {
@@ -111,6 +114,11 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
               </div>
             </button>
           </div>
+          {pasteError && (
+            <p className="font-normal text-[12px] leading-[16px] text-[#ffb020] mt-1">
+              Paste access denied — please long-press the field and paste manually.
+            </p>
+          )}
         </div>
 
         {/* ── Network ──────────────────────────────────────────── */}

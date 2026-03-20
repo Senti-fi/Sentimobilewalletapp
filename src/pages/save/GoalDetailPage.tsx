@@ -97,7 +97,7 @@ function FundGoalSheet({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-[rgba(10,20,47,0.7)]"
-        style={{ backdropFilter: 'blur(2px)' }}
+        style={{ backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
         onClick={onClose}
       />
 

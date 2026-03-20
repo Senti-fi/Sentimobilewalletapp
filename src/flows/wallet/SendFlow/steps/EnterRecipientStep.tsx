@@ -37,10 +37,11 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
   const selfId       = useAppStore(s => s.userProfile?.id)    ?? '';
   const transactions = useAppStore(s => s.transactions);
 
-  const [input,     setInput]     = useState('');
-  const [network,   setNetwork]   = useState<Network>('solana');
-  const [results,   setResults]   = useState<UserResult[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [input,      setInput]      = useState('');
+  const [network,    setNetwork]    = useState<Network>('solana');
+  const [results,    setResults]    = useState<UserResult[]>([]);
+  const [searching,  setSearching]  = useState(false);
+  const [pasteError, setPasteError] = useState(false);
 
   // Suggested (empty query) — pull from local send history, no network call
   // Live search (non-empty query) — debounced DB query
@@ -80,7 +81,13 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
   const handleContinue = () => onNext({ recipient: input.trim() });
 
   const handlePaste = async () => {
-    try { setInput(await navigator.clipboard.readText()); } catch { /* denied */ }
+    setPasteError(false);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) { setInput(text); return; }
+    } catch { /* permission denied or API unavailable */ }
+    setPasteError(true);
+    setTimeout(() => setPasteError(false), 3000);
   };
 
   const handleSelect = (u: UserResult) => {
@@ -149,6 +156,11 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
             </button>
           )}
         </div>
+        {pasteError && (
+          <p className="font-normal text-[12px] leading-[16px] text-[#ffb020] mt-2">
+            Paste access denied — please long-press the field and paste manually.
+          </p>
+        )}
 
         {/* ── Live user results (link only) ────────────────────────────── */}
         {isLink && (
