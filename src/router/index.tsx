@@ -10,7 +10,8 @@ import PortfolioPage         from '../pages/invest/PortfolioPage';
 import ExploreVaultsPage     from '../pages/invest/ExploreVaultsPage';
 import GoalDetailPage        from '../pages/save/GoalDetailPage';
 import WalletPage            from '../pages/wallet';
-import AccountPage  from '../pages/account';
+import AccountPage    from '../pages/account';
+import ReferralPage   from '../pages/account/referral';
 import OnboardingPage, { ONBOARDING_KEY } from '../pages/onboarding';
 import { useAppStore } from '../store';
 
@@ -76,7 +77,8 @@ const router = createBrowserRouter([
       { path: 'invest/portfolio',           element: <PortfolioPage /> },
       { path: 'invest/explore',            element: <ExploreVaultsPage /> },
       { path: 'wallet',       element: <WalletPage />   },
-      { path: 'account',      element: <AccountPage />  },
+      { path: 'account',          element: <AccountPage />  },
+      { path: 'account/referral', element: <ReferralPage /> },
 
       // Catch-all → /home
       { path: '*', element: <Navigate to="/home" replace /> },

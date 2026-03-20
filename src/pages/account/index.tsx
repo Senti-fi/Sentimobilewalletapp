@@ -14,7 +14,7 @@
  *   6. Sign Out Card  — clears profile + returns to onboarding
  *   7. Footer         — version + tagline
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -27,7 +27,9 @@ import {
   Bell,
   HelpCircle,
   LogOut,
+  Gift,
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store';
 import { getNetWorth } from '../../store/selectors';
 import { ONBOARDING_KEY } from '../onboarding';
@@ -210,6 +212,23 @@ export default function AccountPage() {
     setTimeout(() => setCopied(prev => ({ ...prev, [key]: false })), 1500);
   };
 
+  // Live reward points from referral_points table
+  const [rewardPoints, setRewardPoints] = useState<number | null>(null);
+  useEffect(() => {
+    if (!supabase || !userProfile?.id) return;
+    let cancelled = false;
+    supabase
+      .from('referral_points')
+      .select('points')
+      .eq('auth_user_id', userProfile.id)
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setRewardPoints(data.reduce((sum, row) => sum + (row.points as number), 0));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [userProfile?.id]);
+
   function handleSignOut() {
     track('signed_out');
     resetIdentity();
@@ -287,7 +306,9 @@ export default function AccountPage() {
           <div className="w-[1px] bg-[rgba(138,199,255,0.15)] self-stretch mx-3" />
           <div className="flex flex-col gap-[2px] flex-1 min-w-0 items-end">
             <p className="text-[#8ac7ff] font-normal text-[11px] leading-[14px] uppercase tracking-[0.4px]">Rewards</p>
-            <p className="text-white font-bold text-[16px] leading-[20px]">5 pts</p>
+            <p className="text-white font-bold text-[16px] leading-[20px]">
+              {rewardPoints === null ? '—' : `${rewardPoints} pts`}
+            </p>
           </div>
         </div>
       </div>
@@ -382,6 +403,13 @@ export default function AccountPage() {
 
       {/* ── 5. Settings / Action Cards ──────────────────────────────── */}
       <div className="mx-6 mt-4 bg-[rgba(30,41,59,0.4)] rounded-[20px] overflow-hidden shadow-[0px_4px_16px_0px_rgba(0,0,0,0.06)]">
+        <SettingsRow
+          icon={<Gift size={18} className="text-[#00e6ff]" strokeWidth={1.75} />}
+          label="Referral"
+          subtitle="Invite friends and earn reward points"
+          onClick={() => navigate('/account/referral')}
+        />
+        <Divider />
         <SettingsRow
           icon={<ShieldCheck size={18} className="text-[#00e6ff]" strokeWidth={1.75} />}
           label="Security Center"
