@@ -23,8 +23,10 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
   const [network, setNetwork] = useState<Network>('solana');
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(WALLET_ADDRESS).catch(() => {});
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(WALLET_ADDRESS);
+    } catch { /* API unavailable — user can copy manually */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

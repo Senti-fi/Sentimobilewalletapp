@@ -209,8 +209,10 @@ export default function ReferralPage() {
   }, [authUserId]);
 
   // ── Share handlers
-  function handleCopy() {
-    navigator.clipboard.writeText(referralLink).catch(() => {});
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(referralLink);
+    } catch { /* API unavailable */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
@@ -226,7 +228,9 @@ export default function ReferralPage() {
         });
       } catch { /* user cancelled */ }
     } else {
-      navigator.clipboard.writeText(referralLink).catch(() => {});
+      try {
+        await navigator.clipboard.writeText(referralLink);
+      } catch { /* API unavailable */ }
       setCopied(true);
       setShareErr(true);
       setTimeout(() => { setCopied(false); setShareErr(false); }, 2000);
@@ -263,7 +267,7 @@ export default function ReferralPage() {
   const wasReferred = stats.alreadyReferred || codeApplied;
 
   return (
-    <div className="flex flex-col bg-[#0a142f] min-h-screen pb-8">
+    <div className="flex flex-col bg-[#0a142f] min-h-dvh pb-8">
 
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="px-6 pt-12 pb-2">

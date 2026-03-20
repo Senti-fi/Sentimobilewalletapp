@@ -10,7 +10,7 @@
  *   - While typing: debounced 300 ms ilike query, replaces suggested list
  *   - Selecting a result sets input to @handle and enables Continue
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
@@ -42,6 +42,13 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
   const [results,    setResults]    = useState<UserResult[]>([]);
   const [searching,  setSearching]  = useState(false);
   const [pasteError, setPasteError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Reliably open Android soft keyboard (autoFocus alone is unreliable on Android)
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   // Suggested (empty query) — pull from local send history, no network call
   // Live search (non-empty query) — debounced DB query
@@ -145,8 +152,8 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder={isLink ? 'Enter Senti username' : `Paste ${network} address`}
+            ref={inputRef}
             className="flex-1 bg-transparent font-normal text-[14px] leading-[20px] text-white placeholder:text-[#3c5679] outline-none min-w-0"
-            autoFocus
           />
           {!isLink && (
             <button onClick={handlePaste} className="shrink-0">

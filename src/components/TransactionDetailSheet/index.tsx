@@ -94,7 +94,7 @@ export default function TransactionDetailSheet({ transaction, onClose }: Props) 
             {/* Sheet */}
             <motion.div
               className="absolute bottom-0 left-0 right-0 z-50 bg-[#0f1d3a] rounded-t-[24px] overflow-hidden"
-              style={{ maxHeight: '88vh' }}
+              style={{ maxHeight: '88dvh' }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -106,7 +106,7 @@ export default function TransactionDetailSheet({ transaction, onClose }: Props) 
               </div>
 
               {/* Scrollable content */}
-              <div className="overflow-y-auto" style={{ maxHeight: 'calc(88vh - 20px)' }}>
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(88dvh - 20px)' }}>
                 <div className="px-6 pb-[40px]">
 
                   {/* Close button */}

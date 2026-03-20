@@ -111,7 +111,7 @@ function InsightsSheet({
         {/* Sheet */}
         <motion.div
           className="absolute bottom-0 left-0 right-0 z-50 bg-[#0f1d3a] rounded-t-[24px] overflow-hidden"
-          style={{ maxHeight: '80vh' }}
+          style={{ maxHeight: '80dvh' }}
           initial={{ y: '100%' }}
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
@@ -123,7 +123,7 @@ function InsightsSheet({
             <div className="w-[36px] h-[4px] bg-[rgba(255,255,255,0.18)] rounded-[9999px]" />
           </div>
 
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 20px)' }}>
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(80dvh - 20px)' }}>
             <div className="px-6 pb-[32px]">
 
               {/* Header */}

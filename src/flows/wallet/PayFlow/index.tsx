@@ -50,8 +50,10 @@ export default function PayFlow({ onExit }: PayFlowProps) {
   const cardholderName = (userProfile?.username ?? 'SENTI USER').toUpperCase();
   const spendingPct    = Math.min(SPENDING_USED / SPENDING_LIMIT, 1);
 
-  function handleCopy() {
-    navigator.clipboard.writeText(CARD_NUMBER_GROUPS.join(''));
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(CARD_NUMBER_GROUPS.join(''));
+    } catch { /* API unavailable */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

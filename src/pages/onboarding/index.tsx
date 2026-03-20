@@ -859,7 +859,7 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
             onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null); }}
             onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
             placeholder="000000"
-            autoFocus
+            ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
             className="w-full rounded-[16px] outline-none text-center"
             style={{
               height: 64,
@@ -1029,7 +1029,7 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
           onChange={e => { setEmail(e.target.value); setError(null); }}
           onKeyDown={e => e.key === 'Enter' && handleSendCode()}
           placeholder="Enter your email"
-          autoFocus
+          ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
           className="w-full rounded-[16px] outline-none"
           style={{
             height: 57,
@@ -1193,7 +1193,7 @@ function UsernameScreen({
             value={value}
             onChange={e => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
             placeholder="yourname"
-            autoFocus
+            ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
             className="flex-1 bg-transparent outline-none min-w-0"
             style={{
               fontFamily: 'Manrope, sans-serif',

@@ -9,7 +9,7 @@
  *   - While typing: debounced 300 ms ilike query on username
  *   - Clicking a result calls onNext immediately (no extra confirm step)
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Search, ChevronRight, Loader2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
@@ -28,6 +28,12 @@ function avatarColor(username: string): string {
 export default function LinkRecipientStep({ onNext, onExit }: StepProps<WithdrawFlowData>) {
   const selfId       = useAppStore(s => s.userProfile?.id)    ?? '';
   const transactions = useAppStore(s => s.transactions);
+  const inputRef     = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   const [query,     setQuery]     = useState('');
   const [results,   setResults]   = useState<UserResult[]>([]);
@@ -78,7 +84,7 @@ export default function LinkRecipientStep({ onNext, onExit }: StepProps<Withdraw
       {/* ── Bottom sheet ──────────────────────────────────────────────── */}
       <div
         className="bg-[#0a142f] rounded-tl-[24px] rounded-tr-[24px] flex flex-col shrink-0 overflow-hidden"
-        style={{ maxHeight: '88vh' }}
+        style={{ maxHeight: '88dvh' }}
       >
         {/* Drag handle */}
         <div className="flex justify-center" style={{ marginTop: 16, marginBottom: 4 }}>
@@ -118,8 +124,8 @@ export default function LinkRecipientStep({ onNext, onExit }: StepProps<Withdraw
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search @username"
+                  ref={inputRef}
                   className="flex-1 bg-transparent font-normal text-[16px] leading-[normal] text-white placeholder:text-[#8ac7ff] outline-none min-w-0"
-                  autoFocus
                 />
               </div>
               <div className="absolute left-[16px] top-1/2 -translate-y-1/2">

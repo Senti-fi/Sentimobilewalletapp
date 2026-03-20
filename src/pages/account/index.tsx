@@ -206,8 +206,10 @@ export default function AccountPage() {
     : new Date().getFullYear();
 
   const [copied, setCopied] = useState<Record<string, boolean>>({});
-  const handleCopy = (value: string, key: string) => {
-    navigator.clipboard.writeText(value).catch(() => {});
+  const handleCopy = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch { /* API unavailable */ }
     setCopied(prev => ({ ...prev, [key]: true }));
     setTimeout(() => setCopied(prev => ({ ...prev, [key]: false })), 1500);
   };
