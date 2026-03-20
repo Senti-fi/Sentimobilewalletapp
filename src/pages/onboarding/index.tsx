@@ -30,6 +30,7 @@ import type { UserProfile } from '../../store';
 import { track, identifyUser } from '../../lib/analytics';
 import { supabase } from '../../lib/supabase';
 import { saveUserProfile } from '../../lib/sync';
+import { withTimeout, TimeoutError } from '../../lib/withTimeout';
 
 export const ONBOARDING_KEY = 'senti-onboarding-done';
 
@@ -55,25 +56,18 @@ async function checkUsernameAvailable(username: string): Promise<boolean> {
   if (RESERVED_USERNAMES.has(lower)) return false;
   if (!supabase) return true;
 
-  let timeoutId: ReturnType<typeof setTimeout>;
-
-  const queryPromise = supabase
-    .from('users')
-    .select('username')
-    .ilike('username', lower)
-    .maybeSingle()
-    .then(({ data, error }) => {
-      if (error) return true; // DB error → assume available
-      return data === null;
-    });
-
-  const timeoutPromise = new Promise<boolean>(resolve => {
-    timeoutId = setTimeout(() => resolve(true), 3000);
-  });
-
-  return Promise.race([queryPromise, timeoutPromise]).finally(() => {
-    clearTimeout(timeoutId); // prevent the timeout timer leaking after query resolves
-  });
+  try {
+    const { data, error } = await withTimeout(
+      supabase.from('users').select('username').ilike('username', lower).maybeSingle(),
+      4000,
+      'checkUsernameAvailable',
+    );
+    if (error) return true; // DB error → assume available, unique index enforces at save
+    return data === null;
+  } catch {
+    // TimeoutError or network error → assume available, DB enforces uniqueness at save
+    return true;
+  }
 }
 
 // ── Senti "S" logo — Figma 2101:362 (Screen 2 illustration) ────────
@@ -233,48 +227,64 @@ export default function OnboardingPage() {
     setSaveError(null);
     setSubmitting(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      const { data: { user } } = await withTimeout(
+        supabase.auth.getUser(),
+        8000,
+        'getUser',
+      );
+      if (!user) return;
+
+      const normalizedUsername = username.trim().toLowerCase();
+
+      const { error } = await saveUserProfile({
+        id:           user.id,
+        email:        user.email ?? '',
+        authProvider: 'email',
+        username:     normalizedUsername,
+        createdAt:    user.created_at,
+      });
+
+      if (error) {
+        setSaveError(
+          error === 'timeout'
+            ? 'Connection timed out. Please try again.'
+            : 'Username already taken. Please choose another.',
+        );
+        return;
+      }
+
+      // Process referral in the background — never awaited to block UX
+      processReferral(user.id, referralCode);
+
+      const profile: UserProfile = {
+        id:           user.id,
+        email:        user.email ?? '',
+        authProvider: 'email',
+        username:     normalizedUsername,
+        createdAt:    user.created_at,
+      };
+
+      setUserProfile(profile);
+      identifyUser(user.id, {
+        email:        user.email ?? '',
+        authProvider: 'email',
+        username:     normalizedUsername,
+      });
+      track('onboarding_completed', { authProvider: 'email', hasUsername: true });
+      localStorage.setItem(ONBOARDING_KEY, '1');
+      navigate('/home', { replace: true });
+    } catch (err) {
+      setSaveError(
+        err instanceof TimeoutError
+          ? 'Connection timed out. Please try again.'
+          : 'Something went wrong. Please try again.',
+      );
+    } finally {
+      // Always clears the spinner — even if the await above never settled
+      // (TimeoutError forced rejection) or threw unexpectedly.
       setSubmitting(false);
-      return;
     }
-
-    const normalizedUsername = username.trim().toLowerCase();
-
-    const { error } = await saveUserProfile({
-      id:           user.id,
-      email:        user.email ?? '',
-      authProvider: 'email',
-      username:     normalizedUsername,
-      createdAt:    user.created_at,
-    });
-
-    if (error) {
-      setSaveError('Username already taken. Please choose another.');
-      setSubmitting(false);
-      return;
-    }
-
-    // Process referral in the background — never awaited to block UX
-    processReferral(user.id, referralCode);
-
-    const profile: UserProfile = {
-      id:           user.id,
-      email:        user.email ?? '',
-      authProvider: 'email',
-      username:     normalizedUsername,
-      createdAt:    user.created_at,
-    };
-
-    setUserProfile(profile);
-    identifyUser(user.id, {
-      email:        user.email ?? '',
-      authProvider: 'email',
-      username:     normalizedUsername,
-    });
-    track('onboarding_completed', { authProvider: 'email', hasUsername: true });
-    localStorage.setItem(ONBOARDING_KEY, '1');
-    navigate('/home', { replace: true });
   }
 
   function nextSlide() {

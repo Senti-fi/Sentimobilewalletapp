@@ -14,6 +14,7 @@
  * Errors are logged but never thrown — sync is best-effort.
  */
 import { supabase } from './supabase';
+import { withTimeout, TimeoutError } from './withTimeout';
 import type { AppState, UserProfile } from '../store/types';
 
 export type FinancialState = Omit<AppState, 'userProfile'>;
@@ -29,20 +30,30 @@ export async function saveUserProfile(
   profile: UserProfile,
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: null };
-  const { error } = await supabase.from('users').upsert(
-    {
-      auth_user_id: profile.id,       // Supabase auth.users.id (UUID)
-      username:     profile.username, // stored lowercase, enforced unique by DB index
-      handle:       `@${profile.username}`,
-      email:        profile.email,
-    },
-    { onConflict: 'auth_user_id' },
-  );
-  if (error) {
-    console.error('[sync] saveUserProfile:', error.message);
-    return { error: error.message };
+  try {
+    const { error } = await withTimeout(
+      supabase.from('users').upsert(
+        {
+          auth_user_id: profile.id,
+          username:     profile.username,
+          handle:       `@${profile.username}`,
+          email:        profile.email,
+        },
+        { onConflict: 'auth_user_id' },
+      ),
+      8000,
+      'saveUserProfile',
+    );
+    if (error) {
+      console.error('[sync] saveUserProfile:', error.message);
+      return { error: error.message };
+    }
+    return { error: null };
+  } catch (err) {
+    const msg = err instanceof TimeoutError ? 'timeout' : 'unexpected error';
+    console.error('[sync] saveUserProfile:', msg, err);
+    return { error: err instanceof TimeoutError ? 'timeout' : 'save failed' };
   }
-  return { error: null };
 }
 
 /** Upsert the full financial state. Call after every successful store action. */

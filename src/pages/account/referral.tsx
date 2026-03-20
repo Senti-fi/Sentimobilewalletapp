@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { supabase } from '../../lib/supabase';
+import { withTimeout, TimeoutError } from '../../lib/withTimeout';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -35,33 +36,41 @@ interface ReferralStats {
 async function fetchReferralStats(authUserId: string): Promise<ReferralStats> {
   if (!supabase) return { referralCount: 0, totalPoints: 0, alreadyReferred: false, referredByUsername: null };
 
-  const [countResult, pointsResult, inboundResult] = await Promise.all([
-    supabase
-      .from('referrals')
-      .select('id', { count: 'exact', head: true })
-      .eq('referrer_id', authUserId),
-    supabase
-      .from('referral_points')
-      .select('points')
-      .eq('auth_user_id', authUserId),
-    supabase
-      .from('referrals')
-      .select('referrer_id')
-      .eq('referred_id', authUserId)
-      .maybeSingle(),
-  ]);
+  const [countResult, pointsResult, inboundResult] = await withTimeout(
+    Promise.all([
+      supabase
+        .from('referrals')
+        .select('id', { count: 'exact', head: true })
+        .eq('referrer_id', authUserId),
+      supabase
+        .from('referral_points')
+        .select('points')
+        .eq('auth_user_id', authUserId),
+      supabase
+        .from('referrals')
+        .select('referrer_id')
+        .eq('referred_id', authUserId)
+        .maybeSingle(),
+    ]),
+    8000,
+    'fetchReferralStats',
+  );
 
-  const referralCount  = countResult.count ?? 0;
-  const totalPoints    = (pointsResult.data ?? []).reduce((sum, row) => sum + (row.points as number), 0);
+  const referralCount   = countResult.count ?? 0;
+  const totalPoints     = (pointsResult.data ?? []).reduce((sum, row) => sum + (row.points as number), 0);
   const alreadyReferred = inboundResult.data !== null;
 
   let referredByUsername: string | null = null;
   if (alreadyReferred && inboundResult.data?.referrer_id) {
-    const { data: referrer } = await supabase
-      .from('users')
-      .select('username')
-      .eq('auth_user_id', inboundResult.data.referrer_id)
-      .maybeSingle();
+    const { data: referrer } = await withTimeout(
+      supabase
+        .from('users')
+        .select('username')
+        .eq('auth_user_id', inboundResult.data.referrer_id)
+        .maybeSingle(),
+      4000,
+      'lookupReferrer',
+    );
     referredByUsername = referrer?.username ?? null;
   }
 
@@ -81,27 +90,35 @@ async function applyReferralCode(
     return { error: 'You cannot use your own referral code.' };
   }
 
-  const { data: referrer } = await supabase
-    .from('users')
-    .select('auth_user_id')
-    .ilike('username', normalized)
-    .maybeSingle();
+  const { data: referrer } = await withTimeout(
+    supabase.from('users').select('auth_user_id').ilike('username', normalized).maybeSingle(),
+    6000,
+    'lookupReferrer',
+  );
 
   if (!referrer) return { error: 'Code not found. Check the username and try again.' };
 
-  const { data: referral, error: insertErr } = await supabase
-    .from('referrals')
-    .insert({ referrer_id: referrer.auth_user_id, referred_id: authUserId, status: 'completed' })
-    .select('id')
-    .single();
+  const { data: referral, error: insertErr } = await withTimeout(
+    supabase
+      .from('referrals')
+      .insert({ referrer_id: referrer.auth_user_id, referred_id: authUserId, status: 'completed' })
+      .select('id')
+      .single(),
+    6000,
+    'createReferral',
+  );
 
   if (insertErr) return { error: 'Code already applied or invalid.' };
 
   const referralId = referral?.id ?? null;
-  await supabase.from('referral_points').insert([
-    { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
-    { auth_user_id: authUserId,            referral_id: referralId, points: 50,  reason: 'Joined via referral'  },
-  ]);
+  await withTimeout(
+    supabase.from('referral_points').insert([
+      { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
+      { auth_user_id: authUserId,            referral_id: referralId, points: 50,  reason: 'Joined via referral'  },
+    ]),
+    6000,
+    'awardPoints',
+  );
 
   return { error: null };
 }
@@ -216,8 +233,12 @@ export default function ReferralPage() {
       // Success — mark applied and refresh stats so points update
       setCodeApplied(true);
       fetchReferralStats(authUserId).then(data => setStats(data)).catch(() => {});
-    } catch {
-      setCodeError('Something went wrong. Please try again.');
+    } catch (err) {
+      setCodeError(
+        err instanceof TimeoutError
+          ? 'Connection timed out. Please try again.'
+          : 'Something went wrong. Please try again.',
+      );
     } finally {
       setCodeLoading(false);
     }
