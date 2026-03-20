@@ -22,7 +22,7 @@
  * Completion is tracked via localStorage key 'senti-onboarding-done'.
  */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useAppStore } from '../../store';
@@ -117,9 +117,14 @@ type Step = 'loading' | 'splash' | 'slides' | 'cta' | 'username';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const [step,       setStep]       = useState<Step>('loading');
-  const [slideIdx,   setSlideIdx]   = useState(0);
-  const [username,   setUsername]   = useState('');
+  const location = useLocation();
+  const [step,         setStep]         = useState<Step>('loading');
+  const [slideIdx,     setSlideIdx]     = useState(0);
+  const [username,     setUsername]     = useState('');
+  const [referralCode, setReferralCode] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('ref') ?? '';
+  });
   const [submitting, setSubmitting] = useState(false);
   const [saveError,  setSaveError]  = useState<string | null>(null);
 
@@ -179,12 +184,49 @@ export default function OnboardingPage() {
   }
 
   /**
+   * Best-effort referral processing — called after the profile is saved.
+   * Looks up the referrer by username, inserts a referrals row, and awards
+   * points to both parties. Errors are swallowed so a bad code never blocks
+   * onboarding completion.
+   */
+  async function processReferral(referredUserId: string, code: string) {
+    if (!supabase || !code.trim()) return;
+    const client = supabase;
+    const normalizedCode = code.trim().toLowerCase();
+
+    try {
+      const { data: referrer } = await client
+        .from('users')
+        .select('auth_user_id')
+        .ilike('username', normalizedCode)
+        .maybeSingle();
+
+      // Invalid code or self-referral — silently skip
+      if (!referrer || referrer.auth_user_id === referredUserId) return;
+
+      const { data: referral } = await client
+        .from('referrals')
+        .insert({ referrer_id: referrer.auth_user_id, referred_id: referredUserId, status: 'completed' })
+        .select('id')
+        .single();
+
+      const referralId = referral?.id ?? null;
+      await client.from('referral_points').insert([
+        { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
+        { auth_user_id: referredUserId,         referral_id: referralId, points: 50,  reason: 'Joined via referral' },
+      ]);
+    } catch (err) {
+      console.warn('[referral] processing failed silently:', err);
+    }
+  }
+
+  /**
    * Persist the username and complete onboarding.
    *
    * Order of operations:
    *  1. Normalise username (trim + lowercase).
    *  2. Write to DB via saveUserProfile — check for errors (e.g. unique violation).
-   *  3. Only on success: set local profile in the store and navigate.
+   *  3. Only on success: process referral (best-effort), set local profile, navigate.
    */
   async function complete() {
     if (!supabase) return;
@@ -212,6 +254,9 @@ export default function OnboardingPage() {
       setSubmitting(false);
       return;
     }
+
+    // Process referral in the background — never awaited to block UX
+    processReferral(user.id, referralCode);
 
     const profile: UserProfile = {
       id:           user.id,
@@ -284,6 +329,8 @@ export default function OnboardingPage() {
             onContinue={complete}
             submitting={submitting}
             saveError={saveError}
+            referralCode={referralCode}
+            onReferralChange={setReferralCode}
           />
         )}
       </AnimatePresence>
@@ -1024,12 +1071,16 @@ function UsernameScreen({
   onContinue,
   submitting,
   saveError,
+  referralCode,
+  onReferralChange,
 }: {
   value: string;
   onChange: (v: string) => void;
   onContinue: () => void;
   submitting: boolean;
   saveError: string | null;
+  referralCode: string;
+  onReferralChange: (v: string) => void;
 }) {
   const [checking,     setChecking]     = useState(false);
   const [availability, setAvailability] = useState<'available' | 'taken' | null>(null);
@@ -1172,6 +1223,32 @@ function UsernameScreen({
               </span>
             </div>
           )}
+        </div>
+
+        {/* Referral code — optional */}
+        <div style={{ marginTop: 28 }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500, fontSize: 12, color: '#7b92b0', marginBottom: 8, letterSpacing: 0.2 }}>
+            Referral code <span style={{ opacity: 0.6 }}>(optional)</span>
+          </p>
+          <input
+            type="text"
+            value={referralCode}
+            onChange={e => onReferralChange(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+            placeholder="friend's username"
+            className="w-full rounded-[14px] outline-none"
+            style={{
+              height: 50,
+              background: 'rgba(255,255,255,0.06)',
+              border: referralCode ? '1.5px solid rgba(90,157,232,0.4)' : '1.5px solid rgba(255,255,255,0.08)',
+              paddingLeft: 16,
+              paddingRight: 16,
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 500,
+              fontSize: 15,
+              color: '#1e3a5f',
+              transition: 'border-color 0.2s',
+            }}
+          />
         </div>
       </div>
 
