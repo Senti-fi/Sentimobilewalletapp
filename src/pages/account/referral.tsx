@@ -207,15 +207,20 @@ export default function ReferralPage() {
     if (!inputCode.trim() || codeLoading) return;
     setCodeError(null);
     setCodeLoading(true);
-    const { error } = await applyReferralCode(authUserId, username, inputCode);
-    setCodeLoading(false);
-    if (error) {
-      setCodeError(error);
-      return;
+    try {
+      const { error } = await applyReferralCode(authUserId, username, inputCode);
+      if (error) {
+        setCodeError(error);
+        return;
+      }
+      // Success — mark applied and refresh stats so points update
+      setCodeApplied(true);
+      fetchReferralStats(authUserId).then(data => setStats(data)).catch(() => {});
+    } catch {
+      setCodeError('Something went wrong. Please try again.');
+    } finally {
+      setCodeLoading(false);
     }
-    // Success — mark applied and refresh stats so points update
-    setCodeApplied(true);
-    fetchReferralStats(authUserId).then(data => setStats(data)).catch(() => {});
   }
 
   // Derived: has the user already been referred (either before opening this
