@@ -80,7 +80,7 @@ export default function PayFlow({ onExit }: PayFlowProps) {
         {/* ── Bottom sheet ───────────────────────────────────────── */}
         <div
           className="bg-[#0a142f] rounded-tl-[24px] rounded-tr-[24px] flex flex-col shrink-0 overflow-hidden"
-          style={{ maxHeight: '92vh' }}
+          style={{ maxHeight: '92dvh' }}
         >
           {/* Drag handle */}
           <div className="flex justify-center" style={{ marginTop: 16 }}>

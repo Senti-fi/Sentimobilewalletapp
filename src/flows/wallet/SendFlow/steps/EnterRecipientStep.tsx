@@ -158,7 +158,7 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
           {!isLink && (
             <button onClick={handlePaste} className="shrink-0">
               <div className="relative shrink-0" style={{ width: 14.167, height: 16.667 }}>
-                <img alt="Paste" className="absolute block max-w-none size-full" src={imgCopyIcon} />
+                <img alt="Paste" draggable="false" className="absolute block max-w-none size-full" src={imgCopyIcon} />
               </div>
             </button>
           )}

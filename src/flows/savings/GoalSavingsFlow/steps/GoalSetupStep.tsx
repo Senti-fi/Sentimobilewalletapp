@@ -60,7 +60,7 @@ export default function GoalSetupStep({ data, onNext, onBack }: StepProps<GoalSa
               value={goalName}
               onChange={e => setGoalName(e.target.value)}
               placeholder="e.g. Rent, Emergency Fund, Vacation"
-              className="flex-1 bg-transparent text-white font-normal text-[12px] leading-[16px] focus:outline-none placeholder:text-[rgba(255,255,255,0.3)]"
+              className="flex-1 bg-transparent text-white font-normal text-[16px] leading-[20px] focus:outline-none placeholder:text-[rgba(255,255,255,0.3)]"
             />
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function GoalSetupStep({ data, onNext, onBack }: StepProps<GoalSa
               value={targetAmount}
               onChange={e => setTargetAmount(e.target.value)}
               placeholder="0.00"
-              className="flex-1 bg-transparent text-white font-normal text-[12px] leading-[16px] focus:outline-none placeholder:text-[rgba(255,255,255,0.3)]"
+              className="flex-1 bg-transparent text-white font-normal text-[16px] leading-[20px] focus:outline-none placeholder:text-[rgba(255,255,255,0.3)]"
             />
           </div>
         </div>

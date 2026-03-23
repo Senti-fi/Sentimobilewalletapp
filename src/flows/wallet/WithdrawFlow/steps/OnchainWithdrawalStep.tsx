@@ -110,7 +110,7 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
               className="absolute right-[16px] top-1/2 -translate-y-1/2 shrink-0"
             >
               <div className="relative size-[20px]">
-                <img alt="Paste" className="absolute block max-w-none size-full" src={imgPaste} />
+                <img alt="Paste" draggable="false" className="absolute block max-w-none size-full" src={imgPaste} />
               </div>
             </button>
           </div>

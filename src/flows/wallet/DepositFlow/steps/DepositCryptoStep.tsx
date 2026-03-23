@@ -83,7 +83,7 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
       {/* ── QR Code card ───────────────────────────────────────── */}
       <div className="mx-6 bg-white rounded-[16px] p-[24px] flex flex-col items-center mt-[18px] shrink-0 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)]">
         <div className="relative shrink-0 size-[276px]">
-          <img alt="QR Code" className="absolute block max-w-none size-full" src={imgQrCode} />
+          <img alt="QR Code" draggable="false" className="absolute block max-w-none size-full" src={imgQrCode} />
         </div>
         <p className="font-semibold text-[14px] leading-[20px] text-[#262626] mt-[16px]">
           Scan to deposit USDC

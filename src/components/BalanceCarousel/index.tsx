@@ -343,7 +343,7 @@ export default function BalanceCarousel({
     /* Overflow-hidden clip + gesture capture area */
     <div
       className="overflow-hidden"
-      style={{ height: CARD_H }}
+      style={{ height: CARD_H, touchAction: 'pan-y' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

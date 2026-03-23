@@ -37,6 +37,8 @@ html, body {
   font-family: 'Urbanist', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
 /* ── Mobile-first viewport lock ─────────────────────────────────────── */
