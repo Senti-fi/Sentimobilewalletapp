@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, Plus, BarChart2 } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, FlexibleSavingsData } from '../../types';
 import { useAppStore } from '../../../../store';
@@ -18,12 +18,6 @@ import { useHasSeenIntro } from '../../../../hooks/useHasSeenIntro';
 import EarningsChart from '../../../../components/EarningsChart';
 import { generateVaultSeries } from '../../../../data/portfolioTimeSeries';
 import type { Period } from '../../../../data/portfolioTimeSeries';
-
-// ── Figma asset URLs (185:267) ─────────────────────────────────────────
-const imgWave        = 'https://www.figma.com/api/mcp/asset/e012906e-211b-4f9d-9321-120a51820350'; // Wave BG
-const imgPlus        = 'https://www.figma.com/api/mcp/asset/c95d20df-aafb-414d-8136-ae85928dde87'; // Plus icon
-const imgCirclesFour = 'https://www.figma.com/api/mcp/asset/55b8e8bf-d17a-42f9-9807-2e6e17221fe5'; // CirclesFour
-const imgFabIcon     = 'https://www.figma.com/api/mcp/asset/3ded90ae-4d77-4827-8ee0-c094aa73ee0d'; // FAB icon
 
 // ── Earnings helpers ───────────────────────────────────────────────────
 
@@ -265,12 +259,14 @@ export default function IntroStep(props: StepProps<FlexibleSavingsData>) {
           onClick={() => setShowInsights(true)}
         >
           {/* Wave BGs */}
-          <div className="absolute inset-[0_12.46%_-17.22%_0]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
-          </div>
-          <div className="absolute inset-[0_-75.07%_-17.22%_87.54%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
-          </div>
+          <svg className="absolute inset-[0_12.46%_-17.22%_0] block max-w-none size-full" viewBox="0 0 320 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 60 Q80 20 160 60 Q240 100 320 60 L320 176 L0 176 Z" fill="white" fillOpacity="0.08" />
+            <path d="M0 90 Q80 50 160 90 Q240 130 320 90 L320 176 L0 176 Z" fill="white" fillOpacity="0.05" />
+          </svg>
+          <svg className="absolute inset-[0_-75.07%_-17.22%_87.54%] block max-w-none size-full" viewBox="0 0 320 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 60 Q80 20 160 60 Q240 100 320 60 L320 176 L0 176 Z" fill="white" fillOpacity="0.08" />
+            <path d="M0 90 Q80 50 160 90 Q240 130 320 90 L320 176 L0 176 Z" fill="white" fillOpacity="0.05" />
+          </svg>
 
           {/* Balance + earnings — top-left */}
           <div className="absolute left-5 top-5 flex flex-col gap-[4px] text-white w-[185px]">
@@ -298,9 +294,7 @@ export default function IntroStep(props: StepProps<FlexibleSavingsData>) {
               onClick={e => { e.stopPropagation(); handleNext(); }}
               className="border border-[#b3fbff] rounded-[22px] flex items-center gap-2 pl-2 pr-3 py-2.5"
             >
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgPlus} />
-              </div>
+              <Plus size={16} className="text-white shrink-0" />
               <p className="text-white font-normal text-[12px] leading-[16px] whitespace-nowrap">
                 Quick Save
               </p>
@@ -309,21 +303,17 @@ export default function IntroStep(props: StepProps<FlexibleSavingsData>) {
               onClick={e => e.stopPropagation()}
               className="border border-[#b3fbff] rounded-[22px] flex items-center gap-2 pl-2 pr-3 py-2.5"
             >
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgPlus} />
-              </div>
+              <Plus size={16} className="text-white shrink-0" />
               <p className="text-white font-normal text-[12px] leading-[16px] whitespace-nowrap">
                 Withdraw
               </p>
             </button>
-            {/* CirclesFour — opens Insights */}
+            {/* BarChart2 — opens Insights */}
             <button
               onClick={e => { e.stopPropagation(); setShowInsights(true); }}
               className="border border-[#b3fbff] rounded-[22px] flex items-center justify-center px-3 py-2.5"
             >
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgCirclesFour} />
-              </div>
+              <BarChart2 size={16} className="text-white shrink-0" />
             </button>
           </div>
         </div>
@@ -486,9 +476,7 @@ export default function IntroStep(props: StepProps<FlexibleSavingsData>) {
         className="absolute right-4 bg-[#007bff] rounded-full size-14 flex items-center justify-center shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)]"
         style={{ bottom: 86 }}
       >
-        <div className="h-[19px] w-[22px] relative">
-          <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-        </div>
+        <Plus size={22} className="text-white" />
         <div className="absolute -top-1 -right-1 bg-[#00e6ff] border-2 border-[#007bff] rounded-full size-4" />
       </button>
 

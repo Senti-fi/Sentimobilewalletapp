@@ -3,10 +3,9 @@
  *
  * Figma 312:3768 — success icon, "Withdrawal Initiated", summary card, Lucy card, footer.
  */
+import { Check } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-
-const imgCheckmark = 'https://www.figma.com/api/mcp/asset/9d782e27-ec0a-4870-90f9-7eb29a054889';
 
 /** Truncate address for display */
 function truncate(addr: string) {
@@ -28,9 +27,7 @@ export default function WithdrawInitiatedStep({ data, onExit }: StepProps<Withdr
             className="bg-[#1a3a6b] border border-[rgba(0,123,255,0.3)] rounded-full size-[80px] flex items-center justify-center"
             style={{ boxShadow: '0px 0px 16px 4px rgba(0,123,255,0.2)' }}
           >
-            <div className="relative shrink-0" style={{ width: 26.85, height: 20.475 }}>
-              <img alt="" className="absolute block max-w-none size-full" src={imgCheckmark} />
-            </div>
+            <Check size={24} className="text-white" />
           </div>
         </div>
 

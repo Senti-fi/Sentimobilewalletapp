@@ -10,13 +10,9 @@
  *   imgChevron  — chevron-right 7.4 × 16 px
  *   imgCloseX   — close × 11.667 × 11.667 px
  */
+import { X, ChevronRight, Link2, Building2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-
-const imgOnchain  = 'https://www.figma.com/api/mcp/asset/e7845b2e-8a7c-4742-a08c-ac9e1434af9f'; // chain-link icon 20×10
-const imgFiat     = 'https://www.figma.com/api/mcp/asset/ba50af24-0d28-4dfa-a501-b4c8454bc6d3'; // bank icon 20×20
-const imgChevron  = 'https://www.figma.com/api/mcp/asset/6f518238-0b72-49fc-ad1c-ad019b383dcd'; // chevron-right 7.4×16
-const imgCloseX   = 'https://www.figma.com/api/mcp/asset/a01d1ed6-d3d1-49e4-b936-84666376b659'; // close ×
 
 export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<WithdrawFlowData>) {
   return (
@@ -49,9 +45,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
             onClick={onExit}
             className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0"
           >
-            <div className="relative shrink-0 size-[11.667px]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgCloseX} />
-            </div>
+            <X size={12} className="text-black" />
           </button>
         </div>
 
@@ -70,9 +64,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
                   className="bg-[#1a3a6b] flex items-center justify-center rounded-full shrink-0"
                   style={{ width: 29.23, height: 48 }}
                 >
-                  <div className="relative shrink-0" style={{ width: 20, height: 10 }}>
-                    <img alt="" className="absolute block max-w-none size-full" src={imgOnchain} />
-                  </div>
+                  <Link2 size={16} className="text-[#8ac7ff]" />
                 </div>
                 <div className="flex flex-col gap-[3.25px] pr-[16px] self-stretch shrink-0" style={{ width: 238.25 }}>
                   <p className="font-bold text-[18px] leading-[18px] text-white">
@@ -83,9 +75,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
                   </p>
                 </div>
               </div>
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Badges */}
             <div className="flex gap-[8px]">
@@ -110,9 +100,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
                   className="bg-[#0d2a4a] flex items-center justify-center rounded-full shrink-0"
                   style={{ width: 33.23, height: 48 }}
                 >
-                  <div className="relative shrink-0 size-[20px]">
-                    <img alt="" className="absolute block max-w-none size-full" src={imgFiat} />
-                  </div>
+                  <Building2 size={20} className="text-[#8ac7ff]" />
                 </div>
                 <div className="flex flex-col gap-[3.25px] pr-[16px] self-stretch shrink-0" style={{ width: 234.25 }}>
                   <p className="font-bold text-[18px] leading-[18px] text-white">
@@ -123,9 +111,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
                   </p>
                 </div>
               </div>
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
           </button>
 
@@ -152,9 +138,7 @@ export default function WithdrawOptionsStep({ onNext, onExit }: StepProps<Withdr
                   </p>
                 </div>
               </div>
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Badges */}
             <div className="flex gap-[8px]">

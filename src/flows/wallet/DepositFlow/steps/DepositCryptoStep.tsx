@@ -5,15 +5,9 @@
  * No "continue" — user copies address and taps back.
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock, QrCode, Copy, AlertTriangle } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { DepositFlowData } from '../../types';
-
-// ── Figma asset URLs (302:1706) ──────────────────────────────────────
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
-const imgClock     = 'https://www.figma.com/api/mcp/asset/22fc9e04-83e3-4fd0-beed-fe942ecf6acd';
-const imgQrCode    = 'https://www.figma.com/api/mcp/asset/e648a0f5-7181-40cf-b02b-8f856e557c8c';
-const imgCopyIcon  = 'https://www.figma.com/api/mcp/asset/f1431496-c072-4b93-b8b5-d2b7bdea0936';
-const imgWarning   = 'https://www.figma.com/api/mcp/asset/f784199f-26b6-4461-9fc4-f8ecb143c895';
 
 const WALLET_ADDRESS = '0x1a2b3c4d...5e6f7g8h';
 
@@ -36,16 +30,12 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Deposit Crypto</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -82,9 +72,7 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
 
       {/* ── QR Code card ───────────────────────────────────────── */}
       <div className="mx-6 bg-white rounded-[16px] p-[24px] flex flex-col items-center mt-[18px] shrink-0 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)]">
-        <div className="relative shrink-0 size-[276px]">
-          <img alt="QR Code" draggable="false" className="absolute block max-w-none size-full" src={imgQrCode} />
-        </div>
+        <QrCode size={200} className="text-[#262626]" />
         <p className="font-semibold text-[14px] leading-[20px] text-[#262626] mt-[16px]">
           Scan to deposit USDC
         </p>
@@ -101,9 +89,7 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
               {WALLET_ADDRESS}
             </p>
             <button onClick={handleCopy} className="shrink-0">
-              <div className="relative shrink-0" style={{ width: 14.167, height: 16.667 }}>
-                <img alt="Copy" className="absolute block max-w-none size-full" src={imgCopyIcon} />
-              </div>
+              <Copy size={14} className="text-[#8ac7ff]" />
             </button>
           </div>
         </div>
@@ -119,9 +105,7 @@ export default function DepositCryptoStep({ onBack }: StepProps<DepositFlowData>
 
       {/* ── Warning ─────────────────────────────────────────────── */}
       <div className="mx-6 bg-[#2a1f0a] border border-[#3d2f0a] rounded-[12px] p-[17px] flex gap-[12px] items-start mt-[16px] mb-6 shrink-0">
-        <div className="relative shrink-0" style={{ width: 22, height: 19 }}>
-          <img alt="" className="absolute block max-w-none size-full" src={imgWarning} />
-        </div>
+        <AlertTriangle size={20} className="text-[#ffb020] shrink-0 mt-[1px]" />
         <p className="font-normal text-[12px] leading-[18px] text-[#ffb020] flex-1">
           Only send USDC on the {network === 'solana' ? 'Solana' : 'Ethereum'} network. Sending other assets may result in permanent loss.
         </p>

@@ -3,12 +3,9 @@
  *
  * Figma 312:3661 — summary card, security warning, Lucy reassurance, confirm/go back.
  */
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-
-const imgArrowLeft  = 'https://www.figma.com/api/mcp/asset/7daeeac2-6a9e-40ef-a819-780a29490b46';
-const imgWarnPlain  = 'https://www.figma.com/api/mcp/asset/40fb678e-9cf6-4c8f-939b-a316f00ae4fd';
-const imgLucyIcon   = 'https://www.figma.com/api/mcp/asset/5f738819-f2b7-4a1c-84f8-fbd208bc0f6a';
 
 /** Truncate a long address for display: show first 6 + "..." + last 4 */
 function truncate(addr: string) {
@@ -30,10 +27,8 @@ export default function ConfirmWithdrawStep({ data, onNext, onBack }: StepProps<
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-normal text-[20px] leading-[28px] text-white">Confirm Withdrawal</p>
         <div className="size-[24px] shrink-0" />
@@ -101,9 +96,7 @@ export default function ConfirmWithdrawStep({ data, onNext, onBack }: StepProps<
 
         {/* ── Security warning (plain, no background) ───────────── */}
         <div className="flex items-start gap-[12px] mb-[16px] px-[12px]">
-          <div className="relative shrink-0 size-[20px] mt-[2px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWarnPlain} />
-          </div>
+          <AlertTriangle size={20} className="text-[#d1d5db] shrink-0 mt-[2px]" />
           <p className="font-normal text-[12px] leading-[19.5px] text-[#d1d5db]">
             This transaction cannot be reversed. Please verify the address.
           </p>
@@ -112,9 +105,7 @@ export default function ConfirmWithdrawStep({ data, onNext, onBack }: StepProps<
         {/* ── Lucy reassurance ─────────────────────────────────── */}
         <div className="bg-[rgba(30,58,138,0.2)] border border-[rgba(59,130,246,0.3)] rounded-[12px] p-[17px] flex gap-[12px] items-center mb-[20px]">
           <div className="bg-[rgba(59,130,246,0.2)] rounded-full shrink-0 size-[32px] flex items-center justify-center">
-            <div className="relative size-[20px]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgLucyIcon} />
-            </div>
+            <p className="font-bold text-[14px] leading-[20px] text-white text-center">L</p>
           </div>
           <p className="font-normal text-[12px] leading-[16px] text-[#dbeafe] italic flex-1">
             "Address verified. This matches your frequent withdrawal patterns."

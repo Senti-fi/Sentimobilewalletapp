@@ -16,18 +16,12 @@
  */
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shield, Plus, Rocket } from 'lucide-react';
 import BalanceCarousel from '../../components/BalanceCarousel';
 import { useAppStore } from '../../store';
 import { getActiveInvestments } from '../../store/selectors';
 import type { InvestmentPosition } from '../../store';
 
-// ── Figma asset URLs (253:446) ───────────────────────────────────────
-const imgAddFunds  = 'https://www.figma.com/api/mcp/asset/3c493018-ccff-4c02-8ca2-7b404242ebe7'; // ArrowRight (Lucy)
-const imgShield    = 'https://www.figma.com/api/mcp/asset/059f0cce-9356-4ffb-ad6a-05713f1e47e3'; // Shield/Audited
-const imgDepNow    = 'https://www.figma.com/api/mcp/asset/d5ebce2f-1cf4-4908-8d3a-a73a9a1f8c38'; // ArrowRight (Deposit Now)
-const imgFabIcon   = 'https://www.figma.com/api/mcp/asset/990e1168-cec1-4b09-9af8-9f74d9614f7e'; // FAB icon
-const imgRocket    = 'https://www.figma.com/api/mcp/asset/afb79d2f-22e9-4342-b1c9-fb2d1cc9e637'; // Rocket (soon)
 
 // ── Vault display metadata ────────────────────────────────────────────
 // Protocol/TVL are display-only — not stored in the financial state.
@@ -218,9 +212,7 @@ function AvailableVaultCard({
 
         {/* Audited badge */}
         <div className="content-stretch flex gap-[8px] items-center shrink-0">
-          <div className="relative shrink-0 size-[16px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgShield} />
-          </div>
+          <Shield size={16} className="text-[#8ac7ff] shrink-0" />
           <p className="font-bold leading-[normal] text-[#8ac7ff] text-[10px] tracking-[1px] uppercase whitespace-nowrap">
             Audited &amp; Secure
           </p>
@@ -244,9 +236,7 @@ function AvailableVaultCard({
           <p className="font-normal leading-[16px] text-[12px] text-center text-white whitespace-nowrap">
             Deposit Now
           </p>
-          <div className="relative shrink-0 size-[16px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgDepNow} />
-          </div>
+          <ChevronRight size={14} className="text-white" />
         </button>
       </div>
 
@@ -304,11 +294,7 @@ export default function InvestPage() {
             <p className="font-medium leading-[18px] text-[#007bff] text-[14px] whitespace-nowrap">
               Add Funds
             </p>
-            <div className="relative shrink-0 size-[14px]">
-              <div className="absolute inset-[18.75%_12.5%]">
-                <img alt="" className="absolute block max-w-none size-full" src={imgAddFunds} />
-              </div>
-            </div>
+            <ChevronRight size={14} className="text-[#007bff]" />
           </div>
         </div>
 
@@ -386,9 +372,7 @@ export default function InvestPage() {
         </div>
 
         <div className="opacity-40 relative shrink-0">
-          <div className="relative shrink-0 size-[24px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgRocket} />
-          </div>
+          <Rocket size={24} className="text-[#8ac7ff]" />
         </div>
       </div>
 
@@ -405,9 +389,7 @@ function InvestFab() {
     <button
       className="absolute bg-[#007bff] bottom-[86px] content-stretch flex items-center justify-center right-[16px] rounded-[9999px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] size-[56px] z-40"
     >
-      <div className="h-[19px] relative shrink-0 w-[22px]">
-        <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-      </div>
+      <Plus size={20} className="text-white" />
       {/* Cyan notification dot */}
       <div className="absolute bg-[#00e6ff] border-2 border-[#007bff] right-[-4px] rounded-[9999px] size-[16px] top-[-4px]" />
     </button>,

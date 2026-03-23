@@ -24,7 +24,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, CreditCard, PiggyBank, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../../store';
 import type { UserProfile } from '../../store';
 import { track, identifyUser } from '../../lib/analytics';
@@ -70,8 +70,6 @@ async function checkUsernameAvailable(username: string): Promise<boolean> {
   }
 }
 
-// ── Senti "S" logo — Figma 2101:362 (Screen 2 illustration) ────────
-const imgSentiLogo = 'https://www.figma.com/api/mcp/asset/741a58c0-5518-40ba-b57f-56b7bc6a8e6f';
 
 // ── Slide data ─────────────────────────────────────────────────────────
 
@@ -587,16 +585,12 @@ function SlideScreen({
           }}
         >
           <motion.div
-            style={{ position: 'absolute', top: 0, left: 0, width: 350, height: 175, overflow: 'hidden' }}
+            style={{ position: 'absolute', top: 0, left: 0, width: 350, height: 175, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             initial={{ x: 110, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img
-              src={imgSentiLogo}
-              alt="Senti"
-              style={{ position: 'absolute', top: 0, left: 0, width: 350, height: 350, objectFit: 'contain', pointerEvents: 'none' }}
-            />
+            <span style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 800, fontSize: 220, lineHeight: '350px', color: '#007bff', opacity: 0.9, userSelect: 'none', pointerEvents: 'none', position: 'absolute', top: 0, left: 0, width: 350, textAlign: 'center' }}>S</span>
           </motion.div>
           <motion.div
             style={{ position: 'absolute', top: 175, left: 0, width: 350, height: 175, overflow: 'hidden' }}
@@ -604,11 +598,7 @@ function SlideScreen({
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img
-              src={imgSentiLogo}
-              alt=""
-              style={{ position: 'absolute', top: -175, left: 0, width: 350, height: 350, objectFit: 'contain', pointerEvents: 'none' }}
-            />
+            <span style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 800, fontSize: 220, lineHeight: '350px', color: '#007bff', opacity: 0.9, userSelect: 'none', pointerEvents: 'none', position: 'absolute', top: -175, left: 0, width: 350, textAlign: 'center' }}>S</span>
           </motion.div>
         </motion.div>
       )}
@@ -752,13 +742,6 @@ function SlideScreen({
 
 // ── Screen 5: CTA — Figma 2114:475 ────────────────────────────────────
 
-const ctaImgSenti   = 'https://www.figma.com/api/mcp/asset/e0794bba-27e6-456f-920e-210f5bf55aae';
-const ctaCardVec0   = 'https://www.figma.com/api/mcp/asset/f6a56cd7-14aa-4738-8ba9-747bd6c2eaf6';
-const ctaCardVec1   = 'https://www.figma.com/api/mcp/asset/c4f574f2-8911-4de9-bcc1-5763c84bdfe6';
-const ctaCardVec2   = 'https://www.figma.com/api/mcp/asset/b6fdcefc-cdbf-44bb-b496-b4b9e4e29c98';
-const ctaIconSpend  = 'https://www.figma.com/api/mcp/asset/898910e7-d8e3-42d7-98f6-fe5d716a519a';
-const ctaIconSave   = 'https://www.figma.com/api/mcp/asset/658e9525-4b71-421a-8f3a-b5b5d7b39c7b';
-const ctaIconInvest = 'https://www.figma.com/api/mcp/asset/b8fea292-cfb1-4596-9f11-2cdf66d534b2';
 
 /**
  * CTA screen — email OTP flow. No redirects; everything happens in-app.
@@ -946,17 +929,6 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
         {/* Main dark card */}
         <div className="absolute rounded-[28px] overflow-hidden" style={{ left: 2, top: 0, width: 340, height: 220, background: 'linear-gradient(147.09deg, rgb(30,58,95) 0%, rgb(21,45,71) 100%)', boxShadow: '0px 20px 50px rgba(30,58,95,0.4)' }}>
           <div className="absolute inset-0">
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute" style={{ top: '16.88%', right: '-2.94%', bottom: '60.61%', left: '-14.71%' }}>
-                <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec0} />
-              </div>
-              <div className="absolute" style={{ top: '25.21%', right: '-11.76%', bottom: '54.55%', left: '-14.71%' }}>
-                <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec1} />
-              </div>
-              <div className="absolute" style={{ top: 0, right: 0, bottom: '41.82%', left: 0 }}>
-                <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec2} />
-              </div>
-            </div>
             <div className="absolute rounded-full pointer-events-none" style={{ left: 140, top: -60, width: 160, height: 160, background: 'radial-gradient(circle at 48px 48px, rgba(255,255,255,0.2) 0%, transparent 60%)' }} />
           </div>
 
@@ -967,7 +939,7 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
               <p style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 24, lineHeight: '36px', color: '#fff' }}>$24,850.00</p>
             </div>
             <div className="flex items-center justify-center rounded-[18px] shrink-0" style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.2)', padding: 8 }}>
-              <img alt="Senti" src={ctaImgSenti} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+              <span style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 800, fontSize: 42, color: '#fff' }}>S</span>
             </div>
           </div>
 
@@ -999,13 +971,13 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
         {/* Feature tiles */}
         <div className="absolute" style={{ left: 0, top: 250, width: 340, height: 124 }}>
           {[
-            { label: 'Spend', sub: 'Daily use',   left: 0,   icon: ctaIconSpend,  bg: 'linear-gradient(135deg, rgb(122,184,245) 0%, rgb(90,157,232) 100%)'  },
-            { label: 'Save',  sub: 'Your goals',  left: 117, icon: ctaIconSave,   bg: 'linear-gradient(135deg, rgb(90,157,232) 0%, rgb(59,125,216) 100%)'   },
-            { label: 'Invest',sub: 'Grow more',   left: 235, icon: ctaIconInvest, bg: 'linear-gradient(135deg, rgb(59,125,216) 0%, rgb(43,109,200) 100%)'   },
+            { label: 'Spend', sub: 'Daily use',   left: 0,   icon: <CreditCard  size={18} className="text-white" />, bg: 'linear-gradient(135deg, rgb(122,184,245) 0%, rgb(90,157,232) 100%)'  },
+            { label: 'Save',  sub: 'Your goals',  left: 117, icon: <PiggyBank   size={18} className="text-white" />, bg: 'linear-gradient(135deg, rgb(90,157,232) 0%, rgb(59,125,216) 100%)'   },
+            { label: 'Invest',sub: 'Grow more',   left: 235, icon: <TrendingUp  size={18} className="text-white" />, bg: 'linear-gradient(135deg, rgb(59,125,216) 0%, rgb(43,109,200) 100%)'   },
           ].map(({ label, sub, left, icon, bg }) => (
             <div key={label} className="absolute bg-white rounded-[20px]" style={{ left, top: 0, width: 105, height: 124, boxShadow: '0px 8px 20px rgba(0,0,0,0.06)' }}>
               <div className="absolute flex items-center justify-center rounded-[14px]" style={{ left: 31, top: 16, width: 44, height: 44, background: bg }}>
-                <img alt="" style={{ width: 18, height: 18 }} src={icon} />
+                {icon}
               </div>
               <p className="absolute" style={{ left: label === 'Invest' ? 35 : label === 'Save' ? 39 : 34, top: 70, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13, color: '#1e3a5f', lineHeight: '19.5px' }}>{label}</p>
               <p className="absolute" style={{ left: label === 'Invest' ? 26 : label === 'Save' ? 27 : 31, top: 91, fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 11, color: '#7b92b0', lineHeight: '16.5px' }}>{sub}</p>

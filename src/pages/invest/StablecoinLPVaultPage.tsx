@@ -16,6 +16,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, MoreHorizontal, Database, Globe, ShieldCheck, Lock, Plus, RefreshCw, Zap, ChevronRight } from 'lucide-react';
 import DepositFlow from '../../flows/invest/DepositFlow';
 import type { VaultConfig } from '../../flows/invest/DepositFlow/types';
 
@@ -30,34 +31,21 @@ const STABLECOIN_LP_VAULT: VaultConfig = {
   lucySuccess: 'Your funds are working in the LP. Positions may take 1-2 hours to fully settle.',
 };
 
-// ── Figma asset URLs (reused from 273:849) ───────────────────────────
-const imgArrowLeft   = 'https://www.figma.com/api/mcp/asset/367d1e04-4022-44f3-9ae7-cad1e1b772b4'; // ArrowLeft
-const imgDots        = 'https://www.figma.com/api/mcp/asset/bafe849d-1eea-4407-8fec-1bea157a932f'; // DotsThreeOutline
-const imgVaultIcon   = 'https://www.figma.com/api/mcp/asset/bdd3196c-56a4-4728-8846-70f6ef138dfc'; // vault icon
-const imgProtocol    = 'https://www.figma.com/api/mcp/asset/c91c34fb-4923-40e4-9553-9b03f654488b'; // Sphere/Protocol
-const imgShieldCheck = 'https://www.figma.com/api/mcp/asset/4c993823-b445-4af4-8953-d12d3d9a2ad0'; // ShieldCheck
-const imgLock        = 'https://www.figma.com/api/mcp/asset/025e1988-bccc-4e70-8e46-743bba2bf8c3'; // LockSimple/TVL
-const imgFabIcon     = 'https://www.figma.com/api/mcp/asset/3cd774c2-76fa-49b8-a538-0eb76d70a7e3'; // FAB icon
-const imgAutoComp    = 'https://www.figma.com/api/mcp/asset/a43be51c-7629-439d-ae5b-9564f18dc627'; // feature icon 1
-const imgProtocol2   = 'https://www.figma.com/api/mcp/asset/309bcfd5-624b-44ad-b4e6-9b3c90faa93f'; // feature icon 2
-const imgInstant     = 'https://www.figma.com/api/mcp/asset/b38cf642-806d-42cd-a103-303a7310ebcf'; // feature icon 3
-const imgArrowRight  = 'https://www.figma.com/api/mcp/asset/b880d7cb-b693-42f2-ae83-b279438a3031'; // ArrowRight Lucy
-
 // ── Feature card data ────────────────────────────────────────────────
 
 const FEATURES = [
   {
-    icon:  imgAutoComp,
+    icon:  <RefreshCw size={16} className="text-[#00e6ff]" />,
     title: 'Higher Yield',
     desc:  'Earn more by providing liquidity across stablecoin pairs, automatically compounded.',
   },
   {
-    icon:  imgProtocol2,
+    icon:  <ShieldCheck size={16} className="text-[#8ac7ff]" />,
     title: 'Battle-Tested Protocol',
     desc:  "Powered by Curve — the gold standard for stablecoin liquidity with $1.2B TVL.",
   },
   {
-    icon:  imgInstant,
+    icon:  <Zap size={16} className="text-[#ffb020]" />,
     title: '1-2 Hour Withdrawal',
     desc:  'Funds are available within 1-2 hours as liquidity is unwound from the pool.',
   },
@@ -70,9 +58,7 @@ function StablecoinFab() {
   if (!root) return null;
   return createPortal(
     <button className="absolute bg-[#007bff] bottom-[86px] content-stretch flex items-center justify-center right-[16px] rounded-[9999px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] size-[56px] z-40">
-      <div className="h-[19px] relative shrink-0 w-[22px]">
-        <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-      </div>
+      <Plus size={20} className="text-white" />
       <div className="absolute bg-[#00e6ff] border-2 border-[#007bff] right-[-4px] rounded-[9999px] size-[16px] top-[-4px]" />
     </button>,
     root,
@@ -98,18 +84,14 @@ export default function StablecoinLPVaultPage() {
 
         {/* ── 1. Header ─────────────────────────────────────────────── */}
         <div className="content-stretch flex items-center justify-between left-[24px] px-6 pt-[68px] w-full">
-          <button onClick={() => navigate(-1)} className="relative shrink-0 size-[24px]">
-            <div className="absolute inset-[18.75%_12.5%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-            </div>
+          <button onClick={() => navigate(-1)} className="relative shrink-0 size-[24px] flex items-center justify-center">
+            <ArrowLeft size={20} className="text-white" />
           </button>
           <p className="font-semibold leading-[20px] relative shrink-0 text-[16px] text-white whitespace-nowrap">
             Stablecoin LP
           </p>
-          <button className="relative shrink-0 size-[24px]">
-            <div className="absolute inset-[7.81%_39.06%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgDots} />
-            </div>
+          <button className="relative shrink-0 size-[24px] flex items-center justify-center">
+            <MoreHorizontal size={20} className="text-white" />
           </button>
         </div>
 
@@ -117,9 +99,7 @@ export default function StablecoinLPVaultPage() {
         <div className="flex items-center gap-[16px] mt-[28px] px-8">
           {/* Vault icon */}
           <div className="bg-[#1a3a6b] content-stretch flex items-center justify-center rounded-[9999px] shrink-0 size-[56px]">
-            <div className="relative shrink-0 size-[33px]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgVaultIcon} />
-            </div>
+            <Database size={24} className="text-white" />
           </div>
 
           {/* Tag row */}
@@ -195,9 +175,7 @@ export default function StablecoinLPVaultPage() {
               >
                 {/* Icon avatar */}
                 <div className="bg-[rgba(251,191,36,0.15)] content-stretch flex items-center justify-center relative rounded-[9999px] shrink-0 size-[32px]">
-                  <div className="relative shrink-0 size-[16px]">
-                    <img alt="" className="absolute block max-w-none size-full" src={f.icon} />
-                  </div>
+                  {f.icon}
                 </div>
 
                 {/* Text */}
@@ -229,11 +207,7 @@ export default function StablecoinLPVaultPage() {
           {/* Protocol */}
           <div className="border-[rgba(255,255,255,0.1)] border-r content-stretch flex flex-col gap-[4px] h-[35px] items-start pr-px shrink-0 w-[93.667px]">
             <div className="content-stretch flex gap-[4px] items-center justify-center relative w-full">
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[9.38%_9.38%_9.37%_9.37%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgProtocol} />
-                </div>
-              </div>
+              <Globe size={14} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal leading-[normal] text-[10px] text-[rgba(255,255,255,0.5)] text-center uppercase whitespace-nowrap">
                 Protocol
               </p>
@@ -248,11 +222,7 @@ export default function StablecoinLPVaultPage() {
           {/* Security */}
           <div className="border-[rgba(255,255,255,0.1)] border-r content-stretch flex flex-col gap-[4px] h-[35px] items-start pr-px shrink-0 w-[93.667px]">
             <div className="content-stretch flex gap-[4px] items-center justify-center relative w-full">
-              <div className="relative shrink-0 size-[12px]">
-                <div className="absolute inset-[15.63%_12.5%_6.25%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgShieldCheck} />
-                </div>
-              </div>
+              <ShieldCheck size={12} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal leading-[normal] text-[12px] text-[rgba(255,255,255,0.5)] text-center uppercase whitespace-nowrap">
                 Security
               </p>
@@ -267,11 +237,7 @@ export default function StablecoinLPVaultPage() {
           {/* TVL */}
           <div className="content-stretch flex flex-col gap-[4px] h-[35px] items-start shrink-0 w-[93.667px]">
             <div className="content-stretch flex gap-[4px] items-center justify-center relative w-full">
-              <div className="relative shrink-0 size-[12px]">
-                <div className="absolute inset-[3.13%_12.5%_12.5%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgLock} />
-                </div>
-              </div>
+              <Lock size={12} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal leading-[normal] text-[12px] text-[rgba(255,255,255,0.5)] text-center uppercase whitespace-nowrap">
                 TVL
               </p>
@@ -301,11 +267,7 @@ export default function StablecoinLPVaultPage() {
               <p className="font-medium leading-[18px] relative shrink-0 text-[#007bff] text-[14px] whitespace-nowrap">
                 Ask Lucy about this vault
               </p>
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[18.75%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-                </div>
-              </div>
+              <ChevronRight size={14} className="text-[#007bff] shrink-0" />
             </div>
           </div>
         </div>

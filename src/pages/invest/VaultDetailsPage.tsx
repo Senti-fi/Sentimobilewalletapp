@@ -10,7 +10,7 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, ChevronRight, Globe, Shield, Lock, Plus } from 'lucide-react';
 import DepositFlow from '../../flows/invest/DepositFlow';
 import type { VaultConfig } from '../../flows/invest/DepositFlow/types';
 import { useAppStore } from '../../store';
@@ -20,13 +20,6 @@ import { generateVaultSeries } from '../../data/portfolioTimeSeries';
 import type { Period } from '../../data/portfolioTimeSeries';
 import { getVaultTransactions } from '../../data/transactionUtils';
 
-// ── Figma asset URLs (261:274) ───────────────────────────────────────
-const imgDots       = 'https://www.figma.com/api/mcp/asset/aaa8676f-8602-4188-8229-16fdd6412666';
-const imgArrowRight = 'https://www.figma.com/api/mcp/asset/02089dab-a0dc-4bfc-baed-8d1176d16a89';
-const imgProtocol   = 'https://www.figma.com/api/mcp/asset/5a580da9-469e-4230-b87c-8259d25e7572';
-const imgShield     = 'https://www.figma.com/api/mcp/asset/f186f23f-8187-4152-bec4-2c5e7e6d9545';
-const imgLock       = 'https://www.figma.com/api/mcp/asset/9a2d1125-3c0d-4e93-a011-5962641c731e';
-const imgFabIcon = 'https://www.figma.com/api/mcp/asset/203d2558-3fcc-4874-af2e-0c29b82b0b12';
 
 // ── Static display config (non-data fields) ──────────────────────────
 
@@ -112,9 +105,7 @@ function VaultDetailsFab() {
   if (!root) return null;
   return createPortal(
     <button className="absolute bg-[#007bff] bottom-[86px] flex items-center justify-center right-[16px] rounded-[9999px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] size-[56px] z-40">
-      <div className="h-[19px] relative shrink-0 w-[22px]">
-        <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-      </div>
+      <Plus size={20} className="text-white" />
       <div className="absolute bg-[#00e6ff] border-2 border-[#007bff] right-[-4px] rounded-[9999px] size-[16px] top-[-4px]" />
     </button>,
     root,
@@ -183,10 +174,8 @@ export default function VaultDetailsPage() {
           <p className="font-semibold text-[16px] leading-[20px] text-white whitespace-nowrap">
             {config.title}
           </p>
-          <button className="relative shrink-0 size-[24px]">
-            <div className="absolute inset-[7.81%_39.06%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgDots} />
-            </div>
+          <button className="relative shrink-0 size-[24px] flex items-center justify-center">
+            <MoreHorizontal size={20} className="text-white" />
           </button>
         </div>
 
@@ -298,11 +287,7 @@ export default function VaultDetailsPage() {
               <p className="font-medium text-[14px] leading-[18px] text-[#007bff] whitespace-nowrap">
                 Add Funds
               </p>
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[18.75%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-                </div>
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </button>
           </div>
         </div>
@@ -313,11 +298,7 @@ export default function VaultDetailsPage() {
           {/* Protocol */}
           <div className="border-r border-[rgba(255,255,255,0.1)] flex flex-col gap-[4px] h-[35px] items-start pr-px shrink-0 w-[93.667px]">
             <div className="flex gap-[4px] items-center justify-center w-full">
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[9.38%_9.38%_9.37%_9.37%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgProtocol} />
-                </div>
-              </div>
+              <Globe size={14} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal text-[10px] leading-[normal] uppercase text-[rgba(255,255,255,0.5)] text-center whitespace-nowrap">
                 Protocol
               </p>
@@ -332,11 +313,7 @@ export default function VaultDetailsPage() {
           {/* Security */}
           <div className="border-r border-[rgba(255,255,255,0.1)] flex flex-col gap-[4px] h-[35px] items-start pr-px shrink-0 w-[93.667px]">
             <div className="flex gap-[4px] items-center justify-center w-full">
-              <div className="relative shrink-0 size-[12px]">
-                <div className="absolute inset-[15.63%_12.5%_6.25%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgShield} />
-                </div>
-              </div>
+              <Shield size={12} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal text-[12px] leading-[normal] uppercase text-[rgba(255,255,255,0.5)] text-center whitespace-nowrap">
                 Security
               </p>
@@ -349,11 +326,7 @@ export default function VaultDetailsPage() {
           {/* TVL */}
           <div className="flex flex-col gap-[4px] h-[35px] items-start shrink-0 w-[93.667px]">
             <div className="flex gap-[4px] items-center justify-center w-full">
-              <div className="relative shrink-0 size-[12px]">
-                <div className="absolute inset-[3.13%_12.5%_12.5%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgLock} />
-                </div>
-              </div>
+              <Lock size={12} className="text-[#8ac7ff] shrink-0" />
               <p className="font-normal text-[12px] leading-[normal] uppercase text-[rgba(255,255,255,0.5)] text-center whitespace-nowrap">
                 TVL
               </p>

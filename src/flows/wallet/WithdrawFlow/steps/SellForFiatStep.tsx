@@ -5,14 +5,10 @@
  * + bank account selector + Lucy nudge + "Preview Sale" button.
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock, Building2, Info } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
 import { useAppStore } from '../../../../store';
-
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/45be0d0e-de7a-4850-8751-865476ff472a';
-const imgClock     = 'https://www.figma.com/api/mcp/asset/0a3f33c7-a884-4874-aef7-036fd6643938';
-const imgBankIcon  = 'https://www.figma.com/api/mcp/asset/defec878-3317-4471-81e8-9ce874364261';
-const imgInfoIcon  = 'https://www.figma.com/api/mcp/asset/e91dfa42-d9fc-4cb4-9296-d05bd6e23e78';
 
 type Asset = 'USDC' | 'USDT' | 'SOL';
 const ASSETS: Asset[] = ['USDC', 'USDT', 'SOL'];
@@ -45,16 +41,12 @@ export default function SellForFiatStep({ data, onNext, onBack }: StepProps<With
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Sell for Fiat</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -139,9 +131,7 @@ export default function SellForFiatStep({ data, onNext, onBack }: StepProps<With
             <div className="flex items-center gap-[12px]">
               {/* Bank icon */}
               <div className="bg-[rgba(30,58,138,0.5)] rounded-[8px] size-[40px] flex items-center justify-center shrink-0">
-                <div className="relative size-[24px]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgBankIcon} />
-                </div>
+                <Building2 size={24} className="text-white" />
               </div>
               <div>
                 <p className="font-bold text-[14px] leading-[20px] text-white">
@@ -162,9 +152,7 @@ export default function SellForFiatStep({ data, onNext, onBack }: StepProps<With
 
         {/* ── Lucy nudge ────────────────────────────────────────── */}
         <div className="flex items-start gap-[12px] mb-[24px]">
-          <div className="relative shrink-0 size-[16px] mt-[2px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgInfoIcon} />
-          </div>
+          <Info size={16} className="text-[#94a3b8] shrink-0 mt-[2px]" />
           <p className="font-normal text-[12px] leading-[19.5px] text-[#94a3b8]">
             Exchange rates update every few minutes to reflect market changes. Your final rate is locked when you confirm.
           </p>

@@ -8,16 +8,10 @@
  * Dynamic from data: goalName, targetAmount, deadline
  * Static/mock: saved amount ($1,200.00), progress (60%), contributions
  */
-import { ChevronRight } from 'lucide-react';
+import React from 'react';
+import { ChevronRight, Calendar, Plus, PiggyBank, RefreshCw, ArrowRight } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, GoalSavingsData } from '../../types';
-
-// ── Figma asset URLs (143:2202) — valid 7 days ────────────────────────
-const imgCalendar    = 'https://www.figma.com/api/mcp/asset/51ab47f8-5102-4550-a213-79d3d1b24173'; // CalendarDots 16×16
-const imgArrowSmall  = 'https://www.figma.com/api/mcp/asset/9eb55f1c-6bcf-44d3-9326-ba2c98e22476'; // arrow 13×9px
-const imgFabIcon     = 'https://www.figma.com/api/mcp/asset/4dfc53fb-cf0f-4ee2-a15b-a34091b98f7b'; // FAB 22×19px
-const imgDeposit     = 'https://www.figma.com/api/mcp/asset/91dbd0fc-fed1-44ad-af1e-c7b797555709'; // Manual Deposit 15×15
-const imgAutoSave    = 'https://www.figma.com/api/mcp/asset/9a7668ae-8f7f-41cf-9019-59d3b4b027e2'; // Auto-Save 16×22
 
 function formatAmount(val: string): string {
   const n = parseFloat(val || '2000');
@@ -31,10 +25,10 @@ function formatDeadline(iso: string): string {
   });
 }
 
-const CONTRIBUTIONS = [
-  { icon: imgDeposit,  iconH: 15, iconW: 15, label: 'Manual Deposit', date: 'Mar 12, 2024', amount: '+$200.00' },
-  { icon: imgAutoSave, iconH: 22, iconW: 16, label: 'Auto-Save',      date: 'Mar 05, 2024', amount: '+$500.00' },
-  { icon: imgDeposit,  iconH: 15, iconW: 15, label: 'Manual Deposit', date: 'Feb 28, 2024', amount: '+$200.00' },
+const CONTRIBUTIONS: { icon: React.ReactElement; label: string; date: string; amount: string }[] = [
+  { icon: <PiggyBank size={16} className="text-[#007bff]" />,  label: 'Manual Deposit', date: 'Mar 12, 2024', amount: '+$200.00' },
+  { icon: <RefreshCw size={16} className="text-[#007bff]" />,  label: 'Auto-Save',      date: 'Mar 05, 2024', amount: '+$500.00' },
+  { icon: <PiggyBank size={16} className="text-[#007bff]" />,  label: 'Manual Deposit', date: 'Feb 28, 2024', amount: '+$200.00' },
 ];
 
 export default function GoalDetailStep({ data, onBack, onExit }: StepProps<GoalSavingsData>) {
@@ -85,12 +79,7 @@ export default function GoalDetailStep({ data, onBack, onExit }: StepProps<GoalS
 
           {/* Footer — due date row */}
           <div className="flex items-center justify-center gap-2 border-t border-[#334155] pt-[17px]">
-            {/* CalendarDots icon */}
-            <div className="relative shrink-0 size-4">
-              <div className="absolute" style={{ inset: '6.25% 12.5% 12.5% 12.5%' }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgCalendar} />
-              </div>
-            </div>
+            <Calendar size={14} className="text-[#8ac7ff] shrink-0" />
             <p className="text-[#cbd5e1] font-normal text-[14px] leading-[20px]">Due {dueDate}</p>
             <p className="text-[#94a3b8] font-normal text-[16px] leading-[24px] px-1">•</p>
             <p className="text-[#00e6ff] font-normal text-[14px] leading-[20px]">28 days left</p>
@@ -113,10 +102,7 @@ export default function GoalDetailStep({ data, onBack, onExit }: StepProps<GoalS
             </p>
             <button className="flex items-center gap-1 self-start">
               <p className="text-[#00e6ff] font-bold text-[14px] leading-[20px]">Add $80 Now</p>
-              {/* Small arrow asset: 13.333×9.333px */}
-              <div className="relative shrink-0" style={{ width: 13.333, height: 9.333 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgArrowSmall} />
-              </div>
+              <ArrowRight size={14} className="text-[#00e6ff]" />
             </button>
           </div>
         </div>
@@ -144,9 +130,7 @@ export default function GoalDetailStep({ data, onBack, onExit }: StepProps<GoalS
                 <div className="flex items-center gap-3">
                   {/* Icon circle */}
                   <div className="bg-[rgba(0,123,255,0.1)] rounded-full size-10 flex items-center justify-center shrink-0">
-                    <div className="relative shrink-0" style={{ width: c.iconW, height: c.iconH }}>
-                      <img alt="" className="absolute block max-w-none size-full" src={c.icon} />
-                    </div>
+                    {c.icon}
                   </div>
                   <div className="flex flex-col">
                     <p className="text-white font-bold text-[16px] leading-[24px]">{c.label}</p>
@@ -186,9 +170,7 @@ export default function GoalDetailStep({ data, onBack, onExit }: StepProps<GoalS
 
       {/* ── FAB ─────────────────────────────────────────────────────── */}
       <button className="absolute bottom-6 right-4 bg-[#007bff] rounded-full size-14 flex items-center justify-center shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)]">
-        <div className="h-[19px] w-[22px] relative">
-          <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-        </div>
+        <Plus size={22} className="text-white" />
         <div className="absolute -top-1 -right-1 bg-[#00e6ff] border-2 border-[#007bff] rounded-full size-4" />
       </button>
     </div>

@@ -5,12 +5,9 @@
  * User chooses "Send via Link" (to @senti_user) or "Send to Address" (external).
  * Follows the same bottom-sheet pattern as AddMoneyStep (302:1389).
  */
+import { X, ChevronRight } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
-
-// Reuse asset URLs already pulled from the wallet section
-const imgCloseX = 'https://www.figma.com/api/mcp/asset/f6a2211e-c5a6-4716-a07b-97d327a7a260';
-const imgChevron = 'https://www.figma.com/api/mcp/asset/a56ff8cb-8771-4af9-91b4-03d83de6ef52';
 
 export default function SendOptionsStep({ onNext, onExit }: StepProps<SendFlowData>) {
   return (
@@ -44,9 +41,7 @@ export default function SendOptionsStep({ onNext, onExit }: StepProps<SendFlowDa
             onClick={onExit}
             className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0"
           >
-            <div className="relative shrink-0 size-[11.667px]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgCloseX} />
-            </div>
+            <X size={12} className="text-black" />
           </button>
         </div>
 
@@ -74,9 +69,7 @@ export default function SendOptionsStep({ onNext, onExit }: StepProps<SendFlowDa
                   </p>
                 </div>
               </div>
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Tags */}
             <div className="flex gap-[8px]">
@@ -112,9 +105,7 @@ export default function SendOptionsStep({ onNext, onExit }: StepProps<SendFlowDa
                   </p>
                 </div>
               </div>
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Tags */}
             <div className="flex gap-[8px]">

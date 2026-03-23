@@ -5,10 +5,9 @@
  * Asset / Amount / Recipient / Fee / Note / {recipient} Receives
  * + "Confirm & Send" / "Go Back"
  */
+import { ArrowLeft } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/c8096bc8-2313-4408-98bc-7f3a0e8f7815';
 
 /** Derive a display name from a handle */
 function displayName(handle: string) {
@@ -26,10 +25,8 @@ export default function ConfirmLinkStep({ data, onNext, onBack }: StepProps<With
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-normal text-[20px] leading-[28px] text-white">Confirm Transfer</p>
         <div className="size-[24px] shrink-0" />

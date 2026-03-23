@@ -6,12 +6,9 @@
  * "Confirm & Lock" → onNext()
  * "Go Back" → onBack()
  */
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, LockedSavingsData } from '../../types';
-
-// ── Figma asset URLs (224:2071) — valid 7 days ────────────────────────
-const imgShield  = 'https://www.figma.com/api/mcp/asset/cf1f1d7c-d133-43cf-991d-bbdb535c6787'; // shield 16×20
-const imgWarning = 'https://www.figma.com/api/mcp/asset/55063d29-5a4e-4ead-9cf1-ed986024e394'; // warning 20×20
 
 const EST_EARNINGS: Record<number, number> = {
   30: 12, 60: 24, 90: 38, 180: 80, 365: 180,
@@ -82,10 +79,7 @@ export default function ReviewStep({ data, onNext, onBack }: StepProps<LockedSav
           className="bg-[#0d2a4a] border border-[rgba(0,123,255,0.3)] rounded-[12px] flex items-start gap-3 shrink-0"
           style={{ padding: 17, minHeight: 97 }}
         >
-          {/* Shield icon 16×20 */}
-          <div className="relative shrink-0" style={{ width: 16, height: 20, marginTop: 2 }}>
-            <img alt="" className="absolute block max-w-none size-full" src={imgShield} />
-          </div>
+          <ShieldCheck size={18} className="text-[#007bff] shrink-0 mt-[2px]" />
           <div className="flex flex-col gap-1 flex-1">
             <p className="text-white font-bold text-[14px] leading-[20px]">Rate Guaranteed</p>
             <p className="text-[#8ac7ff] font-normal text-[12px] leading-[19.5px]">
@@ -99,10 +93,7 @@ export default function ReviewStep({ data, onNext, onBack }: StepProps<LockedSav
           className="bg-[#2d1515] border border-[#3d1f1f] rounded-[12px] flex items-start gap-3 shrink-0"
           style={{ padding: 17, minHeight: 97 }}
         >
-          {/* Warning icon 20×20 */}
-          <div className="relative shrink-0 size-5" style={{ marginTop: 2 }}>
-            <img alt="" className="absolute block max-w-none size-full" src={imgWarning} />
-          </div>
+          <AlertTriangle size={20} className="text-[#f44] shrink-0 mt-[2px]" />
           <div className="flex flex-col gap-1 flex-1">
             <p className="text-[#f44] font-bold text-[14px] leading-[20px]">Early Withdrawal Penalty</p>
             <p className="text-[#f44] font-normal text-[12px] leading-[19.5px] opacity-90">

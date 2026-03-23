@@ -11,16 +11,12 @@
  *   - Selecting a result sets input to @handle and enables Continue
  */
 import { useState, useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Clock, Copy } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
 import { useAppStore } from '../../../../store';
 import { searchUsers, getRecentRecipients } from '../../../../lib/userSearch';
 import type { UserResult } from '../../../../lib/userSearch';
-
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
-const imgClock     = 'https://www.figma.com/api/mcp/asset/08448048-fa2b-4a63-9b69-f5a75e435974';
-const imgCopyIcon  = 'https://www.figma.com/api/mcp/asset/f1431496-c072-4b93-b8b5-d2b7bdea0936';
 
 type Network = 'solana' | 'ethereum';
 
@@ -106,18 +102,14 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
 
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">
           {isLink ? 'Send via Link' : 'Send to Address'}
         </p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -157,9 +149,7 @@ export default function EnterRecipientStep({ data, onNext, onBack }: StepProps<S
           />
           {!isLink && (
             <button onClick={handlePaste} className="shrink-0">
-              <div className="relative shrink-0" style={{ width: 14.167, height: 16.667 }}>
-                <img alt="Paste" draggable="false" className="absolute block max-w-none size-full" src={imgCopyIcon} />
-              </div>
+              <Copy size={14} className="text-[#8ac7ff]" />
             </button>
           )}
         </div>

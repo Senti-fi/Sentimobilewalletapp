@@ -13,6 +13,7 @@
  */
 import { useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
 import { useAppStore } from '../../store';
 import {
   getNetWorth,
@@ -28,15 +29,6 @@ const ROUTES      = ['/home', '/save', '/invest'] as const;
 const CARD_H      = 196;
 const SWIPE_THRESHOLD = 50;  // px — minimum horizontal delta to trigger navigation
 
-// ── Figma asset URLs ─────────────────────────────────────────────────
-// Wave backgrounds (one per slide to stay consistent with originals)
-const imgWaveHome = 'https://www.figma.com/api/mcp/asset/554fb027-bbfe-4aa2-b3c0-3268aa7378cc';
-const imgWaveSave = 'https://www.figma.com/api/mcp/asset/7467768c-0b77-49b1-8564-04b4336a8ca5';
-const imgWaveInv  = 'https://www.figma.com/api/mcp/asset/8a89975a-dfcc-4c22-8b57-5c2ed8a966b4';
-// Home slide action pill icons
-const imgPlus     = 'https://www.figma.com/api/mcp/asset/34d7cfc2-4c82-4321-9219-0e880f788476';
-const imgSend     = 'https://www.figma.com/api/mcp/asset/6df65f14-63d0-40bf-8a30-67d5b544ced8';
-const imgTransfer = 'https://www.figma.com/api/mcp/asset/4f47db2a-5f95-4708-bd1f-1214a0a37cd3';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 function fmt(n: number) {
@@ -45,17 +37,15 @@ function fmt(n: number) {
 
 // ── Shared sub-components ────────────────────────────────────────────
 
-/** Two decorative wave images used as card background art */
-function WaveBgs({ src }: { src: string }) {
+/** Decorative inline SVG wave background art */
+function WaveBg() {
   return (
-    <>
-      <div className="absolute inset-[0_12.46%_-17.22%_0] pointer-events-none">
-        <img alt="" className="absolute block max-w-none size-full" src={src} />
-      </div>
-      <div className="absolute inset-[0_-75.07%_-17.22%_87.54%] pointer-events-none">
-        <img alt="" className="absolute block max-w-none size-full" src={src} />
-      </div>
-    </>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
+        <path d="M-20,60 C60,30 140,90 220,55 C300,20 360,75 420,55 L420,220 L-20,220 Z" fill="white" opacity="0.08"/>
+        <path d="M-20,90 C80,65 170,105 260,80 C340,58 380,90 420,80 L420,220 L-20,220 Z" fill="white" opacity="0.05"/>
+      </svg>
+    </div>
   );
 }
 
@@ -98,7 +88,7 @@ function HomeSlide({
       className="relative bg-[#007bff] rounded-[20px] overflow-hidden"
       style={{ height: CARD_H }}
     >
-      <WaveBgs src={imgWaveHome} />
+      <WaveBg />
 
       {/* Balance info — top-left */}
       <div className="absolute left-5 top-5 flex flex-col gap-[8px] w-[157px]">
@@ -117,27 +107,15 @@ function HomeSlide({
       {/* Action pills */}
       <div className="absolute left-1/2 -translate-x-1/2 top-[140px] flex items-center gap-[8px]">
         <button onClick={onDeposit} className="bg-[#007bff] border border-[#b3fbff] rounded-[22px] px-[12px] py-[10px] flex items-center gap-[8px] shrink-0">
-          <div className="relative shrink-0 size-[16px]">
-            <div className="absolute inset-[10.94%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgPlus} />
-            </div>
-          </div>
+          <Plus size={12} className="text-white shrink-0" />
           <span className="font-normal text-[12px] leading-[16px] text-white">Deposit</span>
         </button>
         <button onClick={onSend} className="bg-[#007bff] border border-[#b3fbff] rounded-[22px] px-[12px] py-[10px] flex items-center gap-[8px] shrink-0">
-          <div className="relative shrink-0 size-[16px]">
-            <div className="absolute inset-[4.68%_7.81%_10.94%_7.8%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgSend} />
-            </div>
-          </div>
+          <ArrowUpRight size={12} className="text-white shrink-0" />
           <span className="font-normal text-[12px] leading-[16px] text-white">Send</span>
         </button>
         <button onClick={onTransfer} className="bg-[#007bff] border border-[#b3fbff] rounded-[22px] px-[12px] py-[10px] flex items-center gap-[8px] shrink-0">
-          <div className="relative shrink-0 size-[16px]">
-            <div className="absolute inset-[7.81%_7.81%_1.55%_1.57%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgTransfer} />
-            </div>
-          </div>
+          <ArrowLeftRight size={12} className="text-white shrink-0" />
           <span className="font-normal text-[12px] leading-[16px] text-white">Transfer</span>
         </button>
       </div>
@@ -161,7 +139,7 @@ function SaveSlide({
       className="relative bg-[#007bff] rounded-[20px] overflow-hidden"
       style={{ height: CARD_H }}
     >
-      <WaveBgs src={imgWaveSave} />
+      <WaveBg />
 
       {/* Balance info — top-left */}
       <div className="absolute left-5 top-5 flex flex-col gap-[8px] w-[157px]">
@@ -214,7 +192,7 @@ function InvestSlide({
       className="relative bg-gradient-to-b from-[#007bff] to-[#0a142f] rounded-[20px] overflow-hidden"
       style={{ height: CARD_H }}
     >
-      <WaveBgs src={imgWaveInv} />
+      <WaveBg />
 
       {/* Value block — top-left */}
       <div className="absolute left-5 top-5 flex flex-col gap-[8px] w-[157px]">

@@ -21,11 +21,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import WalletPage from '../../../pages/wallet';
 import { useAppStore } from '../../../store';
 
-// ── Card background assets (same as onboarding CTA screen) ───────────
-const ctaImgSenti = 'https://www.figma.com/api/mcp/asset/e0794bba-27e6-456f-920e-210f5bf55aae';
-const ctaCardVec0 = 'https://www.figma.com/api/mcp/asset/f6a56cd7-14aa-4738-8ba9-747bd6c2eaf6';
-const ctaCardVec1 = 'https://www.figma.com/api/mcp/asset/c4f574f2-8911-4de9-bcc1-5763c84bdfe6';
-const ctaCardVec2 = 'https://www.figma.com/api/mcp/asset/b6fdcefc-cdbf-44bb-b496-b4b9e4e29c98';
 
 const CARD_NUMBER_GROUPS = ['4921', '8374', '5610', '8492'];
 const SPENDING_LIMIT     = 1000;
@@ -124,18 +119,6 @@ export default function PayFlow({ onExit }: PayFlowProps) {
                 transition: 'background 0.4s ease, opacity 0.4s ease',
               }}
             >
-              {/* ── Decorative vector patterns ─── */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute" style={{ top: '16.88%', right: '-2.94%', bottom: '60.61%', left: '-14.71%' }}>
-                  <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec0} />
-                </div>
-                <div className="absolute" style={{ top: '25.21%', right: '-11.76%', bottom: '54.55%', left: '-14.71%' }}>
-                  <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec1} />
-                </div>
-                <div className="absolute" style={{ top: 0, right: 0, bottom: '41.82%', left: 0 }}>
-                  <img alt="" className="absolute block max-w-none w-full h-full" src={ctaCardVec2} />
-                </div>
-              </div>
 
               {/* Radial glow inside card */}
               <div
@@ -179,7 +162,7 @@ export default function PayFlow({ onExit }: PayFlowProps) {
                   className="flex items-center justify-center rounded-[18px] shrink-0"
                   style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.18)', padding: 6 }}
                 >
-                  <img alt="Senti" src={ctaImgSenti} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 28, color: '#fff' }}>S</span>
                 </div>
               </div>
 

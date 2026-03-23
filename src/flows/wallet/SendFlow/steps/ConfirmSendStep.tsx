@@ -4,10 +4,9 @@
  * Summary card + Lucy + Go Back / Confirm Send.
  * Mirrors ConfirmPurchaseStep (302:2548) exactly.
  */
+import { ArrowLeft } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
-
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/6650ad68-4610-445f-9b81-c92f5924a06c';
 
 const METHOD_LABEL: Record<string, string> = {
   link:    'Send via Link',
@@ -25,10 +24,8 @@ export default function ConfirmSendStep({ data, onNext, onBack }: StepProps<Send
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="relative flex items-center justify-center px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="absolute left-6 size-[24px]">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="absolute left-6 size-[24px] flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-normal text-[20px] leading-[28px] text-white">Confirm Send</p>
       </div>

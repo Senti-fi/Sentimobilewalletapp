@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Zap, Plus } from 'lucide-react';
 import BalanceCarousel from '../../components/BalanceCarousel';
 import FlowPortal from '../../flows/savings/FlowPortal';
 import ChooseSavingsStyle from '../../flows/savings/ChooseSavingsStyle';
@@ -19,12 +19,6 @@ import type { Goal } from '../../store';
 import TransactionList from '../../components/TransactionList';
 import { getTransactionsByContext } from '../../data/transactionUtils';
 
-// ── Figma asset URLs (168:285) ───────────────────────────────────────
-const imgChevron    = 'https://www.figma.com/api/mcp/asset/8e2b3d97-ca74-4c0d-896d-8e708d2f1cd7'; // Chevron right (section buttons)
-const imgBolt       = 'https://www.figma.com/api/mcp/asset/47208871-5d37-4d3d-9e43-1e3f21399f84'; // Bolt icon
-const imgArrowRight = 'https://www.figma.com/api/mcp/asset/62f00221-9c66-4e5c-879a-b3e2c501f3ed'; // ArrowRight (Lucy Add Funds)
-const imgGoalChev   = 'https://www.figma.com/api/mcp/asset/d63a592b-ad8c-4d7f-82ce-098ff48fc098'; // Chevron in goal cards
-const imgFabIcon    = 'https://www.figma.com/api/mcp/asset/cc5368b2-df38-46c6-9b0b-7e78c6826f33'; // FAB icon
 
 // ── Types ────────────────────────────────────────────────────────────
 type ActiveFlow = 'choose' | 'flexible' | 'goal' | 'locked' | null;
@@ -53,9 +47,7 @@ function SaveFab({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="absolute bg-[#007bff] bottom-[86px] flex items-center justify-center right-[16px] rounded-[9999px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] size-[56px] z-40"
     >
-      <div className="h-[19px] relative shrink-0 w-[22px]">
-        <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-      </div>
+      <Plus size={20} className="text-white" />
       <div className="absolute bg-[#00e6ff] border-2 border-[#007bff] right-[-4px] rounded-[9999px] size-[16px] top-[-4px]" />
     </button>,
     root,
@@ -121,11 +113,7 @@ export default function SavePage() {
               <p className="font-medium text-[14px] leading-[18px] text-[#007bff] whitespace-nowrap">
                 Add Funds
               </p>
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[18.75%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-                </div>
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </button>
           </div>
         </div>
@@ -143,9 +131,7 @@ export default function SavePage() {
               <p className="font-semibold text-[14px] leading-[20px] text-[#007bff] text-center">
                 New Goal
               </p>
-              <div className="relative shrink-0 size-[10.5px]">
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </button>
           </div>
 
@@ -205,9 +191,7 @@ export default function SavePage() {
                   <p className="font-medium text-[12px] leading-[16px] text-[#94a3b8]">
                     Due {due}
                   </p>
-                  <div className="h-[7px] relative shrink-0 w-[4.317px]">
-                    <img alt="" className="absolute block max-w-none size-full" src={imgGoalChev} />
-                  </div>
+                  <ChevronRight size={14} className="text-white" />
                 </div>
               </button>
             );
@@ -240,9 +224,7 @@ export default function SavePage() {
                 <p className="font-medium text-[12px] leading-[16px] text-[#94a3b8]">
                   Goal reached
                 </p>
-                <div className="h-[7px] relative shrink-0 w-[4.317px]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgGoalChev} />
-                </div>
+                <ChevronRight size={10} className="text-[#94a3b8] shrink-0" />
               </div>
             </button>
           ))}
@@ -263,9 +245,7 @@ export default function SavePage() {
               <p className="font-semibold text-[14px] leading-[20px] text-[#007bff] text-center">
                 Lock Funds
               </p>
-              <div className="relative shrink-0 size-[10.5px]">
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </button>
           </div>
 
@@ -296,9 +276,7 @@ export default function SavePage() {
 
             {/* Bolt + earning line */}
             <div className="flex items-center gap-[8px]">
-              <div className="h-[7px] relative shrink-0 w-[11.667px]">
-                <img alt="" className="absolute block max-w-none size-full" src={imgBolt} />
-              </div>
+              <Zap size={12} className="text-[#ffb020] shrink-0" />
               <p className="font-medium text-[12px] leading-[16px] text-[#cbd5e1]">
                 Earning steadily until unlock
               </p>

@@ -6,15 +6,9 @@
  * Back arrow → onBack() → exits flow at step 0
  */
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Plus, BarChart2 } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, GoalSavingsData } from '../../types';
-
-// ── Figma asset URLs (193:1172) — valid 7 days ────────────────────────
-const imgWave        = 'https://www.figma.com/api/mcp/asset/e58ba7a4-6f38-4f77-8361-32bea4dae1e9'; // wave BG
-const imgPlus        = 'https://www.figma.com/api/mcp/asset/c02aeda7-5ca1-49ce-86f3-e7887ad617af'; // Plus 16×16
-const imgCircles     = 'https://www.figma.com/api/mcp/asset/df15e6bc-c2a1-4429-ab2c-24f7c60445d3'; // CirclesFour
-const imgFabIcon     = 'https://www.figma.com/api/mcp/asset/a6f23c0e-45b6-47a9-ae34-d17bbb83cdf7'; // FAB icon 22×19
 
 export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>) {
   const [autoSave, setAutoSave] = useState(false);
@@ -36,12 +30,14 @@ export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>
         {/* ── Blue goals balance card ─────────────────────────────── */}
         <div className="mx-6 bg-[#007bff] rounded-[20px] overflow-hidden relative h-[156px] shrink-0 mb-6">
           {/* Wave backgrounds */}
-          <div className="absolute inset-[0_12.46%_-17.22%_0]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
-          </div>
-          <div className="absolute inset-[0_-75.07%_-17.22%_87.54%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
-          </div>
+          <svg className="absolute inset-[0_12.46%_-17.22%_0] block max-w-none size-full" viewBox="0 0 320 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 60 Q80 20 160 60 Q240 100 320 60 L320 176 L0 176 Z" fill="white" fillOpacity="0.08" />
+            <path d="M0 90 Q80 50 160 90 Q240 130 320 90 L320 176 L0 176 Z" fill="white" fillOpacity="0.05" />
+          </svg>
+          <svg className="absolute inset-[0_-75.07%_-17.22%_87.54%] block max-w-none size-full" viewBox="0 0 320 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 60 Q80 20 160 60 Q240 100 320 60 L320 176 L0 176 Z" fill="white" fillOpacity="0.08" />
+            <path d="M0 90 Q80 50 160 90 Q240 130 320 90 L320 176 L0 176 Z" fill="white" fillOpacity="0.05" />
+          </svg>
 
           {/* Balance */}
           <div className="absolute left-5 top-5 flex flex-col gap-2 w-[157px] text-white">
@@ -63,23 +59,17 @@ export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>
               onClick={() => onNext()}
               className="border border-[#b3fbff] rounded-[22px] flex items-center gap-2 pl-2 pr-3 py-2.5"
             >
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgPlus} />
-              </div>
+              <Plus size={16} className="text-white shrink-0" />
               <p className="text-white font-normal text-[12px] leading-[16px] whitespace-nowrap">New Goal</p>
             </button>
             {/* Withdraw — static for now */}
             <button className="border border-[#b3fbff] rounded-[22px] flex items-center gap-2 pl-2 pr-3 py-2.5">
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgPlus} />
-              </div>
+              <Plus size={16} className="text-white shrink-0" />
               <p className="text-white font-normal text-[12px] leading-[16px] whitespace-nowrap">Withdraw</p>
             </button>
             {/* More options */}
             <button className="border border-[#b3fbff] rounded-[22px] flex items-center justify-center px-3 py-2.5">
-              <div className="size-4 relative shrink-0">
-                <img alt="" className="absolute block max-w-none size-full" src={imgCircles} />
-              </div>
+              <BarChart2 size={16} className="text-white shrink-0" />
             </button>
           </div>
         </div>
@@ -259,9 +249,7 @@ export default function IntroStep({ onNext, onBack }: StepProps<GoalSavingsData>
         onClick={() => onNext()}
         className="absolute bottom-6 right-4 bg-[#007bff] rounded-full size-14 flex items-center justify-center shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)]"
       >
-        <div className="h-[19px] w-[22px] relative">
-          <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-        </div>
+        <Plus size={22} className="text-white" />
         <div className="absolute -top-1 -right-1 bg-[#00e6ff] border-2 border-[#007bff] rounded-full size-4" />
       </button>
     </div>

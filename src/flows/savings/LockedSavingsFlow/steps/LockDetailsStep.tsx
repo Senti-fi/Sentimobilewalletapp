@@ -6,12 +6,9 @@
  * Dynamic from data: lockPeriodDays, amount, apy
  * Static/mock: lock date (today), progress (1%), earned so far (+$0.42)
  */
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, LockedSavingsData } from '../../types';
-
-// ── Figma asset URLs (243:616) — valid 7 days ────────────────────────
-const imgShieldSmall = 'https://www.figma.com/api/mcp/asset/72bf2dc7-d31c-4971-a9fa-0859bbd251a2'; // shield 12×15
-const imgWarning     = 'https://www.figma.com/api/mcp/asset/2c28137d-3cd1-49b5-b747-0e1c758b8f7a'; // warning 22×19
 
 const EST_EARNINGS: Record<number, number> = {
   30: 12, 60: 24, 90: 38, 180: 80, 365: 180,
@@ -143,9 +140,7 @@ export default function LockDetailsStep({ data, onBack }: StepProps<LockedSaving
             {/* Rate Guarantee row with shield icon */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="relative shrink-0" style={{ width: 12, height: 15 }}>
-                  <img alt="" className="absolute block max-w-none size-full" src={imgShieldSmall} />
-                </div>
+                <ShieldCheck size={14} className="text-[#8ac7ff] shrink-0" />
                 <p className="text-[#8ac7ff] font-normal text-[14px] leading-[20px]">Rate Guarantee</p>
               </div>
               <p className="text-white font-normal text-[14px] leading-[20px]">Guaranteed until unlock</p>
@@ -173,9 +168,7 @@ export default function LockDetailsStep({ data, onBack }: StepProps<LockedSaving
         >
           {/* Header row */}
           <div className="flex items-center gap-2">
-            <div className="relative shrink-0" style={{ width: 22, height: 19 }}>
-              <img alt="" className="absolute block max-w-none size-full" src={imgWarning} />
-            </div>
+            <AlertTriangle size={20} className="text-[#f44] shrink-0" />
             <p className="text-[#f44] font-bold text-[16px] leading-[24px]">Early Withdrawal</p>
           </div>
           {/* Description */}

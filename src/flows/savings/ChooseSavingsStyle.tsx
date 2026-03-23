@@ -6,11 +6,7 @@
  * Rendered full-screen via FlowPortal — navigation logic unchanged.
  */
 
-// ── Figma asset URLs (168:424) — valid 7 days ────────────────────────
-const imgFlexibleIcon  = 'https://www.figma.com/api/mcp/asset/87e15d7d-69ed-4cb7-8343-99ab62df1c64'; // 16×20px
-const imgGoalIcon      = 'https://www.figma.com/api/mcp/asset/5d5c6c5e-f77b-4073-b750-d7fa4c32247a'; // 20×20px
-const imgCommittedIcon = 'https://www.figma.com/api/mcp/asset/5e73111a-6f7a-4f60-931b-106fecdbe2ba'; // 16×21px
-const imgArrowRight    = 'https://www.figma.com/api/mcp/asset/7ec3387a-88ba-4169-a9ac-c9d849575b6d'; // 14×14px
+import { Wallet, Target, Lock, ChevronRight } from 'lucide-react';
 
 interface Props {
   onSelect: (flow: 'flexible' | 'goal' | 'locked') => void;
@@ -87,10 +83,7 @@ export default function ChooseSavingsStyle({ onSelect }: Props) {
               className="bg-[rgba(0,230,255,0.1)] rounded-[8px] flex items-center justify-center shrink-0"
               style={{ width: 40, height: 40 }}
             >
-              {/* Icon: 16×20px */}
-              <div className="relative" style={{ width: 16, height: 20 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgFlexibleIcon} />
-              </div>
+                <Wallet size={16} className="text-[#00e6ff]" />
             </div>
             {/* Badge: bg rgba(0,230,255,0.2), pill, px 8 py 4 */}
             <div className="bg-[rgba(0,230,255,0.2)] rounded-[9999px] shrink-0" style={{ paddingLeft: 8, paddingRight: 8, paddingTop: 4, paddingBottom: 4 }}>
@@ -122,10 +115,7 @@ export default function ChooseSavingsStyle({ onSelect }: Props) {
               className="bg-[rgba(0,123,255,0.1)] rounded-[8px] flex items-center justify-center shrink-0"
               style={{ width: 40, height: 40 }}
             >
-              {/* Icon: 20×20px */}
-              <div className="relative" style={{ width: 20, height: 20 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgGoalIcon} />
-              </div>
+              <Target size={20} className="text-[#007bff]" />
             </div>
             {/* Badge: bg rgba(0,123,255,0.2), text #007bff */}
             <div className="bg-[rgba(0,123,255,0.2)] rounded-[9999px] shrink-0" style={{ paddingLeft: 8, paddingRight: 8, paddingTop: 4, paddingBottom: 4 }}>
@@ -154,10 +144,7 @@ export default function ChooseSavingsStyle({ onSelect }: Props) {
               className="bg-[rgba(138,199,255,0.1)] rounded-[8px] flex items-center justify-center shrink-0"
               style={{ width: 40, height: 40 }}
             >
-              {/* Icon: 16×21px */}
-              <div className="relative" style={{ width: 16, height: 21 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgCommittedIcon} />
-              </div>
+              <Lock size={16} className="text-[#8ac7ff]" />
             </div>
             {/* Badge: bg rgba(138,199,255,0.2), text #8ac7ff */}
             <div className="bg-[rgba(138,199,255,0.2)] rounded-[9999px] shrink-0" style={{ paddingLeft: 8, paddingRight: 8, paddingTop: 4, paddingBottom: 4 }}>
@@ -185,12 +172,7 @@ export default function ChooseSavingsStyle({ onSelect }: Props) {
         <span className="text-white font-medium text-[14px] leading-[18px] whitespace-nowrap">
           Not sure? Ask Lucy
         </span>
-        {/* ArrowRight: 14×14px, inner vector inset 18.75% 12.5% */}
-        <div className="relative shrink-0" style={{ width: 14, height: 14 }}>
-          <div className="absolute" style={{ inset: '18.75% 12.5%' }}>
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-          </div>
-        </div>
+        <ChevronRight size={14} className="text-white" />
       </div>
 
     </div>

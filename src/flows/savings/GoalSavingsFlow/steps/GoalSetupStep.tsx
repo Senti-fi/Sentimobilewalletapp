@@ -7,11 +7,9 @@
  * "Create Goal" → onNext({ goalName, targetAmount, deadline, agreedToTerms: true })
  */
 import { useState, useRef } from 'react';
+import { Calendar } from 'lucide-react';
 import PageHeader from '../../../../components/ui/PageHeader';
 import type { StepProps, GoalSavingsData } from '../../types';
-
-// ── Figma asset URL (133:1606) — valid 7 days ─────────────────────────
-const imgCalendar = 'https://www.figma.com/api/mcp/asset/16403396-3054-4834-9d5d-3d496cd16364'; // CalendarDots 24×24
 
 function formatDisplayDate(iso: string): string {
   if (!iso) return '';
@@ -95,12 +93,7 @@ export default function GoalSetupStep({ data, onNext, onBack }: StepProps<GoalSa
             <p className={`font-normal text-[12px] leading-[16px] ${deadline ? 'text-white' : 'text-[#8ac7ff]'}`}>
               {deadline ? formatDisplayDate(deadline) : 'Select a date'}
             </p>
-            {/* CalendarDots icon: 24×24, inset 6.25% 12.5% 12.5% 12.5% */}
-            <div className="relative shrink-0 size-6">
-              <div className="absolute" style={{ inset: '6.25% 12.5% 12.5% 12.5%' }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgCalendar} />
-              </div>
-            </div>
+            <Calendar size={20} className="text-[#8ac7ff] shrink-0" />
             {/* Hidden date input — triggers native picker */}
             <input
               ref={dateRef}

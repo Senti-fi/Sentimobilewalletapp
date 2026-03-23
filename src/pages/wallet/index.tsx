@@ -10,7 +10,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import FlowPortal from '../../flows/savings/FlowPortal';
 import SendFlow from '../../flows/wallet/SendFlow';
 import PayFlow from '../../flows/wallet/PayFlow';
@@ -19,9 +19,6 @@ import { useAppStore } from '../../store';
 import { getWalletBalance } from '../../store/selectors';
 import { getTransactionsByContext } from '../../data/transactionUtils';
 
-// ── Figma asset URLs (295:326) ──────────────────────────────────────
-const imgWave  = 'https://www.figma.com/api/mcp/asset/f198b237-4a38-440d-9841-bef23f7cb4d9'; // Wave BG
-const imgClock = 'https://www.figma.com/api/mcp/asset/2cf71c73-dd5a-4e52-82f0-aee5935986bd'; // ClockCountdown
 
 // ── Asset display config ─────────────────────────────────────────────
 // Visual metadata only — balances always come from the store.
@@ -124,10 +121,8 @@ export default function WalletPage() {
           <ArrowLeft size={20} strokeWidth={2} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Wallet</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -137,11 +132,11 @@ export default function WalletPage() {
         style={{ height: 204 }}
       >
         {/* Wave BG */}
-        <div className="absolute inset-[0_12.46%_-17.22%_0] pointer-events-none">
-          <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
-        </div>
-        <div className="absolute inset-[0_-75.07%_-17.22%_87.54%] pointer-events-none">
-          <img alt="" className="absolute block max-w-none size-full" src={imgWave} />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
+            <path d="M-20,60 C60,30 140,90 220,55 C300,20 360,75 420,55 L420,220 L-20,220 Z" fill="white" opacity="0.08"/>
+            <path d="M-20,90 C80,65 170,105 260,80 C340,58 380,90 420,80 L420,220 L-20,220 Z" fill="white" opacity="0.05"/>
+          </svg>
         </div>
 
         {/* Balance info — top-left */}

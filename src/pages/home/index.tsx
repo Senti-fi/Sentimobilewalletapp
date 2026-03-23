@@ -11,6 +11,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronRight } from 'lucide-react';
 import BalanceCarousel from '../../components/BalanceCarousel';
 import TransactionList from '../../components/TransactionList';
 import FlowPortal from '../../flows/savings/FlowPortal';
@@ -19,10 +20,6 @@ import SendFlow from '../../flows/wallet/SendFlow';
 import WithdrawFlow from '../../flows/wallet/WithdrawFlow';
 import { useAppStore } from '../../store';
 import { getTransactionsByContext } from '../../data/transactionUtils';
-
-// ── Figma asset URLs (111:788) ──────────────────────────────────────
-const imgBell  = 'https://www.figma.com/api/mcp/asset/3b5d6988-0fb2-43f3-918f-fe42d9955a6e'; // BellSimple
-const imgArrow = 'https://www.figma.com/api/mcp/asset/102b963d-6885-4626-ba76-695f65854e40'; // ArrowRight (badge)
 
 
 // ── Sub-components ──────────────────────────────────────────────────
@@ -46,12 +43,7 @@ function PerformanceBadge({
       <span className="font-normal text-[12px] leading-[16px] text-black whitespace-nowrap">
         {label}
       </span>
-      {/* ArrowRight icon */}
-      <div className="relative shrink-0 size-[14px]">
-        <div className="absolute inset-[18.75%_12.5%]">
-          <img alt="" className="absolute block max-w-none size-full" src={imgArrow} />
-        </div>
-      </div>
+      <ChevronRight size={12} className="text-black" />
     </button>
   );
 }
@@ -103,9 +95,7 @@ function HomePageView({
 
         {/* Bell + notification dot */}
         <div className="relative shrink-0 size-[24px]">
-          <div className="absolute inset-[9.38%_12.5%_9.38%_12.51%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgBell} />
-          </div>
+          <Bell size={20} className="text-white" />
           <div className="absolute -top-[1px] -right-[1px] size-[6px] bg-[#f44] rounded-[3px]" />
         </div>
       </div>

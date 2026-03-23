@@ -4,14 +4,9 @@
  * Bottom sheet (h-572px) overlaid on frozen WalletPage.
  * User taps Deposit Crypto or Buy with Fiat card.
  */
+import { X, ChevronRight, Link2, Building2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { DepositFlowData } from '../../types';
-
-// ── Figma asset URLs (302:1389) ──────────────────────────────────────
-const imgCloseX     = 'https://www.figma.com/api/mcp/asset/f6a2211e-c5a6-4716-a07b-97d327a7a260';
-const imgCryptoIcon = 'https://www.figma.com/api/mcp/asset/49825496-8924-4e7c-bad8-ad5afa494a33';
-const imgChevron    = 'https://www.figma.com/api/mcp/asset/a56ff8cb-8771-4af9-91b4-03d83de6ef52';
-const imgBankIcon   = 'https://www.figma.com/api/mcp/asset/478b0eb7-510d-4337-b5ba-b8979b250952';
 
 export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowData>) {
   return (
@@ -48,9 +43,7 @@ export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowDa
             onClick={onExit}
             className="bg-white rounded-full size-[40px] flex items-center justify-center shrink-0"
           >
-            <div className="relative shrink-0 size-[11.667px]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgCloseX} />
-            </div>
+            <X size={12} className="text-black" />
           </button>
         </div>
 
@@ -69,9 +62,7 @@ export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowDa
                   className="bg-[#1a3a6b] rounded-full flex items-center justify-center shrink-0"
                   style={{ width: 29.23, height: 48 }}
                 >
-                  <div className="relative shrink-0" style={{ width: 20, height: 10 }}>
-                    <img alt="" className="absolute block max-w-none size-full" src={imgCryptoIcon} />
-                  </div>
+                  <Link2 size={16} className="text-[#8ac7ff]" />
                 </div>
                 <div className="flex flex-col gap-[3px] pr-4">
                   <p className="font-bold text-[18px] leading-[18px] text-white">Deposit Crypto</p>
@@ -81,9 +72,7 @@ export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowDa
                 </div>
               </div>
               {/* Chevron */}
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Tags */}
             <div className="flex gap-[8px]">
@@ -108,9 +97,7 @@ export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowDa
                   className="bg-[#0d2a4a] rounded-full flex items-center justify-center shrink-0"
                   style={{ width: 33.23, height: 48 }}
                 >
-                  <div className="relative shrink-0 size-[20px]">
-                    <img alt="" className="absolute block max-w-none size-full" src={imgBankIcon} />
-                  </div>
+                  <Building2 size={20} className="text-[#8ac7ff]" />
                 </div>
                 <div className="flex flex-col gap-[3px] pr-4">
                   <p className="font-bold text-[18px] leading-[18px] text-white">Buy with Fiat</p>
@@ -120,9 +107,7 @@ export default function AddMoneyStep({ onNext, onExit }: StepProps<DepositFlowDa
                 </div>
               </div>
               {/* Chevron */}
-              <div className="relative shrink-0" style={{ width: 7.4, height: 16 }}>
-                <img alt="" className="absolute block max-w-none size-full" src={imgChevron} />
-              </div>
+              <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
             </div>
             {/* Tags — two rows */}
             <div className="flex flex-col gap-[8px]">

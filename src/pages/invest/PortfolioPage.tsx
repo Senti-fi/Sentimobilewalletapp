@@ -10,15 +10,12 @@
 import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Plus } from 'lucide-react';
 import { useAppStore } from '../../store';
 import EarningsChart from '../../components/EarningsChart';
 import { generatePortfolioSeries } from '../../data/portfolioTimeSeries';
 import type { Period } from '../../data/portfolioTimeSeries';
 
-// ── Figma asset URLs (289:1800) ──────────────────────────────────────
-const imgFabIcon    = 'https://www.figma.com/api/mcp/asset/7690c701-7399-4b4a-a699-42f25855ec9c';
-const imgArrowRight = 'https://www.figma.com/api/mcp/asset/838df032-1705-4a80-85e0-56c8abb07963';
 
 // Vault name → route ID mapping for navigation
 const VAULT_NAME_TO_ID: Record<string, string> = {
@@ -45,9 +42,7 @@ function PortfolioFab() {
   if (!root) return null;
   return createPortal(
     <button className="absolute bg-[#007bff] bottom-[86px] flex items-center justify-center right-[16px] rounded-[9999px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.3)] size-[56px] z-40">
-      <div className="h-[19px] relative shrink-0 w-[22px]">
-        <img alt="" className="absolute block max-w-none size-full" src={imgFabIcon} />
-      </div>
+      <Plus size={20} className="text-white" />
       <div className="absolute bg-[#00e6ff] border-2 border-[#007bff] right-[-4px] rounded-[9999px] size-[16px] top-[-4px]" />
     </button>,
     root,
@@ -319,11 +314,7 @@ export default function PortfolioPage() {
               <p className="font-medium text-[14px] leading-[18px] text-[#007bff] whitespace-nowrap">
                 Ask Lucy how to optimize
               </p>
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[18.75%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-                </div>
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </div>
           </div>
         </div>

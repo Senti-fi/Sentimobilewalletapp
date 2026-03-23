@@ -15,10 +15,8 @@
  *   CTA button     top 436    (bg-[#007bff], h-56, w-345)
  *   Save More link top 504    (Regular 14px, #8ac7ff)
  */
+import { CheckCircle2 } from 'lucide-react';
 import type { StepProps, FlexibleSavingsData } from '../../types';
-
-// Figma asset URL (191:1060) — success icon (target/bullseye)
-const imgSuccessIcon = 'https://www.figma.com/api/mcp/asset/16361afb-b6b8-44b2-adca-9faadc8abca7';
 
 export default function SuccessStep({ data, onBack, onExit, onDismiss }: StepProps<FlexibleSavingsData>) {
   const amount  = parseFloat(data.amount || '0');
@@ -41,9 +39,7 @@ export default function SuccessStep({ data, onBack, onExit, onDismiss }: StepPro
           className="bg-[#1a3a6b] rounded-full flex items-center justify-center shrink-0"
           style={{ width: 80, height: 80, marginTop: 48 }}
         >
-          <div className="relative shrink-0" style={{ width: 33.333, height: 33.333 }}>
-            <img alt="" className="absolute block max-w-none size-full" src={imgSuccessIcon} />
-          </div>
+          <CheckCircle2 size={33} className="text-[#00e6ff]" />
         </div>
 
         {/* Title — Bold 24px / lh 32px / tracking -0.48px */}

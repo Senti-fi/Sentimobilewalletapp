@@ -5,14 +5,12 @@
  * Matches the Buy with Fiat layout pattern (302:2380).
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
 import AmountInput from '../../../../components/AmountInput';
 import { useAppStore } from '../../../../store';
 import type { Asset } from '../../../../store';
-
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
-const imgClock     = 'https://www.figma.com/api/mcp/asset/08448048-fa2b-4a63-9b69-f5a75e435974';
 
 const ASSETS: Asset[] = ['USDC', 'USDT', 'SOL'];
 
@@ -41,16 +39,12 @@ export default function EnterAmountStep({ data, onNext, onBack }: StepProps<Send
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Send</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 

@@ -5,10 +5,9 @@
  * Success icon + summary (Sent To / Username / Amount / Status: Delivered)
  * + "Send More" + "Back to Wallet"
  */
+import { Send } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
-
-const imgSendIcon = 'https://www.figma.com/api/mcp/asset/ca57332c-961a-4fdc-b3f1-3c8e689f6f06';
 
 /** Derive a display name from a handle */
 function displayName(handle: string) {
@@ -34,9 +33,7 @@ export default function LinkSuccessStep({ data, onExit, onSendMore }: LinkSucces
             className="bg-[#1a3a6b] rounded-full size-[80px] flex items-center justify-center"
             style={{ boxShadow: '0px 0px 20px 0px rgba(0,230,255,0.3)' }}
           >
-            <div className="relative size-[36px] shrink-0">
-              <img alt="" className="absolute block max-w-none size-full" src={imgSendIcon} />
-            </div>
+            <Send size={32} className="text-white" />
           </div>
         </div>
 

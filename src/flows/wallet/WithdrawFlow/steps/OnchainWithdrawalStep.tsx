@@ -4,14 +4,10 @@
  * Figma 312:3334 — asset selector, recipient address, network, amount, warning, preview button.
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock, Clipboard, AlertTriangle } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
 import { useAppStore } from '../../../../store';
-
-const imgArrowLeft   = 'https://www.figma.com/api/mcp/asset/270e5c70-8b11-4bcb-b5dc-ae9d75d2b150';
-const imgClock       = 'https://www.figma.com/api/mcp/asset/7227d2b1-d19c-49e4-9f5c-624851175a58';
-const imgPaste       = 'https://www.figma.com/api/mcp/asset/b13730f7-8b07-475f-8cb7-1f7d154376bc';
-const imgWarning     = 'https://www.figma.com/api/mcp/asset/ca734576-75ee-4b41-893f-bbd8ebfcbb06';
 
 type Asset   = 'USDC' | 'USDT' | 'SOL';
 type Network = 'Solana' | 'Ethereum' | 'BNB Chain';
@@ -51,16 +47,12 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Onchain Withdrawal</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -109,9 +101,7 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
               onClick={handlePaste}
               className="absolute right-[16px] top-1/2 -translate-y-1/2 shrink-0"
             >
-              <div className="relative size-[20px]">
-                <img alt="Paste" draggable="false" className="absolute block max-w-none size-full" src={imgPaste} />
-              </div>
+              <Clipboard size={20} className="text-[#8ac7ff]" />
             </button>
           </div>
           {pasteError && (
@@ -165,9 +155,7 @@ export default function OnchainWithdrawalStep({ data, onNext, onBack }: StepProp
 
         {/* ── Warning ──────────────────────────────────────────── */}
         <div className="bg-[#2a1f0a] border border-[#3d2f0a] rounded-[12px] px-[17px] py-[16px] flex gap-[12px] items-start mb-[24px]">
-          <div className="relative shrink-0 size-[20px] mt-[2px]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgWarning} />
-          </div>
+          <AlertTriangle size={20} className="text-[#ffb020] shrink-0 mt-[2px]" />
           <p className="font-normal text-[14px] leading-[17.5px] text-[#ffb020]">
             Double check the wallet address and network. Sending to the wrong address cannot be reversed.
           </p>

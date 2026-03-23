@@ -14,11 +14,8 @@
  *   View Goal CTA  top 436     → marginTop ~8
  *   Back to Savings top 504    → marginTop ~12
  */
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, CheckCircle2 } from 'lucide-react';
 import type { StepProps, GoalSavingsData } from '../../types';
-
-// ── Figma asset URLs (141:1932) — valid 7 days ────────────────────────
-const imgSuccessIcon = 'https://www.figma.com/api/mcp/asset/d17d3a31-8791-4f72-824f-af205e6b2bf0';
 
 function formatAmount(val: string): string {
   const n = parseFloat(val || '0');
@@ -54,9 +51,7 @@ export default function SuccessStep({ data, onNext, onExit }: StepProps<GoalSavi
           className="bg-[#1a3a6b] rounded-full flex items-center justify-center shrink-0"
           style={{ width: 80, height: 80, marginTop: 48 }}
         >
-          <div className="relative shrink-0" style={{ width: 33.333, height: 33.333 }}>
-            <img alt="" className="absolute block max-w-none size-full" src={imgSuccessIcon} />
-          </div>
+          <CheckCircle2 size={33} className="text-[#00e6ff]" />
         </div>
 
         {/* "Goal Created" — Manrope Bold 24px lh-30 */}

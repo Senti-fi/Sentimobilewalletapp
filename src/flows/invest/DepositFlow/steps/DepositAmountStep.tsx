@@ -12,12 +12,10 @@
  *   → "Preview Deposit" CTA
  */
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import type { DepositStepProps } from '../types';
 import AmountInput from '../../../../components/AmountInput';
 import { useAppStore } from '../../../../store';
-
-// ── Figma asset: ArrowLeft inside sheet (284:1549 → imgVector11) ─────
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/3de09d21-7bae-495f-8d6b-0ee29adddca8';
 
 const QUICK_AMOUNTS = [100, 250, 500, 1000] as const;
 
@@ -59,10 +57,8 @@ export default function DepositAmountStep({
 
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mt-[16px] px-[24px]">
-        <button onClick={onBack} className="relative shrink-0 size-[24px]">
-          <div className="absolute inset-[17.18%_10.94%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative shrink-0 size-[24px] flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-bold text-[24px] leading-[32px] text-white tracking-[-0.48px]">
           {vault.name}

@@ -8,11 +8,8 @@
  * "View Lock Details" → onNext() → LockDetailsStep
  * "Back to Savings"   → onExit()
  */
+import { Lock, Trophy } from 'lucide-react';
 import type { StepProps, LockedSavingsData } from '../../types';
-
-// ── Figma asset URLs (242:323) — valid 7 days ────────────────────────
-const imgLockKey = 'https://www.figma.com/api/mcp/asset/4603f06b-0791-4dd5-886e-839cc9e42a3c'; // LockKey Vector 48×48
-const imgTrophy  = 'https://www.figma.com/api/mcp/asset/b8b38a88-4795-44b4-a575-9a5c177b4d8f'; // Trophy SVG 16×16
 
 const EST_EARNINGS: Record<number, number> = {
   30: 12, 60: 24, 90: 38, 180: 80, 365: 180,
@@ -51,11 +48,7 @@ export default function SuccessStep({ data, onNext, onExit }: StepProps<LockedSa
           className="bg-[#1a3a6b] border border-[rgba(0,123,255,0.1)] rounded-full flex items-center justify-center shrink-0 shadow-[0px_0px_20px_5px_rgba(0,123,255,0.2)]"
           style={{ width: 100, height: 100, marginTop: 84 }}
         >
-          <div className="relative shrink-0 size-12">
-            <div className="absolute inset-[1.56%_10.94%_10.94%_10.94%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgLockKey} />
-            </div>
-          </div>
+          <Lock size={44} className="text-white" />
         </div>
 
         {/* "You're locked in." */}
@@ -105,9 +98,7 @@ export default function SuccessStep({ data, onNext, onExit }: StepProps<LockedSa
 
         {/* ── Milestone Indicator ──────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 shrink-0" style={{ marginTop: 24 }}>
-          <div className="relative shrink-0 size-4">
-            <img alt="" className="absolute block max-w-none size-full" src={imgTrophy} />
-          </div>
+          <Trophy size={16} className="text-[#8ac7ff]" />
           <p className="text-[#8ac7ff] font-normal text-[12px] leading-[16px] text-center">
             You&apos;re building toward your first savings milestone.
           </p>

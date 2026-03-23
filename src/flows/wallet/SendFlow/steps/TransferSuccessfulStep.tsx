@@ -4,11 +4,9 @@
  * Success screen matching the visual language of PurchaseSuccessfulStep (302:2638).
  * "Send More" resets to step 0  |  "Back to Wallet" exits the flow.
  */
+import { Check, ChevronRight } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { SendFlowData } from '../types';
-
-const imgCheckmark  = 'https://www.figma.com/api/mcp/asset/ac2444b3-8619-462d-9b01-52cce5965288';
-const imgArrowRight = 'https://www.figma.com/api/mcp/asset/35834fc3-e984-4224-921b-2f7f9a2ed08b';
 
 export default function TransferSuccessfulStep({
   data,
@@ -28,9 +26,7 @@ export default function TransferSuccessfulStep({
         {/* ── Success icon ───────────────────────────────────────── */}
         <div className="flex justify-center mt-[84px]">
           <div className="bg-[#1a3a6b] border border-[rgba(0,123,255,0.3)] rounded-full size-[80px] flex items-center justify-center shadow-[0px_0px_16px_4px_rgba(0,123,255,0.2)]">
-            <div className="relative shrink-0" style={{ width: 26.85, height: 20.475 }}>
-              <img alt="" className="absolute block max-w-none size-full" src={imgCheckmark} />
-            </div>
+            <Check size={24} className="text-white" />
           </div>
         </div>
 
@@ -86,11 +82,7 @@ export default function TransferSuccessfulStep({
             </p>
             <div className="flex items-center gap-[4px]">
               <p className="font-medium text-[14px] leading-[18px] text-[#007bff]">Show me options</p>
-              <div className="relative shrink-0 size-[14px]">
-                <div className="absolute inset-[18.75%_12.5%]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgArrowRight} />
-                </div>
-              </div>
+              <ChevronRight size={14} className="text-[#007bff]" />
             </div>
           </div>
         </div>

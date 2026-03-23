@@ -5,11 +5,8 @@
  * Bottom-sheet overlay on frozen IntroStep.
  * User taps a period row → onNext({ lockPeriodDays, apy })
  */
+import { Lock, ChevronRight } from 'lucide-react';
 import type { StepProps, LockedSavingsData } from '../../types';
-
-// ── Figma asset URLs (218:961) — valid 7 days ────────────────────────
-const imgLockKey    = 'https://www.figma.com/api/mcp/asset/b8453e24-12b5-4c9c-96fd-26ea80fead5e'; // LockKey Vector 16×16
-const imgCaretRight = 'https://www.figma.com/api/mcp/asset/3cff6dee-8f2c-4fdb-b703-d9ec5deb2ae0'; // CaretRight Vector 16×16
 
 const LOCK_PERIODS = [
   { days: 30,  label: '30 Days',  sublabel: 'Steady Returns',  earnings: '≈ $12',  apy: '4.5%', badge: null          },
@@ -77,11 +74,7 @@ export default function LockSelectionStep({ onNext }: StepProps<LockedSavingsDat
               {/* Left: icon + label */}
               <div className="flex items-center gap-4 shrink-0">
                 <div className="bg-[#007bff] rounded-full size-8 flex items-center justify-center shrink-0">
-                  <div className="relative shrink-0 size-4">
-                    <div className="absolute inset-[3.13%_12.5%_12.5%_12.5%]">
-                      <img alt="" className="absolute block max-w-none size-full" src={imgLockKey} />
-                    </div>
-                  </div>
+                  <Lock size={14} className="text-white" />
                 </div>
                 <div className="flex flex-col items-start">
                   <p className="text-white font-bold text-[16px] leading-[24px]">{period.label}</p>
@@ -95,11 +88,7 @@ export default function LockSelectionStep({ onNext }: StepProps<LockedSavingsDat
                   <p className="text-[#00e6ff] font-bold text-[16px] leading-[24px]">{period.earnings}</p>
                   <p className="text-[#94a3b8] font-normal text-[12px] leading-[16px]">On $500</p>
                 </div>
-                <div className="relative shrink-0 size-4">
-                  <div className="absolute inset-[14.05%_26.55%_14.06%_32.8%]">
-                    <img alt="" className="absolute block max-w-none size-full" src={imgCaretRight} />
-                  </div>
-                </div>
+                <ChevronRight size={16} className="text-[#8ac7ff] shrink-0" />
               </div>
 
               {/* Badge (Popular / Best Value) */}

@@ -4,16 +4,10 @@
  * Amount input, quick pills, payment method selection, Continue CTA.
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock, Building2, CreditCard, Zap } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { DepositFlowData } from '../../types';
 import AmountInput from '../../../../components/AmountInput';
-
-// ── Figma asset URLs (302:2380) ──────────────────────────────────────
-const imgArrowLeft  = 'https://www.figma.com/api/mcp/asset/ed32e853-f58f-4171-983f-a72c643e9975';
-const imgClock      = 'https://www.figma.com/api/mcp/asset/08448048-fa2b-4a63-9b69-f5a75e435974';
-const imgBankCircle = 'https://www.figma.com/api/mcp/asset/354527b8-1641-4612-a03e-ddf93c57cb94';
-const imgCardIcon   = 'https://www.figma.com/api/mcp/asset/b47a083f-590b-45f8-a6c7-8684d796c64c';
-const imgStripeIcon = 'https://www.figma.com/api/mcp/asset/4abb6413-199c-4094-8054-1e6b44a98c2c';
 
 type PayMethod = 'bank' | 'card' | 'stripe';
 
@@ -32,16 +26,12 @@ export default function BuyWithFiatStep({ onNext, onBack }: StepProps<DepositFlo
 
         {/* ── Header ────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-          <button onClick={onBack} className="relative size-[24px] shrink-0">
-            <div className="absolute inset-[18.75%_12.5%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-            </div>
+          <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+            <ArrowLeft size={20} className="text-white" />
           </button>
           <p className="font-semibold text-[16px] leading-[20px] text-white">Buy with Fiat</p>
-          <button className="relative size-[24px] shrink-0">
-            <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-            </div>
+          <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+            <Clock size={18} className="text-[#8ac7ff]" />
           </button>
         </div>
 
@@ -75,9 +65,7 @@ export default function BuyWithFiatStep({ onNext, onBack }: StepProps<DepositFlo
               }`}
             >
               <div className="bg-[#1a3a6b] rounded-full size-[40px] flex items-center justify-center shrink-0">
-                <div className="relative shrink-0" style={{ width: 16.667, height: 16.667 }}>
-                  <img alt="" className="absolute block max-w-none size-full" src={imgBankCircle} />
-                </div>
+                <Building2 size={16} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
@@ -107,9 +95,7 @@ export default function BuyWithFiatStep({ onNext, onBack }: StepProps<DepositFlo
               }`}
             >
               <div className="bg-[#0d2a4a] rounded-full size-[40px] flex items-center justify-center shrink-0">
-                <div className="relative shrink-0" style={{ width: 16.667, height: 13.333 }}>
-                  <img alt="" className="absolute block max-w-none size-full" src={imgCardIcon} />
-                </div>
+                <CreditCard size={16} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[16px] leading-[24px] text-white">Visa / Mastercard</p>
@@ -132,9 +118,7 @@ export default function BuyWithFiatStep({ onNext, onBack }: StepProps<DepositFlo
               }`}
             >
               <div className="bg-[#262626] rounded-full size-[40px] flex items-center justify-center shrink-0">
-                <div className="relative shrink-0 size-[15px]">
-                  <img alt="" className="absolute block max-w-none size-full" src={imgStripeIcon} />
-                </div>
+                <Zap size={14} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[16px] leading-[24px] text-white">Stripe / MoonPay</p>

@@ -5,13 +5,10 @@
  * + quick pills + optional note + "Preview Send" button.
  */
 import { useState } from 'react';
+import { ArrowLeft, Clock, CheckCircle2 } from 'lucide-react';
 import type { StepProps } from '../../../savings/types';
 import type { WithdrawFlowData } from '../types';
 import { useAppStore } from '../../../../store';
-
-const imgArrowLeft   = 'https://www.figma.com/api/mcp/asset/8da92ea6-e0b1-4a08-9946-7c183781082d';
-const imgClock       = 'https://www.figma.com/api/mcp/asset/f2089ac1-5b6f-4d9d-86bb-0e8d6e62ad24';
-const imgSentiCheck  = 'https://www.figma.com/api/mcp/asset/90503e2f-ef96-4ec6-9242-7ac0c76e274b';
 
 type Asset = 'USDC' | 'USDT' | 'SOL';
 const ASSETS: Asset[] = ['USDC', 'USDT', 'SOL'];
@@ -50,16 +47,12 @@ export default function LinkAmountStep({ data, onNext, onBack }: StepProps<Withd
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 pt-[68px] pb-0 shrink-0">
-        <button onClick={onBack} className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[18.75%_12.5%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-          </div>
+        <button onClick={onBack} className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <p className="font-semibold text-[16px] leading-[20px] text-white">Send via Link</p>
-        <button className="relative size-[24px] shrink-0">
-          <div className="absolute inset-[9.36%_9.36%_9.43%_9.43%]">
-            <img alt="" className="absolute block max-w-none size-full" src={imgClock} />
-          </div>
+        <button className="relative size-[24px] shrink-0 flex items-center justify-center">
+          <Clock size={18} className="text-[#8ac7ff]" />
         </button>
       </div>
 
@@ -83,9 +76,7 @@ export default function LinkAmountStep({ data, onNext, onBack }: StepProps<Withd
           </p>
           {/* Senti User badge */}
           <div className="bg-[#0a3040] rounded-full flex items-center gap-[4px] px-[12px] py-[4px]">
-            <div className="relative size-[12px] shrink-0">
-              <img alt="" className="absolute block max-w-none size-full" src={imgSentiCheck} />
-            </div>
+            <CheckCircle2 size={12} className="text-[#00e6ff]" />
             <p className="font-bold text-[10px] leading-[15px] tracking-[0.5px] uppercase text-[#00e6ff]">
               Senti User
             </p>

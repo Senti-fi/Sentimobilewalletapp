@@ -12,10 +12,8 @@
  *   → Pinned footer: "Deposit More" link + "Back to Investments" button
  */
 import { useNavigate } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import type { DepositStepProps } from '../types';
-
-// ── Figma asset: LockKey icon (284:1459 → imgVector) ────────────────
-const imgLockKey = 'https://www.figma.com/api/mcp/asset/60362d3b-ba31-4336-a715-41a0b163eac6';
 
 interface DepositSuccessStepProps extends DepositStepProps {
   onDepositMore: () => void;
@@ -44,11 +42,7 @@ export default function DepositSuccessStep({
             className="bg-[#1a3a6b] border border-[rgba(0,123,255,0.1)] rounded-full size-[100px] flex items-center justify-center"
             style={{ boxShadow: '0px 0px 20px 5px rgba(0,123,255,0.2)' }}
           >
-            <div className="relative shrink-0 size-[48px]">
-              <div className="absolute inset-[1.56%_10.94%_10.94%_10.94%]">
-                <img alt="" className="absolute block max-w-none size-full" src={imgLockKey} />
-              </div>
-            </div>
+            <Lock size={44} className="text-white" />
           </div>
         </div>
 

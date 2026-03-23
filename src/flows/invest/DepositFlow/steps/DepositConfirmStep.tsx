@@ -9,10 +9,8 @@
  *   → Lucy card
  *   → Pinned footer: "Go Back" text + "Confirm Deposit $X" blue button
  */
+import { ArrowLeft } from 'lucide-react';
 import type { DepositStepProps } from '../types';
-
-// ── Figma asset: ArrowLeft (284:1364 → imgVector5) ──────────────────
-const imgArrowLeft = 'https://www.figma.com/api/mcp/asset/641b5d51-35d6-4586-a593-2c3ec59f7791';
 
 const MOCK_CURRENT_BALANCE = 2342.91;
 
@@ -38,10 +36,8 @@ export default function DepositConfirmStep({
 
         {/* Header */}
         <div className="flex items-center justify-between px-[24px] pt-[68px] pb-[20px]">
-          <button onClick={onBack} className="relative shrink-0 size-[24px]">
-            <div className="absolute inset-[18.75%_12.5%]">
-              <img alt="" className="absolute block max-w-none size-full" src={imgArrowLeft} />
-            </div>
+          <button onClick={onBack} className="relative shrink-0 size-[24px] flex items-center justify-center">
+            <ArrowLeft size={20} className="text-white" />
           </button>
           <p className="font-normal text-[20px] leading-[28px] text-white">
             Confirm Deposit
