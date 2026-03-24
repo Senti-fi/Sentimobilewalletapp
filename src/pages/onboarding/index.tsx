@@ -180,6 +180,9 @@ export default function OnboardingPage() {
    * Looks up the referrer by username, inserts a referrals row, and awards
    * points to both parties. Errors are swallowed so a bad code never blocks
    * onboarding completion.
+   *
+   * All DB queries are wrapped with withTimeout so a slow/cold-start DB
+   * never causes the function to hang indefinitely.
    */
   async function processReferral(referredUserId: string, code: string) {
     if (!supabase || !code.trim()) return;
@@ -187,26 +190,51 @@ export default function OnboardingPage() {
     const normalizedCode = code.trim().toLowerCase();
 
     try {
-      const { data: referrer } = await client
-        .from('users')
-        .select('auth_user_id')
-        .ilike('username', normalizedCode)
-        .maybeSingle();
+      // Look up the referrer by username
+      const { data: referrer } = await withTimeout(
+        client.from('users').select('auth_user_id').ilike('username', normalizedCode).maybeSingle(),
+        10000,
+        'processReferral_lookup',
+      );
 
       // Invalid code or self-referral — silently skip
       if (!referrer || referrer.auth_user_id === referredUserId) return;
 
-      const { data: referral } = await client
-        .from('referrals')
-        .insert({ referrer_id: referrer.auth_user_id, referred_id: referredUserId, referral_code: normalizedCode, status: 'completed' })
-        .select('id')
-        .single();
+      // Guard against duplicate referral rows (e.g. if called twice)
+      const { data: existing } = await withTimeout(
+        client.from('referrals').select('id').eq('referred_id', referredUserId).maybeSingle(),
+        10000,
+        'processReferral_checkExisting',
+      );
+      if (existing) return;
+
+      const { data: referral, error: insertErr } = await withTimeout(
+        client
+          .from('referrals')
+          .insert({ referrer_id: referrer.auth_user_id, referred_id: referredUserId, referral_code: normalizedCode, status: 'completed' })
+          .select('id')
+          .single(),
+        10000,
+        'processReferral_insert',
+      );
+
+      // 23505 = unique_violation — another request already inserted the row; not an error
+      if (insertErr) {
+        if (insertErr.code !== '23505') {
+          console.warn('[referral] insert failed:', insertErr.code, insertErr.message);
+        }
+        return;
+      }
 
       const referralId = referral?.id ?? null;
-      await client.from('referral_points').insert([
-        { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
-        { auth_user_id: referredUserId,         referral_id: referralId, points: 50,  reason: 'Joined via referral' },
-      ]);
+      await withTimeout(
+        client.from('referral_points').insert([
+          { auth_user_id: referrer.auth_user_id, referral_id: referralId, points: 100, reason: 'Successful referral' },
+          { auth_user_id: referredUserId,         referral_id: referralId, points: 50,  reason: 'Joined via referral' },
+        ]),
+        10000,
+        'processReferral_points',
+      );
     } catch (err) {
       console.warn('[referral] processing failed silently:', err);
     }
