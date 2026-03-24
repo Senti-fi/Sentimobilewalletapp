@@ -12,7 +12,7 @@
  *                     a row exists where referred_id = user (inbound / already used)
  *   referral_points — sum of all points for the user
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Copy, Check, Share2, Users, Gift,
@@ -52,7 +52,7 @@ async function fetchReferralStats(authUserId: string): Promise<ReferralStats> {
         .eq('referred_id', authUserId)
         .maybeSingle(),
     ]),
-    15000,
+    8000,
     'fetchReferralStats',
   );
 
@@ -187,10 +187,11 @@ export default function ReferralPage() {
   const referralLink = `${window.location.origin}?ref=${username}`;
 
   // ── Share / stats state
-  const [stats,    setStats]    = useState<ReferralStats>({ referralCount: 0, totalPoints: 0, alreadyReferred: false, referredByUsername: null });
-  const [loading,  setLoading]  = useState(true);
-  const [copied,   setCopied]   = useState(false);
-  const [shareErr, setShareErr] = useState(false);
+  const [stats,      setStats]      = useState<ReferralStats>({ referralCount: 0, totalPoints: 0, alreadyReferred: false, referredByUsername: null });
+  const [loading,    setLoading]    = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [copied,     setCopied]     = useState(false);
+  const [shareErr,   setShareErr]   = useState(false);
 
   // ── Enter-a-code state
   const [inputCode,    setInputCode]    = useState('');
@@ -198,15 +199,23 @@ export default function ReferralPage() {
   const [codeError,    setCodeError]    = useState<string | null>(null);
   const [codeApplied,  setCodeApplied]  = useState(false); // success for this session
 
-  useEffect(() => {
-    if (!authUserId) return;
+  const loadStats = useCallback(() => {
+    if (!authUserId) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
+    setFetchError(false);
     fetchReferralStats(authUserId)
-      .then(data  => { if (!cancelled) { setStats(data); setLoading(false); } })
-      .catch(()   => { if (!cancelled) setLoading(false); });
+      .then(data => { if (!cancelled) { setStats(data); setLoading(false); } })
+      .catch(()  => { if (!cancelled) { setLoading(false); setFetchError(true); } });
     return () => { cancelled = true; };
   }, [authUserId]);
+
+  useEffect(() => {
+    return loadStats();
+  }, [loadStats]);
 
   // ── Share handlers
   async function handleCopy() {
@@ -250,7 +259,7 @@ export default function ReferralPage() {
       }
       // Success — mark applied and refresh stats so points update
       setCodeApplied(true);
-      fetchReferralStats(authUserId).then(data => setStats(data)).catch(() => {});
+      loadStats();
     } catch (err) {
       setCodeError(
         err instanceof TimeoutError
@@ -294,6 +303,19 @@ export default function ReferralPage() {
 
       {/* ── Stats Card ──────────────────────────────────────────────── */}
       <div className="mx-6 mt-4 bg-[#162040] rounded-[20px] overflow-hidden shadow-[0px_4px_16px_0px_rgba(0,0,0,0.12)]">
+        {fetchError ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-3">
+            <p className="text-[#8ac7ff] font-normal text-[13px] leading-[18px]">
+              Couldn't load stats
+            </p>
+            <button
+              onClick={loadStats}
+              className="flex items-center gap-2 px-4 py-2 rounded-[10px] bg-[rgba(138,199,255,0.1)] active:bg-[rgba(138,199,255,0.18)] transition-colors"
+            >
+              <span className="text-[#8ac7ff] font-medium text-[13px]">Try again</span>
+            </button>
+          </div>
+        ) : (
         <div className="flex items-stretch">
           <StatCard
             icon={<Users size={18} className="text-[#8ac7ff]" strokeWidth={1.75} />}
@@ -309,6 +331,7 @@ export default function ReferralPage() {
             loading={loading}
           />
         </div>
+        )}
       </div>
 
       {/* ── Your Referral Link Card ──────────────────────────────────── */}
