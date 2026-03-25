@@ -21,7 +21,7 @@
  *
  * Completion is tracked via localStorage key 'senti-onboarding-done'.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Loader2, CheckCircle2, XCircle, CreditCard, PiggyBank, TrendingUp } from 'lucide-react';
@@ -1098,6 +1098,15 @@ function UsernameScreen({
 }) {
   const [checking,     setChecking]     = useState(false);
   const [availability, setAvailability] = useState<'available' | 'taken' | null>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the username input once on mount only — NOT on every render.
+  // An inline ref callback with setTimeout would re-steal focus on every
+  // keystroke in the referral code field (every state update = re-render = ref fires).
+  useEffect(() => {
+    const t = setTimeout(() => usernameInputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   // Debounced real-DB uniqueness check
   useEffect(() => {
@@ -1197,7 +1206,7 @@ function UsernameScreen({
             value={value}
             onChange={e => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
             placeholder="yourname"
-            ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
+            ref={usernameInputRef}
             className="flex-1 bg-transparent outline-none min-w-0"
             style={{
               fontFamily: 'Manrope, sans-serif',
