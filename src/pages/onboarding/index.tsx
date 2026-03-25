@@ -827,121 +827,120 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
     setCode('');
   }
 
-  // ── Verify phase — dedicated clean screen, no hero content ──────────
-  if (phase === 'verify') {
-    return (
-      <motion.div
-        className="absolute inset-0 flex flex-col"
-        style={{ background: 'linear-gradient(180deg, #dce4ec 0%, #eef2f6 100%)' }}
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        transition={transition}
-      >
-        {/* Radial glow */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute rounded-full" style={{ left: 93, top: -100, width: 400, height: 400, background: 'radial-gradient(circle at 200px 200px, rgba(90,157,232,0.08) 0%, transparent 70%)' }} />
-        </div>
-
-        {/* Centered OTP content */}
-        <div className="flex-1 flex flex-col justify-center" style={{ paddingLeft: 32, paddingRight: 32, paddingTop: 80, paddingBottom: 48, gap: 0, maxWidth: 400, width: '100%', margin: '0 auto' }}>
-
-          {/* Header */}
-          <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 700, fontSize: 36, lineHeight: '42px', color: '#1e3a5f', marginBottom: 10 }}>
-              Check your inbox
-            </h1>
-            <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 500, fontSize: 15, lineHeight: '22px', color: '#7b92b0' }}>
-              We sent a 6-digit code to
-            </p>
-            <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600, fontSize: 15, lineHeight: '22px', color: '#4a6a8a' }}>
-              {email}
-            </p>
-          </div>
-
-          {/* OTP input */}
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-            value={code}
-            onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null); }}
-            onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
-            placeholder="000000"
-            ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
-            className="w-full rounded-[16px] outline-none text-center"
-            style={{
-              height: 64,
-              background: '#fff',
-              border: '1.5px solid rgba(0,0,0,0.10)',
-              boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
-              fontFamily: 'Inter, sans-serif',
-              fontWeight: 700,
-              fontSize: 28,
-              letterSpacing: 12,
-              color: '#1e3a5f',
-              marginBottom: 8,
-            }}
-          />
-
-          {/* Error / resent feedback */}
-          <div style={{ minHeight: 20, marginBottom: 20 }}>
-            {error && (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ff3b30' }}>{error}</p>
-            )}
-            {!error && resent && (
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#02d128' }}>New code sent.</p>
-            )}
-          </div>
-
-          {/* Verify button */}
-          <button
-            onClick={handleVerifyCode}
-            disabled={loading || code.length !== 6}
-            className="w-full flex items-center justify-center rounded-[16px]"
-            style={{
-              height: 57,
-              background: code.length === 6
-                ? 'linear-gradient(170.08deg, #5a9de8 0%, #3b7dd8 100%)'
-                : 'linear-gradient(170.08deg, rgb(197,208,219) 0%, rgb(184,196,208) 100%)',
-              opacity: loading ? 0.6 : 1,
-              transition: 'opacity 0.2s, background 0.2s',
-              cursor: loading || code.length !== 6 ? 'not-allowed' : 'pointer',
-              marginBottom: 12,
-            }}
-          >
-            {loading
-              ? <Loader2 size={20} className="animate-spin text-white" />
-              : <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>Verify</span>
-            }
-          </button>
-
-          {/* Resend */}
-          <button onClick={handleResend} className="w-full flex items-center justify-center" style={{ height: 36 }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
-              Didn't get a code?{' '}
-              <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Resend</span>
-            </span>
-          </button>
-
-        </div>
-      </motion.div>
-    );
-  }
-
-  // ── Email phase — hero layout ─────────────────────────────────────
   return (
-    <motion.div
-      className="absolute inset-0 overflow-hidden flex flex-col"
-      style={{ background: 'linear-gradient(180deg, #dce4ec 0%, #eef2f6 100%)' }}
-      variants={variants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={transition}
-    >
+    <AnimatePresence mode="wait">
+      {phase === 'verify' ? (
+        // ── Verify phase — dedicated clean screen, no hero content ──────
+        <motion.div
+          key="verify"
+          className="absolute inset-0 flex flex-col"
+          style={{ background: 'linear-gradient(180deg, #dce4ec 0%, #eef2f6 100%)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+        >
+          {/* Radial glow */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute rounded-full" style={{ left: 93, top: -100, width: 400, height: 400, background: 'radial-gradient(circle at 200px 200px, rgba(90,157,232,0.08) 0%, transparent 70%)' }} />
+          </div>
+
+          {/* Centered OTP content */}
+          <div className="flex-1 flex flex-col justify-center" style={{ paddingLeft: 32, paddingRight: 32, paddingTop: 80, paddingBottom: 48, gap: 0, maxWidth: 400, width: '100%', margin: '0 auto' }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{ fontFamily: 'Urbanist, sans-serif', fontWeight: 700, fontSize: 36, lineHeight: '42px', color: '#1e3a5f', marginBottom: 10 }}>
+                Check your inbox
+              </h1>
+              <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 500, fontSize: 15, lineHeight: '22px', color: '#7b92b0' }}>
+                We sent a 6-digit code to
+              </p>
+              <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 600, fontSize: 15, lineHeight: '22px', color: '#4a6a8a' }}>
+                {email}
+              </p>
+            </div>
+
+            {/* OTP input */}
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={code}
+              onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null); }}
+              onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
+              placeholder="000000"
+              ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
+              className="w-full rounded-[16px] outline-none text-center"
+              style={{
+                height: 64,
+                background: '#fff',
+                border: '1.5px solid rgba(0,0,0,0.10)',
+                boxShadow: '0px 2px 8px rgba(0,0,0,0.04)',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 700,
+                fontSize: 28,
+                letterSpacing: 12,
+                color: '#1e3a5f',
+                marginBottom: 8,
+              }}
+            />
+
+            {/* Error / resent feedback */}
+            <div style={{ minHeight: 20, marginBottom: 20 }}>
+              {error && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ff3b30' }}>{error}</p>
+              )}
+              {!error && resent && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#02d128' }}>New code sent.</p>
+              )}
+            </div>
+
+            {/* Verify button */}
+            <button
+              onClick={handleVerifyCode}
+              disabled={loading || code.length !== 6}
+              className="w-full flex items-center justify-center rounded-[16px]"
+              style={{
+                height: 57,
+                background: code.length === 6
+                  ? 'linear-gradient(170.08deg, #5a9de8 0%, #3b7dd8 100%)'
+                  : 'linear-gradient(170.08deg, rgb(197,208,219) 0%, rgb(184,196,208) 100%)',
+                opacity: loading ? 0.6 : 1,
+                transition: 'opacity 0.2s, background 0.2s',
+                cursor: loading || code.length !== 6 ? 'not-allowed' : 'pointer',
+                marginBottom: 12,
+              }}
+            >
+              {loading
+                ? <Loader2 size={20} className="animate-spin text-white" />
+                : <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 16, color: '#fff' }}>Verify</span>
+              }
+            </button>
+
+            {/* Resend */}
+            <button onClick={handleResend} className="w-full flex items-center justify-center" style={{ height: 36 }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
+                Didn't get a code?{' '}
+                <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Resend</span>
+              </span>
+            </button>
+
+          </div>
+        </motion.div>
+      ) : (
+        // ── Email phase — hero layout ───────────────────────────────────
+        <motion.div
+          key="email"
+          className="absolute inset-0 overflow-hidden flex flex-col"
+          style={{ background: 'linear-gradient(180deg, #dce4ec 0%, #eef2f6 100%)' }}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={transition}
+        >
       {/* Background radial glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute rounded-full" style={{ left: 93, top: -100, width: 400, height: 400, background: 'radial-gradient(circle at 200px 200px, rgba(90,157,232,0.08) 0%, transparent 70%)' }} />
@@ -1070,6 +1069,8 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
         </button>
       </div>
     </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
