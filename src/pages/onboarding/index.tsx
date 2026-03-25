@@ -254,12 +254,15 @@ export default function OnboardingPage() {
     setSubmitting(true);
 
     try {
-      const { data: { user } } = await withTimeout(
-        supabase.auth.getUser(),
-        15000,
-        'getUser',
-      );
-      if (!user) return;
+      // getSession() reads from local memory — no network call, can't hang.
+      // getUser() makes a network round-trip that can block indefinitely under
+      // poor connectivity, causing the same "timed out" failure as the upsert.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        setSaveError('Session expired. Please sign in again.');
+        return;
+      }
 
       const normalizedUsername = username.trim().toLowerCase();
 

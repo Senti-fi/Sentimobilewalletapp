@@ -31,16 +31,17 @@ export async function saveUserProfile(
 ): Promise<{ error: string | null }> {
   if (!supabase) return { error: null };
   try {
+    // Use a SECURITY DEFINER RPC instead of a direct table upsert.
+    // Direct PostgREST upserts can hang indefinitely under RLS if any legacy
+    // policy creates a conflicting evaluation path. The RPC bypasses RLS and
+    // always settles (succeeds, unique-violation, or unauthorized exception).
     const { error } = await withTimeout(
-      supabase.from('users').upsert(
-        {
-          auth_user_id: profile.id,
-          username:     profile.username,
-          handle:       `@${profile.username}`,
-          email:        profile.email,
-        },
-        { onConflict: 'auth_user_id' },
-      ),
+      supabase.rpc('upsert_user_profile', {
+        p_auth_user_id: profile.id,
+        p_username:     profile.username,
+        p_handle:       `@${profile.username}`,
+        p_email:        profile.email,
+      }),
       15000,
       'saveUserProfile',
     );
