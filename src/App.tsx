@@ -5,6 +5,7 @@ import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store';
 import type { AuthProvider } from './store/types';
+import { identifyUser } from './lib/analytics';
 
 /**
  * Subscribes to Supabase auth state changes for the lifetime of the app.
@@ -51,6 +52,12 @@ function AuthListener() {
               authProvider,
               username:     data.username,
               createdAt:    session.user.created_at,
+            });
+
+            identifyUser(session.user.id, {
+              email:        session.user.email ?? '',
+              authProvider,
+              username:     data.username,
             });
           }
           // No username yet → onboarding will collect it; profile stays null.

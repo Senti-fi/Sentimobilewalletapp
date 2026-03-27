@@ -21,6 +21,7 @@ import {
 import { useAppStore } from '../../store';
 import { supabase } from '../../lib/supabase';
 import { withTimeout, TimeoutError } from '../../lib/withTimeout';
+import { track } from '../../lib/analytics';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -222,6 +223,7 @@ export default function ReferralPage() {
     try {
       await navigator.clipboard.writeText(referralLink);
     } catch { /* API unavailable */ }
+    track('referral_link_copied');
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   }
@@ -235,11 +237,13 @@ export default function ReferralPage() {
           text: 'Use my referral link to sign up for Senti — your all-in-one crypto wallet.',
           url: referralLink,
         });
+        track('referral_link_shared', { method: 'native_share' });
       } catch { /* user cancelled */ }
     } else {
       try {
         await navigator.clipboard.writeText(referralLink);
       } catch { /* API unavailable */ }
+      track('referral_link_shared', { method: 'clipboard_fallback' });
       setCopied(true);
       setShareErr(true);
       setTimeout(() => { setCopied(false); setShareErr(false); }, 2000);
@@ -258,6 +262,7 @@ export default function ReferralPage() {
         return;
       }
       // Success — mark applied and refresh stats so points update
+      track('referral_code_applied', { referrer: inputCode.trim().toLowerCase() });
       setCodeApplied(true);
       loadStats();
     } catch (err) {

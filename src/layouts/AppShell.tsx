@@ -1,5 +1,13 @@
-import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import BottomTabBar from '../components/navigation/BottomTabBar';
+import { trackPageview } from '../lib/analytics';
+
+function PageviewTracker() {
+  const location = useLocation();
+  useEffect(() => { trackPageview(); }, [location.pathname]);
+  return null;
+}
 
 /**
  * AppShell
@@ -19,6 +27,7 @@ import BottomTabBar from '../components/navigation/BottomTabBar';
 export default function AppShell() {
   return (
     <div className="relative h-full bg-[#0a142f]">
+      <PageviewTracker />
       {/* scrollable page area — fills all space above the 80px nav bar */}
       <main className="absolute inset-0 bottom-[80px] overflow-y-auto scrollbar-hide">
         <Outlet />

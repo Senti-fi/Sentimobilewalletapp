@@ -38,3 +38,9 @@ export function track(event: string, properties?: Record<string, unknown>): void
   if (!key) return;
   posthog.capture(event, properties);
 }
+
+/** Fire a SPA pageview — call on every route change. */
+export function trackPageview(): void {
+  if (!key) return;
+  posthog.capture('$pageview');
+}
