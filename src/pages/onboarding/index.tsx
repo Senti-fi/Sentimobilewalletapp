@@ -168,6 +168,11 @@ export default function OnboardingPage() {
         username:     data.username,
         createdAt:    user.created_at,
       });
+      identifyUser(user.id, {
+        email:        user.email ?? '',
+        authProvider: 'email',
+        username:     data.username,
+      });
       localStorage.setItem(ONBOARDING_KEY, '1');
       navigate('/home', { replace: true });
     } else {
@@ -787,7 +792,24 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
   const [code,     setCode]     = useState('');
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const [resent,   setResent]   = useState(false);
+  const [resent,    setResent]    = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const otpInputRef   = useRef<HTMLInputElement>(null);
+
+  // Focus email input once on mount
+  useEffect(() => {
+    const t = setTimeout(() => emailInputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Focus OTP input when phase switches to verify
+  useEffect(() => {
+    if (phase !== 'verify') return;
+    const t = setTimeout(() => otpInputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, [phase]);
 
   async function handleSendCode() {
     if (!supabase || !email.trim()) return;
@@ -819,13 +841,16 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
   }
 
   async function handleResend() {
-    if (!supabase) return;
+    if (!supabase || resending) return;
+    setResending(true);
     setResent(false);
     setError(null);
-    await supabase.auth.signInWithOtp({
+    const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: { shouldCreateUser: true },
     });
+    setResending(false);
+    if (err) { setError('Failed to resend. Please try again.'); return; }
     setResent(true);
     setCode('');
   }
@@ -874,7 +899,7 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
               onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError(null); }}
               onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
               placeholder="000000"
-              ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
+              ref={otpInputRef}
               className="w-full rounded-[16px] outline-none text-center"
               style={{
                 height: 64,
@@ -923,11 +948,19 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
             </button>
 
             {/* Resend */}
-            <button onClick={handleResend} className="w-full flex items-center justify-center" style={{ height: 36 }}>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
-                Didn't get a code?{' '}
-                <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Resend</span>
-              </span>
+            <button
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full flex items-center justify-center"
+              style={{ height: 36, opacity: resending ? 0.5 : 1, transition: 'opacity 0.2s' }}
+            >
+              {resending
+                ? <Loader2 size={14} className="animate-spin" style={{ color: '#7b92b0' }} />
+                : <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400, fontSize: 14, color: '#7b92b0' }}>
+                    Didn't get a code?{' '}
+                    <span style={{ fontWeight: 600, color: '#1e3a5f' }}>Resend</span>
+                  </span>
+              }
             </button>
 
           </div>
@@ -1031,7 +1064,7 @@ function CtaScreen({ onVerified }: { onVerified: () => void }) {
           onChange={e => { setEmail(e.target.value); setError(null); }}
           onKeyDown={e => e.key === 'Enter' && handleSendCode()}
           placeholder="Enter your email"
-          ref={el => { if (el) setTimeout(() => el.focus(), 100); }}
+          ref={emailInputRef}
           className="w-full rounded-[16px] outline-none"
           style={{
             height: 57,
@@ -1261,8 +1294,8 @@ function UsernameScreen({
             className="w-full rounded-[14px] outline-none"
             style={{
               height: 50,
-              background: 'rgba(255,255,255,0.06)',
-              border: referralCode ? '1.5px solid rgba(90,157,232,0.4)' : '1.5px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.7)',
+              border: referralCode ? '1.5px solid rgba(90,157,232,0.4)' : '1.5px solid rgba(0,0,0,0.10)',
               paddingLeft: 16,
               paddingRight: 16,
               fontFamily: 'Inter, sans-serif',
